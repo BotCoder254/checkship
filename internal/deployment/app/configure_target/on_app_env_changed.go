@@ -3,8 +3,8 @@ package configure_target
 import (
 	"context"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/bus"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 )
 
 // When an application environment has changed and only if the target has changed,

@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 )
 
 // Group for deployment to prevent multiple deployment at the same time on the same

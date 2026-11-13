@@ -1,6 +1,6 @@
 # multiple-ports
 
-Quick & dirty project to test the **seelf** ability to handle multiple ports of specific types and check how they are managed by traefik.
+Quick & dirty project to test the **checkship** ability to handle multiple ports of specific types and check how they are managed by traefik.
 
 ## Usage
 

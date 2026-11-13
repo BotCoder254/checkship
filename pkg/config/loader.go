@@ -6,7 +6,7 @@ import (
 	"os"
 
 	nenv "github.com/Netflix/go-env"
-	"github.com/YuukanOO/seelf/pkg/ostools"
+	"github.com/checkship-deploy/checkship/pkg/ostools"
 	"github.com/joho/godotenv"
 
 	"gopkg.in/yaml.v3"

@@ -4,9 +4,9 @@ import (
 	"context"
 	"io"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/monad"
-	"github.com/YuukanOO/seelf/pkg/ssh"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/ssh"
 	"github.com/docker/cli/cli/command"
 	clitypes "github.com/docker/cli/cli/config/types"
 	"github.com/docker/cli/cli/flags"

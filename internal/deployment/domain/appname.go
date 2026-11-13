@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/YuukanOO/seelf/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
 )
 
 var (

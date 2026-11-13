@@ -3,9 +3,9 @@ package get_deployment_test
 import (
 	"testing"
 
-	"github.com/YuukanOO/seelf/internal/deployment/app/get_deployment"
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/monad"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_deployment"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/monad"
 )
 
 func Test_Deployment(t *testing.T) {

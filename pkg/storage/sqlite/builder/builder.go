@@ -6,8 +6,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/storage"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/storage"
 )
 
 const countClause = "COUNT(*)" // Count clause needed for pagination.

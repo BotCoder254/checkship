@@ -5,12 +5,12 @@ import (
 	"errors"
 	"path/filepath"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/infra/source"
-	"github.com/YuukanOO/seelf/pkg/ostools"
-	"github.com/YuukanOO/seelf/pkg/types"
-	"github.com/YuukanOO/seelf/pkg/validate"
-	"github.com/YuukanOO/seelf/pkg/validate/strings"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/source"
+	"github.com/checkship-deploy/checkship/pkg/ostools"
+	"github.com/checkship-deploy/checkship/pkg/types"
+	"github.com/checkship-deploy/checkship/pkg/validate"
+	"github.com/checkship-deploy/checkship/pkg/validate/strings"
 )
 
 var ErrWriteComposeFailed = errors.New("write_compose_failed")

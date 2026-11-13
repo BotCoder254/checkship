@@ -26,15 +26,15 @@ build-front: # Build the frontend
 	cd cmd/serve/front && npm i && npm run build && cd ../../..
 
 build-back: # Build the backend
-	go build -tags release -ldflags="-s -w" -o seelf
+	go build -tags release -ldflags="-s -w" -o checkship
 
 build: build-front build-back # Build the final binary for the current platform
 
 build-docs: # Build the docs
 	npm i && npm run docs:build
 
-prepare-release: # Update the version.go file with the SEELF_VERSION env variable
-	@sed -i".bak" "s/version = \".*\"/version = \"$(SEELF_VERSION)\"/g" cmd/version/version.go
+prepare-release: # Update the version.go file with the CHECKSHIP_VERSION env variable
+	@sed -i".bak" "s/version = \".*\"/version = \"$(CHECKSHIP_VERSION)\"/g" cmd/version/version.go
 
 release-docker: # Build and push the docker image
-	@docker buildx build --platform linux/amd64,linux/arm64/v8 -t "yuukanoo/seelf:$(SEELF_VERSION)" -t yuukanoo/seelf:latest --push .
+	@docker buildx build --platform linux/amd64,linux/arm64/v8 -t "ghcr.io/checkship-deploy/checkship:$(CHECKSHIP_VERSION)" -t ghcr.io/checkship-deploy/checkship:latest --push .

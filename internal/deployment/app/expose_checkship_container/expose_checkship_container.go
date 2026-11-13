@@ -1,19 +1,19 @@
-package expose_seelf_container
+package expose_checkship_container
 
 import (
 	"context"
 	"errors"
 
-	auth "github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/validate"
-	"github.com/YuukanOO/seelf/pkg/validate/strings"
+	auth "github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/validate"
+	"github.com/checkship-deploy/checkship/pkg/validate/strings"
 )
 
 type (
-	// Expose seelf container using a local target configuration.
+	// Expose checkship container using a local target configuration.
 	// If a local target already exists, it will not be modified but only use
 	// to attach the container to it.
 	Command struct {
@@ -31,7 +31,7 @@ type (
 	}
 )
 
-func (Command) Name_() string { return "deployment.command.expose_seelf_container" }
+func (Command) Name_() string { return "deployment.command.expose_checkship_container" }
 
 func Handler(
 	reader domain.TargetsReader,

@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/validate/strings"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/validate/strings"
 )
 
 func Test_Required(t *testing.T) {

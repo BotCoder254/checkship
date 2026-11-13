@@ -3,10 +3,10 @@ package sqlite
 import (
 	"context"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/event"
-	"github.com/YuukanOO/seelf/pkg/storage/sqlite"
-	"github.com/YuukanOO/seelf/pkg/storage/sqlite/builder"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/event"
+	"github.com/checkship-deploy/checkship/pkg/storage/sqlite"
+	"github.com/checkship-deploy/checkship/pkg/storage/sqlite/builder"
 )
 
 type (

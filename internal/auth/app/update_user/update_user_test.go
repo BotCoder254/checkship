@@ -4,16 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"github.com/YuukanOO/seelf/internal/auth/app/update_user"
-	"github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/internal/auth/fixture"
-	"github.com/YuukanOO/seelf/internal/auth/infra/crypto"
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/bus/spy"
-	"github.com/YuukanOO/seelf/pkg/monad"
-	"github.com/YuukanOO/seelf/pkg/validate"
+	"github.com/checkship-deploy/checkship/internal/auth/app/update_user"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/internal/auth/fixture"
+	"github.com/checkship-deploy/checkship/internal/auth/infra/crypto"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/bus/spy"
+	"github.com/checkship-deploy/checkship/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/validate"
 )
 
 func Test_UpdateUser(t *testing.T) {

@@ -4,7 +4,7 @@ layout: home
 # title: Lightweight self-hosted deployment platform written in Go
 
 hero:
-  name: "seelf"
+  name: "checkship"
   text: "Lightweight self-hosted deployment platform written in Go."
   tagline: From a local compose file to a remote environment without hassle.
   actions:
@@ -13,7 +13,7 @@ hero:
       link: /guide/quickstart
     - theme: alt
       text: Source code
-      link: https://github.com/YuukanOO/seelf
+      link: https://github.com/checkship-deploy/checkship
 
 features:
   - title: Easy

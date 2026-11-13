@@ -64,7 +64,7 @@ INSERT INTO runs(date) VALUES (now());
 		}
 
 		ctx.JSON(http.StatusOK, response{
-			Description: "Simple application which logs in a database the date of each run and exposes environment variables to test seelf.",
+			Description: "Simple application which logs in a database the date of each run and exposes environment variables to test checkship.",
 			Env:         os.Environ(),
 			Runs:        results,
 		})

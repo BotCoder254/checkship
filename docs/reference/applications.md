@@ -4,13 +4,13 @@ Defines a new **stack of services** exposed on a [target subdomain](/reference/t
 
 ## Multiple exposed services
 
-When you define a complete stack for your application, you may have multiple services exposed. This is totally allowed by **seelf**. When [identifying services](/reference/providers/docker#exposing-services) which must be exposed, the first one in **alphabetical order** will become the **default service** and take the default subdomain.
+When you define a complete stack for your application, you may have multiple services exposed. This is totally allowed by **checkship**. When [identifying services](/reference/providers/docker#exposing-services) which must be exposed, the first one in **alphabetical order** will become the **default service** and take the default subdomain.
 
 Other services will be exposed using a subdomain on the default one.
 
 ## Environments {#environments}
 
-Only 2 environments are managed by **seelf** at the moment: **production** and **staging**.
+Only 2 environments are managed by **checkship** at the moment: **production** and **staging**.
 
 ::: info
 Any updates on an application environment will trigger a redeploy of the latest deployment.
@@ -34,7 +34,7 @@ For the staging environment, a `-staging` suffix is added to the application nam
 
 ## Cleanup
 
-Deleting an application will (if at least one deployment has been successful on a target) remove **everything created by seelf** on it:
+Deleting an application will (if at least one deployment has been successful on a target) remove **everything created by checkship** on it:
 
 - Containers
 - Images

@@ -5,13 +5,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/YuukanOO/seelf/cmd/config"
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/infra/artifact"
-	"github.com/YuukanOO/seelf/internal/deployment/infra/source/raw"
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/log"
-	"github.com/YuukanOO/seelf/pkg/must"
+	"github.com/checkship-deploy/checkship/cmd/config"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/artifact"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/source/raw"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/log"
+	"github.com/checkship-deploy/checkship/pkg/must"
 )
 
 func Test_LocalArtifactManager(t *testing.T) {

@@ -3,7 +3,7 @@ package sqlite
 import (
 	"embed"
 
-	"github.com/YuukanOO/seelf/pkg/storage/sqlite"
+	"github.com/checkship-deploy/checkship/pkg/storage/sqlite"
 )
 
 //go:embed migrations/*.sql

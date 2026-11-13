@@ -1,12 +1,12 @@
 package serve
 
 import (
-	"github.com/YuukanOO/seelf/internal/auth/app/get_profile"
-	"github.com/YuukanOO/seelf/internal/auth/app/refresh_api_key"
-	"github.com/YuukanOO/seelf/internal/auth/app/update_user"
-	"github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/http"
+	"github.com/checkship-deploy/checkship/internal/auth/app/get_profile"
+	"github.com/checkship-deploy/checkship/internal/auth/app/refresh_api_key"
+	"github.com/checkship-deploy/checkship/internal/auth/app/update_user"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/http"
 	"github.com/gin-gonic/gin"
 )
 

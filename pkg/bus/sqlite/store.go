@@ -5,14 +5,14 @@ import (
 	"embed"
 	"time"
 
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/flag"
-	"github.com/YuukanOO/seelf/pkg/id"
-	"github.com/YuukanOO/seelf/pkg/monad"
-	"github.com/YuukanOO/seelf/pkg/storage"
-	"github.com/YuukanOO/seelf/pkg/storage/sqlite"
-	"github.com/YuukanOO/seelf/pkg/storage/sqlite/builder"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/flag"
+	"github.com/checkship-deploy/checkship/pkg/id"
+	"github.com/checkship-deploy/checkship/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/storage"
+	"github.com/checkship-deploy/checkship/pkg/storage/sqlite"
+	"github.com/checkship-deploy/checkship/pkg/storage/sqlite/builder"
 )
 
 var (

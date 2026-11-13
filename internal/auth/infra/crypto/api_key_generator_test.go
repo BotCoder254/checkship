@@ -3,8 +3,8 @@ package crypto_test
 import (
 	"testing"
 
-	"github.com/YuukanOO/seelf/internal/auth/infra/crypto"
-	"github.com/YuukanOO/seelf/pkg/assert"
+	"github.com/checkship-deploy/checkship/internal/auth/infra/crypto"
+	"github.com/checkship-deploy/checkship/pkg/assert"
 )
 
 func Test_KeyGenerator(t *testing.T) {

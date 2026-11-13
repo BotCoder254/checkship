@@ -5,12 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	authfixture "github.com/YuukanOO/seelf/internal/auth/fixture"
-	"github.com/YuukanOO/seelf/internal/deployment/app/cleanup_target"
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/fixture"
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/bus"
+	authfixture "github.com/checkship-deploy/checkship/internal/auth/fixture"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/cleanup_target"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/fixture"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 )
 
 func Test_CleanupTarget(t *testing.T) {

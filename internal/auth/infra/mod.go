@@ -1,17 +1,17 @@
 package infra
 
 import (
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/log"
-	"github.com/YuukanOO/seelf/pkg/storage/sqlite"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/log"
+	"github.com/checkship-deploy/checkship/pkg/storage/sqlite"
 
-	"github.com/YuukanOO/seelf/internal/auth/app/create_first_account"
-	"github.com/YuukanOO/seelf/internal/auth/app/login"
-	"github.com/YuukanOO/seelf/internal/auth/app/refresh_api_key"
-	"github.com/YuukanOO/seelf/internal/auth/app/update_user"
-	"github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/internal/auth/infra/crypto"
-	authsqlite "github.com/YuukanOO/seelf/internal/auth/infra/sqlite"
+	"github.com/checkship-deploy/checkship/internal/auth/app/create_first_account"
+	"github.com/checkship-deploy/checkship/internal/auth/app/login"
+	"github.com/checkship-deploy/checkship/internal/auth/app/refresh_api_key"
+	"github.com/checkship-deploy/checkship/internal/auth/app/update_user"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/internal/auth/infra/crypto"
+	authsqlite "github.com/checkship-deploy/checkship/internal/auth/infra/sqlite"
 )
 
 // Setup the auth module

@@ -3,8 +3,8 @@ package flag_test
 import (
 	"testing"
 
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/flag"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/flag"
 )
 
 type flagType uint

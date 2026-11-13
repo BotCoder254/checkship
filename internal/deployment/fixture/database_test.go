@@ -3,11 +3,11 @@ package fixture_test
 import (
 	"testing"
 
-	auth "github.com/YuukanOO/seelf/internal/auth/domain"
-	authfixture "github.com/YuukanOO/seelf/internal/auth/fixture"
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/fixture"
-	"github.com/YuukanOO/seelf/pkg/assert"
+	auth "github.com/checkship-deploy/checkship/internal/auth/domain"
+	authfixture "github.com/checkship-deploy/checkship/internal/auth/fixture"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/fixture"
+	"github.com/checkship-deploy/checkship/pkg/assert"
 )
 
 func Test_Database(t *testing.T) {

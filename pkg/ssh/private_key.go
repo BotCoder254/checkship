@@ -1,7 +1,7 @@
 package ssh
 
 import (
-	"github.com/YuukanOO/seelf/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
 	"golang.org/x/crypto/ssh"
 )
 

@@ -1,4 +1,4 @@
-module github.com/YuukanOO/seelf/examples/go-api
+module github.com/checkship-deploy/checkship/examples/go-api
 
 go 1.19
 

@@ -1,16 +1,16 @@
 package serve
 
 import (
-	"github.com/YuukanOO/seelf/internal/deployment/app/create_target"
-	"github.com/YuukanOO/seelf/internal/deployment/app/get_target"
-	"github.com/YuukanOO/seelf/internal/deployment/app/get_targets"
-	"github.com/YuukanOO/seelf/internal/deployment/app/reconfigure_target"
-	"github.com/YuukanOO/seelf/internal/deployment/app/request_target_cleanup"
-	"github.com/YuukanOO/seelf/internal/deployment/app/update_target"
-	"github.com/YuukanOO/seelf/internal/deployment/infra/provider/docker"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/http"
-	"github.com/YuukanOO/seelf/pkg/monad"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/create_target"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_target"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_targets"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/reconfigure_target"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/request_target_cleanup"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/update_target"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/provider/docker"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/http"
+	"github.com/checkship-deploy/checkship/pkg/monad"
 	"github.com/gin-gonic/gin"
 )
 

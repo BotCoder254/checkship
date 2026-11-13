@@ -13,18 +13,18 @@ Docker engine `v1.41` can sometimes cause issues when attaching multiple network
 When trying to process a single [deployment](/reference/deployments), it will try to find a compose file in the following order at the **project root**:
 
 ```
-compose.seelf.ENVIRONMENT.yml
-compose.seelf.ENVIRONMENT.yaml
-docker-compose.seelf.ENVIRONMENT.yml
-docker-compose.seelf.ENVIRONMENT.yaml
+compose.checkship.ENVIRONMENT.yml
+compose.checkship.ENVIRONMENT.yaml
+docker-compose.checkship.ENVIRONMENT.yml
+docker-compose.checkship.ENVIRONMENT.yaml
 compose.ENVIRONMENT.yml
 compose.ENVIRONMENT.yaml
 docker-compose.ENVIRONMENT.yml
 docker-compose.ENVIRONMENT.yaml
-compose.seelf.yml
-compose.seelf.yaml
-docker-compose.seelf.yml
-docker-compose.seelf.yaml
+compose.checkship.yml
+compose.checkship.yaml
+docker-compose.checkship.yml
+docker-compose.checkship.yaml
 compose.yml
 compose.yaml
 docker-compose.yml
@@ -35,7 +35,7 @@ Where `ENVIRONMENT` will be one of `production`, `staging`.
 
 ## Exposing services
 
-Once a valid compose file has been found and **only if** the target [manages the proxy itself](/reference/targets#proxy), **seelf** will apply some **heuristics** to determine which services should be exposed and where.
+Once a valid compose file has been found and **only if** the target [manages the proxy itself](/reference/targets#proxy), **checkship** will apply some **heuristics** to determine which services should be exposed and where.
 
 It will consider any service with **port mappings** to be exposed.
 
@@ -46,16 +46,16 @@ When working on a local compose stack, you make **services available by defining
 ::: warning Exposing TCP and UDP ports
 When you don't define a specific protocol, **compose** falls back to `tcp` when reading the project file. When exposing services, the distinction between `http` and `tcp` is mandatory for the proxy to work as intended and expose your services appropriately.
 
-To make the distinction, **seelf** rely on how ports are defined in the compose file:
+To make the distinction, **checkship** rely on how ports are defined in the compose file:
 
-- **Without a specific protocol** (ex `- "8080:80"`), seelf will assumes it should use an `http` router.
+- **Without a specific protocol** (ex `- "8080:80"`), checkship will assumes it should use an `http` router.
 - **With a specific protocol** (ex `- "8080:80/tcp"` or `- "8080:80/udp"`), it will use the router associated: `tcp` or `udp`.
 
-When custom entrypoints are found (multiple `http` ports on the same container or `tcp` / `udp` ports), **seelf does not rely on the actual published ports defined** since it can't assume they will be available on the [target](/reference/targets).
+When custom entrypoints are found (multiple `http` ports on the same container or `tcp` / `udp` ports), **checkship does not rely on the actual published ports defined** since it can't assume they will be available on the [target](/reference/targets).
 
 Instead, it will spawn a tiny container to **find available ports of the specified protocols** and map them to your entrypoints. This process **only happens the first time your custom entrypoints are seen** and as long as you do not change the **service name**, **container port** and **protocol**.
 
-Using this tiny rule, **seelf** can determine the router to use correctly and your compose file **still works locally**.
+Using this tiny rule, **checkship** can determine the router to use correctly and your compose file **still works locally**.
 :::
 
 The first service in **alphabetical order** using an `http` router will take the [default application subdomain](/reference/applications#environments). Every other services exposed will be on a subdomain of that default one.
@@ -65,26 +65,26 @@ If some services uses custom entrypoints, the target will be [reconfigured](/ref
 ::: warning Proxy unavailability
 Currently, the proxy to handle the default http entrypoints and custom ones is **shared** meaning there is a **tiny unavailability** when new entrypoints should be exposed (the first time they are seen or when they are no more needed).
 
-In the future, it will be possible to deploy a sidecar proxy specifically for custom entrypoints to prevent this, see [this issue](https://github.com/YuukanOO/seelf/issues/62).
+In the future, it will be possible to deploy a sidecar proxy specifically for custom entrypoints to prevent this, see [this issue](https://github.com/checkship-deploy/checkship/issues/62).
 :::
 
-## Labels appended by seelf
+## Labels appended by checkship
 
-To identify which resources are managed by seelf, some **docker labels** are appended during the deployment process. Some labels such as `app.seelf.application`, `app.seelf.target`, `app.seelf.environment` and `app.seelf.custom_entrypoints` are appended to each resources: container, networks, volumes and images built while the others labels are only appended to the container.
+To identify which resources are managed by checkship, some **docker labels** are appended during the deployment process. Some labels such as `app.checkship.application`, `app.checkship.target`, `app.checkship.environment` and `app.checkship.custom_entrypoints` are appended to each resources: container, networks, volumes and images built while the others labels are only appended to the container.
 
 | Name                         | Description                                                                            |
 | ---------------------------- | -------------------------------------------------------------------------------------- |
-| app.seelf.exposed            | Only used to identify the seelf container when exposing it through a local target      |
-| app.seelf.application        | ID of the application                                                                  |
-| app.seelf.environment        | [Environment](/reference/applications#environments) of the resource                    |
-| app.seelf.target             | ID of the target on which the container must be exposed                                |
-| app.seelf.subdomain          | Subdomain on which a container will be available, used as a default rule for the proxy |
-| app.seelf.custom_entrypoints | Appended on a service which uses custom entrypoints                                    |
+| app.checkship.exposed            | Only used to identify the checkship container when exposing it through a local target      |
+| app.checkship.application        | ID of the application                                                                  |
+| app.checkship.environment        | [Environment](/reference/applications#environments) of the resource                    |
+| app.checkship.target             | ID of the target on which the container must be exposed                                |
+| app.checkship.subdomain          | Subdomain on which a container will be available, used as a default rule for the proxy |
+| app.checkship.custom_entrypoints | Appended on a service which uses custom entrypoints                                    |
 
-Using those labels, you can easily filter resources managed by seelf, such as:
+Using those labels, you can easily filter resources managed by checkship, such as:
 
 ```sh
-docker container ls --filter "label=app.seelf.target"
+docker container ls --filter "label=app.checkship.target"
 ```
 
 ## Example
@@ -129,7 +129,7 @@ volumes:
   dbdata:
 ```
 
-When deploying this project on seelf, it will:
+When deploying this project on checkship, it will:
 
 - Build an image for the `app` service named `sandbox-<application id>/app:production`
 - Expose the `app` service on the default subdomain `http://sandbox.docker.localhost` because that's the first service in **alphabetical order** which has **ports mappings defined**. If environment variables has been defined for the `app` service in the production environment, they will overwrite what's in the compose file

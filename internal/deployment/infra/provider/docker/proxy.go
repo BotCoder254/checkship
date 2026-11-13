@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/go-connections/nat"
@@ -65,7 +65,7 @@ func newProxyProjectBuilder(client *client, target domain.Target) ProxyProjectBu
 	}
 
 	if url.UseSSL() {
-		b.certResolverName = "seelf-resolver-" + string(idLower)
+		b.certResolverName = "checkship-resolver-" + string(idLower)
 	}
 
 	return b
@@ -294,10 +294,10 @@ func ServicePortSortFunc(a, b types.ServicePortConfig) int {
 
 // Retrieve the network name of a specific target
 func targetPublicNetworkName(id domain.TargetID) string {
-	return "seelf-gateway-" + strings.ToLower(string(id))
+	return "checkship-gateway-" + strings.ToLower(string(id))
 }
 
 // Retrieve the project name of a specific target
 func targetProjectName(id domain.TargetID) string {
-	return "seelf-internal-" + strings.ToLower(string(id))
+	return "checkship-internal-" + strings.ToLower(string(id))
 }

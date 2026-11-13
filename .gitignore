@@ -1,7 +1,8 @@
 .DS_Store
-seelf
+checkship
 .vscode
 !.vscode/launch.json
 node_modules
 docs/.vitepress/dist
 docs/.vitepress/cache
+.claude/settings.local.json

@@ -3,4 +3,7 @@
     --vp-c-brand-2: #34d399;
 
     --vp-button-brand-bg: var(--vp-c-brand-1);
+
+    /* checkship logo: 28px in the sidebar header (navigation bar) */
+    --vp-nav-logo-height: 28px;
 }

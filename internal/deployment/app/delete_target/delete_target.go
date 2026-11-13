@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/bus"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 )
 
 type Command struct {

@@ -1,8 +1,8 @@
 package get_targets
 
 import (
-	"github.com/YuukanOO/seelf/internal/deployment/app/get_target"
-	"github.com/YuukanOO/seelf/pkg/bus"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_target"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 )
 
 // Retrieve all available targets.

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/monad"
 	"gopkg.in/yaml.v3"
 )
 

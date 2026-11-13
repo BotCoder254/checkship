@@ -6,14 +6,14 @@
 	import Menu from '$assets/icons/menu.svelte';
 	import routes from '$lib/path';
 	import l from '$lib/localization';
-	import Logo from '$assets/logo-dark.svelte';
+	import Logo from '$assets/logo.svelte';
 
 	export let user: Profile;
 </script>
 
 <Stack class="topbar" gap={10} justify="space-between">
 	<a href="/" class="logo" title={l.translate('breadcrumb.home')}>
-		<Logo />
+		<Logo size={22} />
 	</a>
 	<div class="menu-container">
 		<input id="menu" type="checkbox" />
@@ -41,10 +41,9 @@
 		margin: 0 calc(var(--sp-4) * -1);
 	}
 
-	.logo svg {
+	.logo {
 		display: block;
-		height: 1.5rem;
-		width: auto;
+		line-height: 0;
 	}
 
 	.nav {

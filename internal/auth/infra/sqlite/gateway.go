@@ -3,10 +3,10 @@ package sqlite
 import (
 	"context"
 
-	"github.com/YuukanOO/seelf/internal/auth/app/get_profile"
-	"github.com/YuukanOO/seelf/pkg/storage"
-	"github.com/YuukanOO/seelf/pkg/storage/sqlite"
-	"github.com/YuukanOO/seelf/pkg/storage/sqlite/builder"
+	"github.com/checkship-deploy/checkship/internal/auth/app/get_profile"
+	"github.com/checkship-deploy/checkship/pkg/storage"
+	"github.com/checkship-deploy/checkship/pkg/storage/sqlite"
+	"github.com/checkship-deploy/checkship/pkg/storage/sqlite/builder"
 )
 
 type gateway struct {

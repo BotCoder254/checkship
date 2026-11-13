@@ -9,9 +9,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/log"
-	"github.com/YuukanOO/seelf/pkg/ostools"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/log"
+	"github.com/checkship-deploy/checkship/pkg/ostools"
 )
 
 var (

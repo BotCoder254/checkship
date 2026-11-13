@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"github.com/YuukanOO/seelf/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/monad"
 )
 
 // Holds the vcs configuration of an application.

@@ -3,7 +3,7 @@ package domain
 import (
 	"net/mail"
 
-	"github.com/YuukanOO/seelf/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
 )
 
 var ErrInvalidEmail = apperr.New("invalid_email")

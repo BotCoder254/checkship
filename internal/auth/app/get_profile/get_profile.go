@@ -3,7 +3,7 @@ package get_profile
 import (
 	"time"
 
-	"github.com/YuukanOO/seelf/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 )
 
 type (

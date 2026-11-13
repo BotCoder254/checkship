@@ -10,13 +10,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/infra/source"
-	"github.com/YuukanOO/seelf/pkg/ostools"
-	"github.com/YuukanOO/seelf/pkg/types"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/source"
+	"github.com/checkship-deploy/checkship/pkg/ostools"
+	"github.com/checkship-deploy/checkship/pkg/types"
 )
 
-const tmpPattern string = "seelf-archive-"
+const tmpPattern string = "checkship-archive-"
 
 var (
 	ErrOpenArchiveFailed    = errors.New("open_archive_failed")

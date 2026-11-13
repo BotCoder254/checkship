@@ -3,8 +3,8 @@ package numbers_test
 import (
 	"testing"
 
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/validate/numbers"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/validate/numbers"
 )
 
 func Test_Min(t *testing.T) {

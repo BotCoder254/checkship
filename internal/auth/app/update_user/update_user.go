@@ -3,11 +3,11 @@ package update_user
 import (
 	"context"
 
-	"github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/monad"
-	"github.com/YuukanOO/seelf/pkg/validate"
-	"github.com/YuukanOO/seelf/pkg/validate/strings"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/validate"
+	"github.com/checkship-deploy/checkship/pkg/validate/strings"
 )
 
 // Update a user profile.

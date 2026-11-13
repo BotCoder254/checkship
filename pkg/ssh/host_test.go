@@ -3,9 +3,9 @@ package ssh_test
 import (
 	"testing"
 
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/must"
-	"github.com/YuukanOO/seelf/pkg/ssh"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/must"
+	"github.com/checkship-deploy/checkship/pkg/ssh"
 )
 
 func Test_Host(t *testing.T) {

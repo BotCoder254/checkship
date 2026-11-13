@@ -4,11 +4,11 @@ import (
 	"errors"
 	"testing"
 
-	auth "github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/fixture"
-	"github.com/YuukanOO/seelf/pkg/assert"
-	shared "github.com/YuukanOO/seelf/pkg/domain"
+	auth "github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/fixture"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	shared "github.com/checkship-deploy/checkship/pkg/domain"
 )
 
 func Test_Deployment(t *testing.T) {

@@ -3,8 +3,8 @@ package domain_test
 import (
 	"testing"
 
-	"github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/pkg/assert"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/pkg/assert"
 )
 
 func Test_Email_ValidatesAnEmail(t *testing.T) {

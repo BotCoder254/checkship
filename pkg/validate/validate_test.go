@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/monad"
-	"github.com/YuukanOO/seelf/pkg/validate"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/validate"
 )
 
 var (

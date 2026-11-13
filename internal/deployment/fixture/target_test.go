@@ -3,9 +3,9 @@ package fixture_test
 import (
 	"testing"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/fixture"
-	"github.com/YuukanOO/seelf/pkg/assert"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/fixture"
+	"github.com/checkship-deploy/checkship/pkg/assert"
 )
 
 func Test_Target(t *testing.T) {

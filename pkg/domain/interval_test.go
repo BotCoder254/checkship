@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/domain"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/domain"
 )
 
 func Test_TimeInterval(t *testing.T) {

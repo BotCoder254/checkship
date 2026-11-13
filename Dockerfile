@@ -16,12 +16,12 @@ COPY --from=front_builder /app/build ./cmd/serve/front/build
 RUN make build-back
 
 FROM alpine:3.16
-LABEL org.opencontainers.image.authors="julien@leicher.me" \
-    org.opencontainers.image.source="https://github.com/YuukanOO/seelf"
+LABEL org.opencontainers.image.authors="checkship-deploy" \
+    org.opencontainers.image.source="https://github.com/checkship-deploy/checkship"
 RUN apk add --update-cache openssh-client && \
     rm -rf /var/cache/apk/*
-ENV DATA_PATH=/seelf/data
+ENV DATA_PATH=/checkship/data
 WORKDIR /app
-COPY --from=builder /app/seelf ./
+COPY --from=builder /app/checkship ./
 EXPOSE 8080
-CMD ["./seelf", "-c", "/seelf/data/conf.yml", "serve"]
+CMD ["./checkship", "-c", "/checkship/data/conf.yml", "serve"]

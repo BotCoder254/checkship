@@ -3,8 +3,8 @@ package memory
 import (
 	"context"
 
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/types"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/types"
 )
 
 type (

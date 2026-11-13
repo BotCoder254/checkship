@@ -1,8 +1,8 @@
 package get_registries
 
 import (
-	"github.com/YuukanOO/seelf/internal/deployment/app/get_registry"
-	"github.com/YuukanOO/seelf/pkg/bus"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_registry"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 )
 
 type Query struct {

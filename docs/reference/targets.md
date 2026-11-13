@@ -10,8 +10,8 @@ For now, only one target per host is allowed.
 
 When declaring a target, you must choose how the proxy (needed to make your services available from the outside world) should be managed:
 
-- **Automatic**: **seelf** will deploy and configure a [traefik](https://traefik.io/traefik/) proxy on the target. Services urls will be automatically generated based on the [target's url](#url) and [service file](/reference/providers/docker#exposing-services) when deploying. Exposed services will also join the proxy network.
-- **Manual**: you're in charge of **everything** related to services exposure. **seelf** will deploy services on this target without attempting to expose them in any way.
+- **Automatic**: **checkship** will deploy and configure a [traefik](https://traefik.io/traefik/) proxy on the target. Services urls will be automatically generated based on the [target's url](#url) and [service file](/reference/providers/docker#exposing-services) when deploying. Exposed services will also join the proxy network.
+- **Manual**: you're in charge of **everything** related to services exposure. **checkship** will deploy services on this target without attempting to expose them in any way.
 
 ### Url
 
@@ -41,7 +41,7 @@ If you messed your server up, you can **reconfigure** a target by clicking the c
 
 ## Cleanup
 
-Deleting a target will (if it has been configured at least once correctly) remove **everything created by seelf** on it:
+Deleting a target will (if it has been configured at least once correctly) remove **everything created by checkship** on it:
 
 - Containers
 - Images

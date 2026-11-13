@@ -4,17 +4,17 @@ import (
 	"context"
 	"errors"
 
-	"github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/validate"
-	"github.com/YuukanOO/seelf/pkg/validate/strings"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/validate"
+	"github.com/checkship-deploy/checkship/pkg/validate/strings"
 )
 
-var ErrAdminAccountRequired = errors.New(`seelf requires a default user to be created but your database looks empty.
-	Please set the SEELF_ADMIN_EMAIL and SEELF_ADMIN_PASSWORD environment variables and relaunch the command, for example:
+var ErrAdminAccountRequired = errors.New(`checkship requires a default user to be created but your database looks empty.
+	Please set the CHECKSHIP_ADMIN_EMAIL and CHECKSHIP_ADMIN_PASSWORD environment variables and relaunch the command, for example:
 
-	$ SEELF_ADMIN_EMAIL=admin@example.com SEELF_ADMIN_PASSWORD=admin seelf serve
+	$ CHECKSHIP_ADMIN_EMAIL=admin@example.com CHECKSHIP_ADMIN_PASSWORD=admin checkship serve
 
 	Please note this is a one time only action`)
 

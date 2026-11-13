@@ -1,6 +1,6 @@
 package app
 
-import "github.com/YuukanOO/seelf/pkg/monad"
+import "github.com/checkship-deploy/checkship/pkg/monad"
 
 type (
 	UserSummary struct {

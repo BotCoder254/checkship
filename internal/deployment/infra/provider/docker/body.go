@@ -1,6 +1,6 @@
 package docker
 
-import "github.com/YuukanOO/seelf/pkg/monad"
+import "github.com/checkship-deploy/checkship/pkg/monad"
 
 // Request payload when wanting to instantiate a ProviderConfig
 // If the Host field is omitted, the provider will consider it's a local target.

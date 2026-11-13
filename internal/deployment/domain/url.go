@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/url"
 
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/monad"
 )
 
 const schemeHttps = "https"

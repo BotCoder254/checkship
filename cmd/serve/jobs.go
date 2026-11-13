@@ -1,8 +1,8 @@
 package serve
 
 import (
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/http"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/http"
 	"github.com/gin-gonic/gin"
 )
 

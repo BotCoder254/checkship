@@ -4,15 +4,15 @@ import (
 	"context"
 	"errors"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 	"github.com/go-git/go-git/v5/config"
 
-	"github.com/YuukanOO/seelf/internal/deployment/infra/source"
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/monad"
-	"github.com/YuukanOO/seelf/pkg/types"
-	"github.com/YuukanOO/seelf/pkg/validate"
-	"github.com/YuukanOO/seelf/pkg/validate/strings"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/source"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/types"
+	"github.com/checkship-deploy/checkship/pkg/validate"
+	"github.com/checkship-deploy/checkship/pkg/validate/strings"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -28,7 +28,7 @@ var (
 	ErrGitCheckoutFailed     = errors.New("git_checkout_failed")
 )
 
-const basicAuthUser = "seelf"
+const basicAuthUser = "checkship"
 
 type (
 	// Public request to trigger a git deployment

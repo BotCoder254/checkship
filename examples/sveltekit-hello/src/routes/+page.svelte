@@ -4,15 +4,13 @@
 		<p>Isn't that easy?</p>
 
 		<ul>
-			<li><a href="https://github.com/YuukanOO/seelf/" rel="noopener noreferrer">Source</a></li>
+			<li><a href="https://github.com/checkship-deploy/checkship/" rel="noopener noreferrer">Source</a></li>
 			<li>
 				<a
-					href="https://yuukanoo.github.io/seelf/guide/quickstart.html"
+					href="https://checkship-deploy.github.io/checkship/guide/quickstart.html"
 					rel="noopener noreferrer">Docs</a
 				>
-			</li>
-			<li><a href="https://yuukanoo.github.io/seelf/contributing/donating.html" rel="noopener noreferrer">❤️ Donate</a></li>
-		</ul>
+			</li>		</ul>
 	</div>
 </div>
 

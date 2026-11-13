@@ -6,7 +6,7 @@
 // and a way to add middlewares to your handlers.
 package bus
 
-import "github.com/YuukanOO/seelf/pkg/storage"
+import "github.com/checkship-deploy/checkship/pkg/storage"
 
 const (
 	MessageKindNotification MessageKind = iota

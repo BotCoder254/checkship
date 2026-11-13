@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	shared "github.com/YuukanOO/seelf/pkg/domain"
-	"github.com/YuukanOO/seelf/pkg/event"
-	"github.com/YuukanOO/seelf/pkg/storage"
-	"github.com/YuukanOO/seelf/pkg/storage/sqlite"
-	"github.com/YuukanOO/seelf/pkg/storage/sqlite/builder"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	shared "github.com/checkship-deploy/checkship/pkg/domain"
+	"github.com/checkship-deploy/checkship/pkg/event"
+	"github.com/checkship-deploy/checkship/pkg/storage"
+	"github.com/checkship-deploy/checkship/pkg/storage/sqlite"
+	"github.com/checkship-deploy/checkship/pkg/storage/sqlite/builder"
 )
 
 type (

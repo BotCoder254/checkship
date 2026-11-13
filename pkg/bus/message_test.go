@@ -3,8 +3,8 @@ package bus_test
 import (
 	"testing"
 
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 )
 
 func TestMessage(t *testing.T) {

@@ -4,5 +4,5 @@
 </script>
 
 <svelte:head>
-	<title>seelf - {title}</title>
+	<title>checkship - {title}</title>
 </svelte:head>

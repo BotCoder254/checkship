@@ -21,7 +21,7 @@ This action is IRREVERSIBLE and will DELETE ALL DATA associated with this applic
 	'app.no_deployments': 'No deployments yet',
 	'app.name.help':
 		"The application name will determine the subdomain from which deployments will be available. That's why you should <strong>only</strong> use <strong>alphanumeric characters</strong> and a <strong>unique name</strong> accross targets.",
-	'app.how': 'How does seelf expose services?',
+	'app.how': 'How does checkship expose services?',
 	'app.how.placeholder.name': '<app-name>',
 	'app.how.placeholder.scheme': '<target scheme>://',
 	'app.how.placeholder.url': '<target url>',
@@ -43,7 +43,7 @@ This action is IRREVERSIBLE and will DELETE ALL DATA associated with this applic
 	'app.environment.target': 'Deploy target',
 	'app.environment.target.changed': 'Target changed',
 	'app.environment.target.changed.description': (name: string) =>
-		`If you change the target, resources related to this application deployed by seelf on <strong>${name}</strong> will be <strong>REMOVED</strong> and a new deployment on the new target will be queued if possible. If you want to backup something, do it before updating the target.`,
+		`If you change the target, resources related to this application deployed by checkship on <strong>${name}</strong> will be <strong>REMOVED</strong> and a new deployment on the new target will be queued if possible. If you want to backup something, do it before updating the target.`,
 	'app.environment.vars': 'Environment variables',
 	'app.environment.vars.service.add': 'Add service variables',
 	'app.environment.vars.service.delete': 'Remove service variables',
@@ -78,7 +78,7 @@ This action is IRREVERSIBLE and will DELETE ALL DATA associated with this applic
 	'target.name.help': 'The name is being used only for display, it can be anything you want.',
 	'target.manual_proxy': 'Manual proxy',
 	'target.automatic_proxy_configuration': 'Expose services automatically',
-	'target.automatic_proxy_configuration.help': `If enabled, a proxy will be deployed on the target and your services will be <a target="_blank" href="https://yuukanoo.github.io/seelf/reference/providers/docker.html#exposing-services">automatically exposed</a>. If disabled, you will <strong>have to manually expose your services</strong> with your preferred solution. Updating this setting <strong>may</strong> require you to redeploy your applications.`,
+	'target.automatic_proxy_configuration.help': `If enabled, a proxy will be deployed on the target and your services will be <a target="_blank" href="https://checkship-deploy.github.io/checkship/reference/providers/docker.html#exposing-services">automatically exposed</a>. If disabled, you will <strong>have to manually expose your services</strong> with your preferred solution. Updating this setting <strong>may</strong> require you to redeploy your applications.`,
 	'target.url.help':
 		'All applications deployed on this target will be available as a <strong>subdomain</strong> on this root URL (without path). It should be <strong>unique</strong> among targets. You <strong>MUST</strong> configure a <strong>wildcard DNS</strong> for subdomains such as <code>*.&lt;url above&gt;</code> redirects to this target IP.',
 	'target.provider': 'Provider',
@@ -159,7 +159,7 @@ You may reconsider and try to make the target reachable before deleting it.`,
 		"If you want to trigger a deployment for an application, you'll need this token. You can also <strong>Show the cURL command</strong> from the deployment page and use it in your pipeline since it includes the token in the appropriate header.",
 	'profile.key': 'API Key',
 	'profile.key.help':
-		'Pass this token as an <code>Authorization: Bearer</code> header to communicate with the seelf API. <strong>You MUST keep it secret!</strong>',
+		'Pass this token as an <code>Authorization: Bearer</code> header to communicate with the checkship API. <strong>You MUST keep it secret!</strong>',
 	'profile.key.refresh': 'Regenerate API Key',
 	'profile.key.refresh.confirm': 'It will make the old key invalid. Do you confirm?',
 	// Deployment
@@ -231,10 +231,10 @@ You may reconsider and try to make the target reachable before deleting it.`,
 	'breadcrumb.not_found': 'Not found',
 	// Footer
 	'footer.description': (version: string) =>
-		`seelf v${version.substring(0, 16)} — Painless self-hosted deployment platform`,
+		`checkship v${version.substring(0, 16)} — Painless self-hosted deployment platform`,
 	'footer.source': 'Source',
 	'footer.documentation': 'Docs',
-	'footer.donate': '❤️ Donate',
+	'footer.credits': 'Credits',
 	// Shared
 	'console.copy_to_clipboard': 'Copy to clipboard',
 	'console.select_all': 'Select all',

@@ -5,14 +5,14 @@ import (
 	"database/sql/driver"
 	"time"
 
-	auth "github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	shared "github.com/YuukanOO/seelf/pkg/domain"
-	"github.com/YuukanOO/seelf/pkg/event"
-	"github.com/YuukanOO/seelf/pkg/id"
-	"github.com/YuukanOO/seelf/pkg/monad"
-	"github.com/YuukanOO/seelf/pkg/storage"
+	auth "github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	shared "github.com/checkship-deploy/checkship/pkg/domain"
+	"github.com/checkship-deploy/checkship/pkg/event"
+	"github.com/checkship-deploy/checkship/pkg/id"
+	"github.com/checkship-deploy/checkship/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/storage"
 )
 
 var (

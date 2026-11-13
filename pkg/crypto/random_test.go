@@ -3,8 +3,8 @@ package crypto_test
 import (
 	"testing"
 
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/crypto"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/crypto"
 )
 
 func Test_RandomKey(t *testing.T) {

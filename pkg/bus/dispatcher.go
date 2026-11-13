@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/YuukanOO/seelf/pkg/storage"
-	"github.com/YuukanOO/seelf/pkg/types"
+	"github.com/checkship-deploy/checkship/pkg/storage"
+	"github.com/checkship-deploy/checkship/pkg/types"
 )
 
 var ErrNoHandlerRegistered = errors.New("no_handler_registered")

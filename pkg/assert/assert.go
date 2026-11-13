@@ -9,9 +9,9 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/event"
-	"github.com/YuukanOO/seelf/pkg/validate"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/event"
+	"github.com/checkship-deploy/checkship/pkg/validate"
 )
 
 // Asserts that the given value is true

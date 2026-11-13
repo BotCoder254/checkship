@@ -1,13 +1,13 @@
 # Configuration
 
-**seelf** can be configured from a **yaml** file and/or **environment variables**. Environment variables will always take precedence over the configuration file.
+**checkship** can be configured from a **yaml** file and/or **environment variables**. Environment variables will always take precedence over the configuration file.
 
 When configured using a file, you can provide it with the `-c <your_file.yml>` or `--config <your_file.yml>`.
 
 If the configuration file does not exist, **it will be created** with the initial configuration.
 
 ::: info
-Environment variables can also be defined in a `.env` or `.env.local` file in the working directory when launching seelf.
+Environment variables can also be defined in a `.env` or `.env.local` file in the working directory when launching checkship.
 :::
 
 ## Reference
@@ -16,7 +16,7 @@ Environment variables can also be defined in a `.env` or `.env.local` file in th
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
 | log.level<br>LOG_LEVEL                                  | Log level to use (info, warn or error)                                                                                                                                                                                                                      | info                                  |
 | log.format<br>LOG_FORMAT                                | Format of the logs (json, console)                                                                                                                                                                                                                          | console                               |
-| data.path<br>DATA_PATH                                  | Where data produced by seelf will be saved (deployment artifacts, logs, local db, …)                                                                                                                                                                        | ~/.config/seelf                       |
+| data.path<br>DATA_PATH                                  | Where data produced by checkship will be saved (deployment artifacts, logs, local db, …)                                                                                                                                                                        | ~/.config/checkship                       |
 | data.deployment_dir_template<br>DEPLOYMENT_DIR_TEMPLATE | [Go template](https://pkg.go.dev/text/template) determining the directory where the build will occur (use <code v-pre>{{ .Number }}-{{ .Environment }}</code> if you want to keep all application deployment sources for example)                           | <code v-pre>{{ .Environment }}</code> |
 | http.host<br>HTTP_HOST                                  | Host to listen to                                                                                                                                                                                                                                           | 0.0.0.0                               |
 | http.port<br>HTTP_PORT,PORT                             | Port to listen to                                                                                                                                                                                                                                           | 8080                                  |
@@ -27,4 +27,4 @@ Environment variables can also be defined in a `.env` or `.env.local` file in th
 | runners.cleanup<br>RUNNERS_CLEANUP_COUNT                | How many cleanup jobs could be run simultaneously                                                                                                                                                                                                           | 2                                     |
 | -<br>ADMIN_EMAIL                                        | Email of the first user account to create (ignored if a user already exists)                                                                                                                                                                                |                                       |
 | -<br>ADMIN_PASSWORD                                     | Password of the first user account to create (ignored if a user already exists)                                                                                                                                                                             |                                       |
-| -<br>EXPOSED_ON                                         | Url at which the seelf container [will be exposed](/guide/installation#exposing-seelf) and default target url. In the form `<url scheme>://<container name>@<default target url>`                                                                           |                                       |
+| -<br>EXPOSED_ON                                         | Url at which the checkship container [will be exposed](/guide/installation#exposing-checkship) and default target url. In the form `<url scheme>://<container name>@<default target url>`                                                                           |                                       |

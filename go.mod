@@ -1,4 +1,4 @@
-module github.com/YuukanOO/seelf
+module github.com/checkship-deploy/checkship
 
 go 1.23
 

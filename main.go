@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/YuukanOO/seelf/cmd"
+	"github.com/checkship-deploy/checkship/cmd"
 )
 
 func main() {

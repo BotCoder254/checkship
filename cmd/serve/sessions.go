@@ -1,10 +1,10 @@
 package serve
 
 import (
-	"github.com/YuukanOO/seelf/internal/auth/app/get_profile"
-	"github.com/YuukanOO/seelf/internal/auth/app/login"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/http"
+	"github.com/checkship-deploy/checkship/internal/auth/app/get_profile"
+	"github.com/checkship-deploy/checkship/internal/auth/app/login"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/http"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )

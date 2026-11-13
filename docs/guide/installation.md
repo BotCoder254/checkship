@@ -2,7 +2,7 @@
 
 If you choose a Docker-based installation, you **must** have [Docker >= v18.0.9](https://docs.docker.com/get-docker/) installed (2019-09-03).
 
-**Compose** and **Git** are packaged inside seelf itself so you don't have to bother with them.
+**Compose** and **Git** are packaged inside checkship itself so you don't have to bother with them.
 
 ## With Compose (recommended) {#with-compose}
 
@@ -12,7 +12,7 @@ Simply save the following `compose.yml` file in a folder, [configure it accordin
 services:
   web:
     restart: unless-stopped
-    image: yuukanoo/seelf:latest # <- You probably better sets the version explicitly here
+    image: ghcr.io/checkship-deploy/checkship:latest # <- You probably better sets the version explicitly here
     environment:
       - ADMIN_EMAIL=admin@example.com # <- Change this
       - ADMIN_PASSWORD=admin # <- Change this
@@ -22,7 +22,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ssh:/root/.ssh # If you deploy on remote servers, keep ssh related configurations
-      - data:/seelf/data # The /seelf/data directory contains the database, configuration file and everything deployed by seelf, so keep it :)
+      - data:/checkship/data # The /checkship/data directory contains the database, configuration file and everything deployed by checkship, so keep it :)
 
 volumes:
   ssh:
@@ -38,10 +38,10 @@ docker run -d \
   -e "ADMIN_EMAIL=admin@example.com" \
   -e "ADMIN_PASSWORD=admin" \
   -v "/var/run/docker.sock:/var/run/docker.sock" \
-  -v "seelfdata:/seelf/data" \
-  -v "seelfssh:/root/.ssh" \
+  -v "checkshipdata:/checkship/data" \
+  -v "checkshipssh:/root/.ssh" \
   -p "8080:8080" \
-  yuukanoo/seelf
+  ghcr.io/checkship-deploy/checkship
 ```
 
 ::: info
@@ -56,20 +56,20 @@ You'll need **Go** installed on your machine (at least 1.21) and **Node** for th
 On **Windows**, you will need a gcc compiler such as [tdm gcc](https://jmeubank.github.io/tdm-gcc/) to build the sqlite3 driver correctly.
 :::
 
-Retrieve the seelf sources by either [cloning the repository](https://github.com/YuukanOO/seelf) or downloading them on the [Releases page](https://github.com/YuukanOO/seelf/releases) and run:
+Retrieve the checkship sources by either [cloning the repository](https://github.com/checkship-deploy/checkship) or downloading them on the [Releases page](https://github.com/checkship-deploy/checkship/releases) and run:
 
 ```sh
-make build && ./seelf serve
+make build && ./checkship serve
 ```
 
-## Exposing seelf itself {#exposing-seelf}
+## Exposing checkship itself {#exposing-checkship}
 
-You probably want to expose seelf itself on an url without a port and with a valid certificate. You can manage this part yourself or just leverage the proxy deployed by seelf.
+You probably want to expose checkship itself on an url without a port and with a valid certificate. You can manage this part yourself or just leverage the proxy deployed by checkship.
 
 ::: warning
-If you choose to expose **seelf** with the local target, you **should never** delete the target or things may break.
+If you choose to expose **checkship** with the local target, you **should never** delete the target or things may break.
 
-If it happens, you can map the port `8080` to access your seelf instance (on the root domain and port) and reconfigure the target. Once done, you can remove the ports section since seelf will be exposed by the proxy.
+If it happens, you can map the port `8080` to access your checkship instance (on the root domain and port) and reconfigure the target. Once done, you can remove the ports section since checkship will be exposed by the proxy.
 :::
 
 To do this, we recommend to use the [docker compose installation](#with-compose) and add the missing parts.
@@ -78,23 +78,23 @@ To do this, we recommend to use the [docker compose installation](#with-compose)
 services:
   web:
     restart: unless-stopped
-    image: yuukanoo/seelf:latest # <- You probably better sets the version explicitly here
-    container_name: seelf # Should match the user portion of EXPOSED_ON when exposing seelf using a local target // [!code ++]
+    image: ghcr.io/checkship-deploy/checkship:latest # <- You probably better sets the version explicitly here
+    container_name: checkship # Should match the user portion of EXPOSED_ON when exposing checkship using a local target // [!code ++]
     environment:
       - ADMIN_EMAIL=admin@example.com # <- Change this
       - ADMIN_PASSWORD=admin # <- Change this
       # (...) sets other environment variables here, see the configuration documentation
-      - EXPOSED_ON=http://seelf@docker.localhost # <- Change this to where you want seelf to be exposed, the user part represents the container name, see above. // [!code ++]
+      - EXPOSED_ON=http://checkship@docker.localhost # <- Change this to where you want checkship to be exposed, the user part represents the container name, see above. // [!code ++]
       - HTTP_SECURE= # Force fallback to the default handling of http secure (based on EXPOSED_ON if set) // [!code ++]
     ports: // [!code --]
       - "8080:8080" // [!code --]
     labels: // [!code ++]
-      - app.seelf.exposed=true // [!code ++]
-      - app.seelf.subdomain=myseelf # Subdomain where seelf will be exposed on the default target represented by EXPOSED_ON, here http://myseelf.docker.localhost // [!code ++]
+      - app.checkship.exposed=true // [!code ++]
+      - app.checkship.subdomain=mycheckship # Subdomain where checkship will be exposed on the default target represented by EXPOSED_ON, here http://mycheckship.docker.localhost // [!code ++]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ssh:/root/.ssh # If you deploy on remote servers, keep ssh related configurations
-      - data:/seelf/data # The /seelf/data directory contains the database, configuration file and everything deployed by seelf, so keep it :)
+      - data:/checkship/data # The /checkship/data directory contains the database, configuration file and everything deployed by checkship, so keep it :)
 
 volumes:
   ssh:
@@ -104,7 +104,7 @@ volumes:
 ::: info
 If set, the `EXPOSED_ON` will be used to determine:
 
-- The name of the seelf container itself which must be attached to the local target,
+- The name of the checkship container itself which must be attached to the local target,
 - The default local target URL if no one exists yet.
 
 If a local target already exists, the container will be attached to it without updating the target URL.

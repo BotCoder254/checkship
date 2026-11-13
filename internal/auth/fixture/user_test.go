@@ -3,10 +3,10 @@ package fixture_test
 import (
 	"testing"
 
-	"github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/internal/auth/fixture"
-	"github.com/YuukanOO/seelf/internal/auth/infra/crypto"
-	"github.com/YuukanOO/seelf/pkg/assert"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/internal/auth/fixture"
+	"github.com/checkship-deploy/checkship/internal/auth/infra/crypto"
+	"github.com/checkship-deploy/checkship/pkg/assert"
 )
 
 func Test_User(t *testing.T) {

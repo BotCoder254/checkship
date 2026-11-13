@@ -3,9 +3,9 @@
 package fixture
 
 import (
-	"github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/pkg/id"
-	"github.com/YuukanOO/seelf/pkg/must"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/pkg/id"
+	"github.com/checkship-deploy/checkship/pkg/must"
 )
 
 type (

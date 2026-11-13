@@ -3,8 +3,8 @@ package storage_test
 import (
 	"testing"
 
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/storage"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/storage"
 )
 
 func Test_SecretString(t *testing.T) {

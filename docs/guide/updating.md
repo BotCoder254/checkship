@@ -1,13 +1,13 @@
 # Updating
 
-This procedure depends on the method you choose when [installing seelf](/guide/installation) initially.
+This procedure depends on the method you choose when [installing checkship](/guide/installation) initially.
 
 ::: warning
 When switching from a major version to another one (ex. `v1.x.x` to `v2.x.x`), check the [Migration page](/guide/migration) for additional instructions.
 :::
 
 ::: warning
-You should always **make a backup** before updating **seelf** to make sure you don't lose anything if something goes wrong.
+You should always **make a backup** before updating **checkship** to make sure you don't lose anything if something goes wrong.
 :::
 
 ## With Compose
@@ -24,10 +24,10 @@ If you use a specific image version, you **must** update the tag in the compose 
 
 ## With Docker
 
-Since the configuration has been saved in the volume `seelfdata` the first time you launched seelf, you can omit the settings here unless they have changed, in this case, you should probably check the configuration file in `seelfdata/conf.yml`.
+Since the configuration has been saved in the volume `checkshipdata` the first time you launched checkship, you can omit the settings here unless they have changed, in this case, you should probably check the configuration file in `checkshipdata/conf.yml`.
 
 ```sh
-docker pull yuukanoo/seelf && docker rm $(docker stop $(docker ps -a -q --filter="ancestor=yuukanoo/seelf")) && docker run -d -v "/var/run/docker.sock:/var/run/docker.sock" -v "seelfdata:/seelf/data" -v "seelfssh:/root/.ssh" -p "8080:8080" yuukanoo/seelf
+docker pull ghcr.io/checkship-deploy/checkship && docker rm $(docker stop $(docker ps -a -q --filter="ancestor=ghcr.io/checkship-deploy/checkship")) && docker run -d -v "/var/run/docker.sock:/var/run/docker.sock" -v "checkshipdata:/checkship/data" -v "checkshipssh:/root/.ssh" -p "8080:8080" ghcr.io/checkship-deploy/checkship
 ```
 
 ## From sources

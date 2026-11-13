@@ -2,21 +2,21 @@ services:
   web:
     restart: unless-stopped
     build: .
-    container_name: seelf # Should match the user portion of EXPOSED_ON when exposing seelf using a local target
+    container_name: checkship # Should match the user portion of EXPOSED_ON when exposing checkship using a local target
     environment:
-      - SEELF_ADMIN_EMAIL=admin@example.com # <- Change this
-      - SEELF_ADMIN_PASSWORD=admin # <- Change this
-      - EXPOSED_ON=http://seelf@docker.localhost # <- Change this to where you want seelf to be exposed
+      - CHECKSHIP_ADMIN_EMAIL=admin@example.com # <- Change this
+      - CHECKSHIP_ADMIN_PASSWORD=admin # <- Change this
+      - EXPOSED_ON=http://checkship@docker.localhost # <- Change this to where you want checkship to be exposed
       - HTTP_SECURE= # Force fallback to the default handling of http secure (based on EXPOSED_ON if set)
       # - DEPLOYMENT_DIR_TEMPLATE={{ .Number }}-{{ .Environment }} # You can configure the deployment build directory path if you want to keep every deployment source files for example.
     labels:
-      - app.seelf.exposed=true # Mandatory, DO NOT change if using EXPOSED_ON
-      - app.seelf.subdomain=seelf # Subdomain where seelf will be exposed on the default target represented by EXPOSED_ON
-      #- traefik.http.routers.seelf.rule=Host(`seelf.docker.localhost`) # <- Change this to where you want seelf to be exposed (use the same domain as above)
+      - app.checkship.exposed=true # Mandatory, DO NOT change if using EXPOSED_ON
+      - app.checkship.subdomain=checkship # Subdomain where checkship will be exposed on the default target represented by EXPOSED_ON
+      #- traefik.http.routers.checkship.rule=Host(`checkship.docker.localhost`) # <- Change this to where you want checkship to be exposed (use the same domain as above)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ssh:/root/.ssh # If you deploy on remote servers, keep ssh related configurations
-      - data:/seelf/data # The /seelf/data directory contains the database, configuration file and everything deployed by seelf, so keep it :)
+      - data:/checkship/data # The /checkship/data directory contains the database, configuration file and everything deployed by checkship, so keep it :)
 
 volumes:
   ssh:

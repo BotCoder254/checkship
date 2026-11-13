@@ -1,6 +1,6 @@
 # Backend
 
-The **seelf** backend is written in the [Golang](https://go.dev/) language for its **simplicity** and **small footprint**.
+The **checkship** backend is written in the [Golang](https://go.dev/) language for its **simplicity** and **small footprint**.
 
 ## Architecture
 
@@ -8,7 +8,7 @@ The **seelf** backend is written in the [Golang](https://go.dev/) language for i
 
 - `cmd/`: contains application commands such as the `serve` one
 - `internal/`: contains internal package representing the **core features** of this application organized by bounded contexts and `app`, `domain`, `infra` and `fixture` folders (see [The Domain](#the-domain))
-- `pkg/`: contains reusable stuff not tied to seelf which can be reused if needed
+- `pkg/`: contains reusable stuff not tied to checkship which can be reused if needed
 
 ### The Domain {#the-domain}
 
@@ -33,7 +33,7 @@ The **rule of thumbs** in this project **regarding struct creation** is to **alw
 
 Entities are mutable and always use pointer receivers. That's because they may hold a lot of data and that's the most reasonable way to think about them.
 
-In DDD, value objects _should_ be immutable. But in Go, everything is pass by value by default hence a copy is done. This is why value objects in seelf are mutable (use pointer receiver for mutation methods). Since an entity always exposes its value objects as values, no harm could be done.
+In DDD, value objects _should_ be immutable. But in Go, everything is pass by value by default hence a copy is done. This is why value objects in checkship are mutable (use pointer receiver for mutation methods). Since an entity always exposes its value objects as values, no harm could be done.
 
 To make calls chainable, getters on value objects use a value receiver instead (mixing pointer and value receivers against Go recommendations... but I favor usability here).
 
@@ -69,7 +69,7 @@ To make things more explicit, optional values are not represented using a pointe
 These commands must be executed from the root folder.
 
 - `make serve-back`: Serve the web server
-- `make build`: Build the seelf executable
+- `make build`: Build the checkship executable
 - `make ts`: Print the current timestamp (**unix only**), needed when writing migrations
 - `make outdated`: Print package versions and the latest one for updating
 - `make test`: Run all test suites (front & back), if you only wish to launch the backend ones, just run `go test ./... --cover` instead

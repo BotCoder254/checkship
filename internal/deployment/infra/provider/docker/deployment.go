@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 	"github.com/compose-spec/compose-go/v2/cli"
 	"github.com/compose-spec/compose-go/v2/interpolation"
 	"github.com/compose-spec/compose-go/v2/loader"
@@ -77,18 +77,18 @@ func (b *deploymentProjectBuilder) findComposeFile() error {
 	var (
 		envStr               = string(b.config.Environment())
 		serviceFilesAffinity = []string{
-			"compose.seelf." + envStr + ".yml",
-			"compose.seelf." + envStr + ".yaml",
-			"docker-compose.seelf." + envStr + ".yml",
-			"docker-compose.seelf." + envStr + ".yaml",
+			"compose.checkship." + envStr + ".yml",
+			"compose.checkship." + envStr + ".yaml",
+			"docker-compose.checkship." + envStr + ".yml",
+			"docker-compose.checkship." + envStr + ".yaml",
 			"compose." + envStr + ".yml",
 			"compose." + envStr + ".yaml",
 			"docker-compose." + envStr + ".yml",
 			"docker-compose." + envStr + ".yaml",
-			"compose.seelf.yml",
-			"compose.seelf.yaml",
-			"docker-compose.seelf.yml",
-			"docker-compose.seelf.yaml",
+			"compose.checkship.yml",
+			"compose.checkship.yaml",
+			"docker-compose.checkship.yml",
+			"docker-compose.checkship.yaml",
 			"compose.yml",
 			"compose.yaml",
 			"docker-compose.yml",
@@ -162,7 +162,7 @@ func (b *deploymentProjectBuilder) loadProject(ctx context.Context) error {
 }
 
 func (b *deploymentProjectBuilder) transform() {
-	b.logger.Stepf("configuring seelf docker project for environment: %s", b.config.Environment())
+	b.logger.Stepf("configuring checkship docker project for environment: %s", b.config.Environment())
 
 	if len(b.project.DisabledServices) > 0 {
 		b.logger.Infof("some services have been disabled by the %s profile: %s", b.config.Environment(), strings.Join(maps.Keys(b.project.DisabledServices), ", "))
@@ -290,7 +290,7 @@ func (b *deploymentProjectBuilder) transform() {
 		b.project.Volumes[name] = volume
 	}
 
-	// Append the public seelf network to the project
+	// Append the public checkship network to the project
 	if b.exposedManually {
 		return
 	}
@@ -315,7 +315,7 @@ func (b *deploymentProjectBuilder) parsePortDefinition(rawValue string) error {
 		// Host port SHOULD be unique in a compose file or the binding will fail, this is
 		// why we dismiss ports without explicit host mapping.
 		if port.Binding.HostPort == "" {
-			b.logger.Warnf("port %s is missing host port, this is mandatory for seelf, this port will be ignored", port.Port.Port())
+			b.logger.Warnf("port %s is missing host port, this is mandatory for checkship, this port will be ignored", port.Port.Port())
 			continue
 		}
 

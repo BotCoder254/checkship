@@ -1,7 +1,7 @@
 package crypto
 
 import (
-	"github.com/YuukanOO/seelf/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
 	"golang.org/x/crypto/bcrypt"
 )
 

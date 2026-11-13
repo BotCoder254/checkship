@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/fixture"
-	"github.com/YuukanOO/seelf/internal/deployment/infra/provider"
-	"github.com/YuukanOO/seelf/pkg/assert"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/fixture"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/provider"
+	"github.com/checkship-deploy/checkship/pkg/assert"
 )
 
 func Test_Facade(t *testing.T) {

@@ -1,8 +1,8 @@
 package numbers
 
 import (
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/validate"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/validate"
 )
 
 var ErrMin = apperr.New("min")

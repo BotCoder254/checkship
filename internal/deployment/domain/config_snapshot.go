@@ -3,7 +3,7 @@ package domain
 import (
 	"strings"
 
-	"github.com/YuukanOO/seelf/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/monad"
 )
 
 // Holds data related to the configuration of the final application. It should

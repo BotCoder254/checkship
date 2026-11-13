@@ -11,17 +11,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YuukanOO/seelf/cmd/config"
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/fixture"
-	"github.com/YuukanOO/seelf/internal/deployment/infra/artifact"
-	"github.com/YuukanOO/seelf/internal/deployment/infra/provider/docker"
-	"github.com/YuukanOO/seelf/internal/deployment/infra/source/raw"
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/log"
-	"github.com/YuukanOO/seelf/pkg/monad"
-	"github.com/YuukanOO/seelf/pkg/must"
-	"github.com/YuukanOO/seelf/pkg/ssh"
+	"github.com/checkship-deploy/checkship/cmd/config"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/fixture"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/artifact"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/provider/docker"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/source/raw"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/log"
+	"github.com/checkship-deploy/checkship/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/must"
+	"github.com/checkship-deploy/checkship/pkg/ssh"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/compose/v2/pkg/api"
@@ -228,7 +228,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 			assert.DeepEqual(t, domain.TargetEntrypointsAssigned{}, assigned)
 			assert.HasLength(t, 1, mock.ups)
 			assert.DeepEqual(t, &types.Project{
-				Name: "seelf-internal-" + targetIdLower,
+				Name: "checkship-internal-" + targetIdLower,
 				Services: types.Services{
 					"proxy": {
 						Name: "proxy",
@@ -243,7 +243,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 							fmt.Sprintf("--providers.docker.constraints=(Label(`%s`, `%s`) && (Label(`%s`, `true`) || LabelRegex(`%s`, `.+`))) || Label(`%s`, `true`)",
 								docker.TargetLabel, target.ID(), docker.CustomEntrypointsLabel, docker.SubdomainLabel, docker.ExposedLabel),
 							fmt.Sprintf("--providers.docker.defaultrule=Host(`{{ index .Labels %s}}.docker.localhost`)", fmt.Sprintf(`"%s"`, docker.SubdomainLabel)),
-							"--providers.docker.network=seelf-gateway-" + targetIdLower,
+							"--providers.docker.network=checkship-gateway-" + targetIdLower,
 						},
 						Ports: []types.ServicePortConfig{
 							{Target: 80, Published: "80"},
@@ -252,7 +252,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 							{Type: types.VolumeTypeBind, Source: "/var/run/docker.sock", Target: "/var/run/docker.sock"},
 						},
 						CustomLabels: types.Labels{
-							api.ProjectLabel:     "seelf-internal-" + targetIdLower,
+							api.ProjectLabel:     "checkship-internal-" + targetIdLower,
 							api.ServiceLabel:     "proxy",
 							api.VersionLabel:     api.ComposeVersion,
 							api.ConfigFilesLabel: "",
@@ -262,7 +262,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 				},
 				Networks: types.Networks{
 					"default": types.NetworkConfig{
-						Name: "seelf-gateway-" + targetIdLower,
+						Name: "checkship-gateway-" + targetIdLower,
 						Labels: types.Labels{
 							docker.TargetLabel: string(target.ID()),
 						},
@@ -283,7 +283,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 			assert.DeepEqual(t, domain.TargetEntrypointsAssigned{}, assigned)
 			assert.HasLength(t, 1, mock.ups)
 			assert.DeepEqual(t, &types.Project{
-				Name: "seelf-internal-" + targetIdLower,
+				Name: "checkship-internal-" + targetIdLower,
 				Services: types.Services{
 					"proxy": {
 						Name: "proxy",
@@ -293,10 +293,10 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 						Image:   "traefik:v2.11",
 						Restart: types.RestartPolicyUnlessStopped,
 						Command: types.ShellCommand{
-							fmt.Sprintf("--certificatesresolvers.%s.acme.storage=/letsencrypt/acme.json", "seelf-resolver-"+targetIdLower),
-							fmt.Sprintf("--certificatesresolvers.%s.acme.tlschallenge=true", "seelf-resolver-"+targetIdLower),
+							fmt.Sprintf("--certificatesresolvers.%s.acme.storage=/letsencrypt/acme.json", "checkship-resolver-"+targetIdLower),
+							fmt.Sprintf("--certificatesresolvers.%s.acme.tlschallenge=true", "checkship-resolver-"+targetIdLower),
 							"--entrypoints.http.address=:443",
-							"--entrypoints.http.http.tls.certresolver=seelf-resolver-" + targetIdLower,
+							"--entrypoints.http.http.tls.certresolver=checkship-resolver-" + targetIdLower,
 							"--entrypoints.insecure.address=:80",
 							"--entrypoints.insecure.http.redirections.entryPoint.scheme=https",
 							"--entrypoints.insecure.http.redirections.entryPoint.to=http",
@@ -304,7 +304,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 							fmt.Sprintf("--providers.docker.constraints=(Label(`%s`, `%s`) && (Label(`%s`, `true`) || LabelRegex(`%s`, `.+`))) || Label(`%s`, `true`)",
 								docker.TargetLabel, target.ID(), docker.CustomEntrypointsLabel, docker.SubdomainLabel, docker.ExposedLabel),
 							fmt.Sprintf("--providers.docker.defaultrule=Host(`{{ index .Labels %s}}.docker.localhost`)", fmt.Sprintf(`"%s"`, docker.SubdomainLabel)),
-							"--providers.docker.network=seelf-gateway-" + targetIdLower,
+							"--providers.docker.network=checkship-gateway-" + targetIdLower,
 						},
 						Ports: []types.ServicePortConfig{
 							{Target: 80, Published: "80"},
@@ -315,7 +315,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 							{Type: types.VolumeTypeVolume, Source: "letsencrypt", Target: "/letsencrypt"},
 						},
 						CustomLabels: types.Labels{
-							api.ProjectLabel:     "seelf-internal-" + targetIdLower,
+							api.ProjectLabel:     "checkship-internal-" + targetIdLower,
 							api.ServiceLabel:     "proxy",
 							api.VersionLabel:     api.ComposeVersion,
 							api.ConfigFilesLabel: "",
@@ -325,7 +325,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 				},
 				Networks: types.Networks{
 					"default": types.NetworkConfig{
-						Name: "seelf-gateway-" + targetIdLower,
+						Name: "checkship-gateway-" + targetIdLower,
 						Labels: types.Labels{
 							docker.TargetLabel: string(target.ID()),
 						},
@@ -333,7 +333,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 				},
 				Volumes: types.Volumes{
 					"letsencrypt": types.VolumeConfig{
-						Name: "seelf-internal-" + targetIdLower + "_letsencrypt",
+						Name: "checkship-internal-" + targetIdLower + "_letsencrypt",
 						Labels: types.Labels{
 							docker.TargetLabel: string(target.ID()),
 						},
@@ -370,7 +370,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 			assert.NotZero(t, udpPort)
 
 			assert.DeepEqual(t, &types.Project{
-				Name: "seelf-internal-" + targetIdLower,
+				Name: "checkship-internal-" + targetIdLower,
 				Services: types.Services{
 					"proxy": {
 						Name: "proxy",
@@ -387,7 +387,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 							fmt.Sprintf("--providers.docker.constraints=(Label(`%s`, `%s`) && (Label(`%s`, `true`) || LabelRegex(`%s`, `.+`))) || Label(`%s`, `true`)",
 								docker.TargetLabel, target.ID(), docker.CustomEntrypointsLabel, docker.SubdomainLabel, docker.ExposedLabel),
 							fmt.Sprintf("--providers.docker.defaultrule=Host(`{{ index .Labels %s}}.docker.localhost`)", fmt.Sprintf(`"%s"`, docker.SubdomainLabel)),
-							"--providers.docker.network=seelf-gateway-" + targetIdLower,
+							"--providers.docker.network=checkship-gateway-" + targetIdLower,
 						},
 						Ports: sortedPorts([]types.ServicePortConfig{
 							{Target: 80, Published: "80"},
@@ -398,7 +398,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 							{Type: types.VolumeTypeBind, Source: "/var/run/docker.sock", Target: "/var/run/docker.sock"},
 						},
 						CustomLabels: types.Labels{
-							api.ProjectLabel:     "seelf-internal-" + targetIdLower,
+							api.ProjectLabel:     "checkship-internal-" + targetIdLower,
 							api.ServiceLabel:     "proxy",
 							api.VersionLabel:     api.ComposeVersion,
 							api.ConfigFilesLabel: "",
@@ -408,7 +408,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 				},
 				Networks: types.Networks{
 					"default": types.NetworkConfig{
-						Name: "seelf-gateway-" + targetIdLower,
+						Name: "checkship-gateway-" + targetIdLower,
 						Labels: types.Labels{
 							docker.TargetLabel: string(target.ID()),
 						},
@@ -458,7 +458,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 			assert.NotZero(t, udpPort)
 
 			assert.DeepEqual(t, &types.Project{
-				Name: "seelf-internal-" + targetIdLower,
+				Name: "checkship-internal-" + targetIdLower,
 				Services: types.Services{
 					"proxy": {
 						Name: "proxy",
@@ -477,7 +477,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 							fmt.Sprintf("--providers.docker.constraints=(Label(`%s`, `%s`) && (Label(`%s`, `true`) || LabelRegex(`%s`, `.+`))) || Label(`%s`, `true`)",
 								docker.TargetLabel, target.ID(), docker.CustomEntrypointsLabel, docker.SubdomainLabel, docker.ExposedLabel),
 							fmt.Sprintf("--providers.docker.defaultrule=Host(`{{ index .Labels %s}}.docker.localhost`)", fmt.Sprintf(`"%s"`, docker.SubdomainLabel)),
-							"--providers.docker.network=seelf-gateway-" + targetIdLower,
+							"--providers.docker.network=checkship-gateway-" + targetIdLower,
 						},
 						Ports: sortedPorts([]types.ServicePortConfig{
 							{Target: 80, Published: "80"},
@@ -490,7 +490,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 							{Type: types.VolumeTypeBind, Source: "/var/run/docker.sock", Target: "/var/run/docker.sock"},
 						},
 						CustomLabels: types.Labels{
-							api.ProjectLabel:     "seelf-internal-" + targetIdLower,
+							api.ProjectLabel:     "checkship-internal-" + targetIdLower,
 							api.ServiceLabel:     "proxy",
 							api.VersionLabel:     api.ComposeVersion,
 							api.ConfigFilesLabel: "",
@@ -500,7 +500,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 				},
 				Networks: types.Networks{
 					"default": types.NetworkConfig{
-						Name: "seelf-gateway-" + targetIdLower,
+						Name: "checkship-gateway-" + targetIdLower,
 						Labels: types.Labels{
 							docker.TargetLabel: string(target.ID()),
 						},
@@ -519,7 +519,7 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 			assert.True(t, assigned == nil)
 			assert.HasLength(t, 0, mock.ups)
 			assert.HasLength(t, 1, mock.downs)
-			assert.Equal(t, "seelf-internal-"+strings.ToLower(string(target.ID())), mock.downs[0].projectName)
+			assert.Equal(t, "checkship-internal-"+strings.ToLower(string(target.ID())), mock.downs[0].projectName)
 		})
 	})
 
@@ -633,7 +633,7 @@ volumes:
 
 			project := mock.ups[0].project
 			expectedProjectName := fmt.Sprintf("%s-%s-%s", deployment.Config().AppName(), deployment.Config().Environment(), appIdLower)
-			expectedGatewayNetworkName := "seelf-gateway-" + strings.ToLower(string(target.ID()))
+			expectedGatewayNetworkName := "checkship-gateway-" + strings.ToLower(string(target.ID()))
 			assert.Equal(t, expectedProjectName, project.Name)
 			assert.Equal(t, 3, len(project.Services))
 

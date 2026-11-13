@@ -3,8 +3,8 @@ package domain_test
 import (
 	"testing"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/assert"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/assert"
 )
 
 func Test_AppNameFrom(t *testing.T) {

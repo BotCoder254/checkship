@@ -1,6 +1,6 @@
 package domain
 
-import "github.com/YuukanOO/seelf/pkg/apperr"
+import "github.com/checkship-deploy/checkship/pkg/apperr"
 
 type EnvironmentConfigRequirement struct {
 	config       EnvironmentConfig

@@ -3,7 +3,7 @@ package builder
 import (
 	"strings"
 
-	"github.com/YuukanOO/seelf/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/monad"
 )
 
 // Maybe is a helper function that will only append the SQL statement and arguments

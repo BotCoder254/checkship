@@ -5,7 +5,7 @@ package spy
 import (
 	"context"
 
-	"github.com/YuukanOO/seelf/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 )
 
 type (

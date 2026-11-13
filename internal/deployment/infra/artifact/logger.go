@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 )
 
 type stepLogger struct {

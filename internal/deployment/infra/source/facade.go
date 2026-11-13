@@ -3,7 +3,7 @@ package source
 import (
 	"context"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 )
 
 type (

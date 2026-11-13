@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/assert"
 )
 
 func Test_Error(t *testing.T) {

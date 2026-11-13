@@ -7,17 +7,17 @@ import (
 	"os"
 	"testing"
 
-	"github.com/YuukanOO/seelf/cmd/config"
-	auth "github.com/YuukanOO/seelf/internal/auth/domain"
-	authsqlite "github.com/YuukanOO/seelf/internal/auth/infra/sqlite"
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	deployment "github.com/YuukanOO/seelf/internal/deployment/infra/sqlite"
-	"github.com/YuukanOO/seelf/pkg/bus/spy"
-	scheduler "github.com/YuukanOO/seelf/pkg/bus/sqlite"
-	"github.com/YuukanOO/seelf/pkg/log"
-	"github.com/YuukanOO/seelf/pkg/must"
-	"github.com/YuukanOO/seelf/pkg/ostools"
-	"github.com/YuukanOO/seelf/pkg/storage/sqlite"
+	"github.com/checkship-deploy/checkship/cmd/config"
+	auth "github.com/checkship-deploy/checkship/internal/auth/domain"
+	authsqlite "github.com/checkship-deploy/checkship/internal/auth/infra/sqlite"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	deployment "github.com/checkship-deploy/checkship/internal/deployment/infra/sqlite"
+	"github.com/checkship-deploy/checkship/pkg/bus/spy"
+	scheduler "github.com/checkship-deploy/checkship/pkg/bus/sqlite"
+	"github.com/checkship-deploy/checkship/pkg/log"
+	"github.com/checkship-deploy/checkship/pkg/must"
+	"github.com/checkship-deploy/checkship/pkg/ostools"
+	"github.com/checkship-deploy/checkship/pkg/storage/sqlite"
 )
 
 type (

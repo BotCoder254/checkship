@@ -3,9 +3,9 @@ package domain_test
 import (
 	"testing"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/must"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/must"
 )
 
 func Test_Url(t *testing.T) {
@@ -90,10 +90,10 @@ func Test_Url(t *testing.T) {
 	})
 
 	t.Run("should retrieve the user part of an url if any", func(t *testing.T) {
-		url := must.Panic(domain.UrlFrom("http://seelf@docker.localhost"))
+		url := must.Panic(domain.UrlFrom("http://checkship@docker.localhost"))
 
 		assert.True(t, url.User().HasValue())
-		assert.Equal(t, "seelf", url.User().MustGet())
+		assert.Equal(t, "checkship", url.User().MustGet())
 
 		url = must.Panic(domain.UrlFrom("http://docker.localhost"))
 
@@ -101,10 +101,10 @@ func Test_Url(t *testing.T) {
 	})
 
 	t.Run("should be able to remove the user part of an url", func(t *testing.T) {
-		url := must.Panic(domain.UrlFrom("http://seelf@docker.localhost"))
+		url := must.Panic(domain.UrlFrom("http://checkship@docker.localhost"))
 
 		assert.Equal(t, "http://docker.localhost", url.WithoutUser().String())
-		assert.Equal(t, "http://seelf@docker.localhost", url.String())
+		assert.Equal(t, "http://checkship@docker.localhost", url.String())
 
 		url = must.Panic(domain.UrlFrom("http://docker.localhost"))
 

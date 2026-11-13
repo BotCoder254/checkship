@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/bus"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 )
 
 // Queue the provider cleanup stuff for both production and staging for the app being deleted.

@@ -3,7 +3,7 @@ package domain
 import (
 	"time"
 
-	"github.com/YuukanOO/seelf/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
 )
 
 var ErrInvalidTimeInterval = apperr.New("invalid_time_interval")

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/assert"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/assert"
 )
 
 func Test_Environment(t *testing.T) {

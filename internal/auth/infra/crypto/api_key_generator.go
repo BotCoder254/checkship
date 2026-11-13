@@ -1,8 +1,8 @@
 package crypto
 
 import (
-	"github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/pkg/crypto"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/pkg/crypto"
 )
 
 const apiKeyLengthInBytes = 64

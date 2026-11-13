@@ -8,13 +8,13 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/bus/memory"
-	"github.com/YuukanOO/seelf/pkg/flag"
-	"github.com/YuukanOO/seelf/pkg/log"
-	"github.com/YuukanOO/seelf/pkg/must"
-	"github.com/YuukanOO/seelf/pkg/storage"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/bus/memory"
+	"github.com/checkship-deploy/checkship/pkg/flag"
+	"github.com/checkship-deploy/checkship/pkg/log"
+	"github.com/checkship-deploy/checkship/pkg/must"
+	"github.com/checkship-deploy/checkship/pkg/storage"
 )
 
 func TestScheduler(t *testing.T) {

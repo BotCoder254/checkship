@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="checkship">
+  <style>
+    .mark { stroke: #2f5bea; }
+    @media (prefers-color-scheme: dark) { .mark { stroke: #7f95ff; } }
+  </style>
+  <g class="mark">
+    <!-- Ring: r=9 around (12,12), open between 18° and 68° so the check can leave it -->
+    <path d="M15.37 3.66A9 9 0 1 0 20.56 9.22" />
+    <!-- Check: short arm, then the long arm launching out through the gap -->
+    <path d="M7.25 11.75 10.75 15.25 20 4" />
+  </g>
+</svg>

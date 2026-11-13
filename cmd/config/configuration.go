@@ -8,29 +8,29 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/YuukanOO/seelf/cmd/serve"
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/config"
-	"github.com/YuukanOO/seelf/pkg/crypto"
-	"github.com/YuukanOO/seelf/pkg/id"
-	"github.com/YuukanOO/seelf/pkg/log"
-	"github.com/YuukanOO/seelf/pkg/monad"
-	"github.com/YuukanOO/seelf/pkg/must"
-	"github.com/YuukanOO/seelf/pkg/ostools"
-	"github.com/YuukanOO/seelf/pkg/validate"
-	"github.com/YuukanOO/seelf/pkg/validate/numbers"
+	"github.com/checkship-deploy/checkship/cmd/serve"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/config"
+	"github.com/checkship-deploy/checkship/pkg/crypto"
+	"github.com/checkship-deploy/checkship/pkg/id"
+	"github.com/checkship-deploy/checkship/pkg/log"
+	"github.com/checkship-deploy/checkship/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/must"
+	"github.com/checkship-deploy/checkship/pkg/ostools"
+	"github.com/checkship-deploy/checkship/pkg/validate"
+	"github.com/checkship-deploy/checkship/pkg/validate/numbers"
 )
 
 var (
 	userConfigDir            = must.Panic(os.UserConfigDir())
 	generatedSecretKey       = must.Panic(crypto.RandomKey[string](64))
-	defaultDataDirectory     = filepath.Join(userConfigDir, "seelf")
+	defaultDataDirectory     = filepath.Join(userConfigDir, "checkship")
 	DefaultConfigPath        = filepath.Join(defaultDataDirectory, defaultConfigFilename) // Default configuration path
 	noticeSecretKeyGenerated = `a default secret key has been generated. If you want to override it, you can set the HTTP_SECRET environment variable.`
 )
 
 const (
-	databaseConnectionString      = "seelf.db?_journal=WAL&_timeout=5000&_foreign_keys=yes&_txlock=immediate"
+	databaseConnectionString      = "checkship.db?_journal=WAL&_timeout=5000&_foreign_keys=yes&_txlock=immediate"
 	defaultConfigFilename         = "conf.yml"
 	defaultPort                   = 8080
 	defaultHost                   = ""
@@ -42,7 +42,7 @@ const (
 )
 
 type (
-	// Configuration used to configure seelf commands.
+	// Configuration used to configure checkship commands.
 	Configuration interface {
 		serve.Options
 
@@ -78,7 +78,7 @@ type (
 		Secret string            `env:"HTTP_SECRET"`
 	}
 
-	// Contains configuration related to where files produced by seelf will be stored.
+	// Contains configuration related to where files produced by checkship will be stored.
 	dataConfiguration struct {
 		Path                  string `env:"DATA_PATH"`
 		DeploymentDirTemplate string `env:"DEPLOYMENT_DIR_TEMPLATE" yaml:"deployment_dir_template"`
@@ -93,13 +93,13 @@ type (
 
 	// internalConfiguration fields not read from the configuration file and use only during specific steps
 	internalConfiguration struct {
-		Email     string `env:"SEELF_ADMIN_EMAIL,ADMIN_EMAIL"`
-		Password  string `env:"SEELF_ADMIN_PASSWORD,ADMIN_PASSWORD"`
-		ExposedOn string `env:"EXPOSED_ON"` // Container name and default target url (ie. http://seelf@docker.localhost)
+		Email     string `env:"CHECKSHIP_ADMIN_EMAIL,ADMIN_EMAIL"`
+		Password  string `env:"CHECKSHIP_ADMIN_PASSWORD,ADMIN_PASSWORD"`
+		ExposedOn string `env:"EXPOSED_ON"` // Container name and default target url (ie. http://checkship@docker.localhost)
 	}
 )
 
-// Instantiate the default seelf configuration.
+// Instantiate the default checkship configuration.
 func Default(builders ...ConfigurationBuilder) Configuration {
 	conf := &configuration{
 		Log: logConfiguration{

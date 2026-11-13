@@ -1,8 +1,8 @@
 package raw
 
 import (
-	"github.com/YuukanOO/seelf/internal/deployment/app/get_deployment"
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_deployment"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 )
 
 type Data string

@@ -1,6 +1,6 @@
 package builder
 
-import "github.com/YuukanOO/seelf/pkg/storage"
+import "github.com/checkship-deploy/checkship/pkg/storage"
 
 // Tiny mapper when all you have to do is retrieve a single value from a query.
 func valueMapper[T any](scanner storage.Scanner) (value T, err error) {

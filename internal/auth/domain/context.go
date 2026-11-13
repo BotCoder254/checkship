@@ -3,7 +3,7 @@ package domain
 import (
 	"context"
 
-	"github.com/YuukanOO/seelf/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/monad"
 )
 
 type contextKey string

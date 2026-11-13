@@ -1,6 +1,6 @@
 # Frontend
 
-The frontend part of **seelf** is written using [SvelteKit](https://kit.svelte.dev/) for its **low bundle size** and **performances**.
+The frontend part of **checkship** is written using [SvelteKit](https://kit.svelte.dev/) for its **low bundle size** and **performances**.
 
 The frontend stuff is located in the `cmd/serve/front` directory and embedded inside the final executable at build time.
 

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/log"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/log"
 	"github.com/gin-gonic/gin"
 )
 

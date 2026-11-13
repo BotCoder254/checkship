@@ -5,6 +5,7 @@
 	import PageTitle from '$components/page-title.svelte';
 	import Stack from '$components/stack.svelte';
 	import TextInput from '$components/text-input.svelte';
+	import Logo from '$assets/logo.svelte';
 	import auth from '$lib/auth';
 	import l from '$lib/localization';
 
@@ -19,6 +20,7 @@
 <PageTitle title={l.translate('auth.signin.title')} />
 
 <div class="signin">
+	<Logo size={56} />
 	<div class="signin-card">
 		<Form class="signin-form" handler={submit} let:submitting let:errors>
 			<Stack direction="column">
@@ -54,6 +56,8 @@
 <style module>
 	.signin {
 		display: flex;
+		flex-direction: column;
+		gap: var(--sp-8);
 		align-items: center;
 		justify-content: center;
 		min-height: 100vh;

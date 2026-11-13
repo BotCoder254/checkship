@@ -5,16 +5,16 @@ import (
 	"errors"
 	"testing"
 
-	authfixture "github.com/YuukanOO/seelf/internal/auth/fixture"
-	"github.com/YuukanOO/seelf/internal/deployment/app/deploy"
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/fixture"
-	"github.com/YuukanOO/seelf/internal/deployment/infra/artifact"
-	"github.com/YuukanOO/seelf/internal/deployment/infra/source/raw"
-	"github.com/YuukanOO/seelf/pkg/assert"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/bus/spy"
-	"github.com/YuukanOO/seelf/pkg/log"
+	authfixture "github.com/checkship-deploy/checkship/internal/auth/fixture"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/deploy"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/fixture"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/artifact"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/source/raw"
+	"github.com/checkship-deploy/checkship/pkg/assert"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/bus/spy"
+	"github.com/checkship-deploy/checkship/pkg/log"
 )
 
 func Test_Deploy(t *testing.T) {

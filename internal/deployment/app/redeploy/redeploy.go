@@ -3,9 +3,9 @@ package redeploy
 import (
 	"context"
 
-	auth "github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/bus"
+	auth "github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 )
 
 // Request a redeploy of the given deployment.

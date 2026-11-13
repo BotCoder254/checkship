@@ -3,8 +3,8 @@ package delete_target
 import (
 	"context"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/bus"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 )
 
 // Upon receiving a cleanup request, queue a job to delete the target record when every other tasks are done.

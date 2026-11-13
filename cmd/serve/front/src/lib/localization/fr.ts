@@ -26,7 +26,7 @@ Cette action est IRRÉVERSIBLE et supprimera TOUTES LES DONNÉES associées sur 
 		'app.no_deployments': 'Aucun déploiement',
 		'app.name.help':
 			"Le nom de l'application détermine le sous-domaine utilisé par les déploiements. C'est pourquoi vous devez <strong>uniquement</strong> utiliser des <strong>caractères alphanumériques</strong> et un <strong>nom unique</strong> au sein des différentes cibles.",
-		'app.how': 'Comment les services sont-ils exposés par seelf ?',
+		'app.how': 'Comment les services sont-ils exposés par checkship ?',
 		'app.how.placeholder.name': '<nom-app>',
 		'app.how.placeholder.scheme': '<scheme cible>://',
 		'app.how.placeholder.url': '<url cible>',
@@ -48,7 +48,7 @@ Cette action est IRRÉVERSIBLE et supprimera TOUTES LES DONNÉES associées sur 
 		'app.environment.target': 'Cible de déploiement',
 		'app.environment.target.changed': 'Cible mise à jour',
 		'app.environment.target.changed.description': (name: string) =>
-			`Si vous changez de cible, toutes les ressources liées à cette application déployées par seelf sur <strong>${name}</strong> seront <strong>SUPPRIMÉES</strong> et un déploiement sur la nouvelle cible sera programmé si possible. Si vous devez sauvegarder quelque chose, faites le avant de changer la cible.`,
+			`Si vous changez de cible, toutes les ressources liées à cette application déployées par checkship sur <strong>${name}</strong> seront <strong>SUPPRIMÉES</strong> et un déploiement sur la nouvelle cible sera programmé si possible. Si vous devez sauvegarder quelque chose, faites le avant de changer la cible.`,
 		'app.environment.vars': "Variables d'environnement",
 		'app.environment.vars.service.add': 'Ajouter un service',
 		'app.environment.vars.service.delete': 'Supprimer le service',
@@ -85,7 +85,7 @@ Cette action est IRRÉVERSIBLE et supprimera TOUTES LES DONNÉES associées sur 
 		'target.name.help': `Le nom est utilisé uniquement pour l'affichage. Vous pouvez choisir ce que vous voulez.`,
 		'target.manual_proxy': 'Proxy manuel',
 		'target.automatic_proxy_configuration': 'Exposer les services automatiquement',
-		'target.automatic_proxy_configuration.help': `Si activé, un proxy sera déployé sur la cible et vos services seront <a target="_blank" href="https://yuukanoo.github.io/seelf/reference/providers/docker.html#exposing-services">automatiquement exposés</a>. Si désactivé, vous <strong>devrez faire le nécessaire</strong> pour rendre vos services accessibles en utilisant la méthode de votre choix. Changer ce paramètre <strong>pourra</strong> nécessiter le redéploiement de vos applications.`,
+		'target.automatic_proxy_configuration.help': `Si activé, un proxy sera déployé sur la cible et vos services seront <a target="_blank" href="https://checkship-deploy.github.io/checkship/reference/providers/docker.html#exposing-services">automatiquement exposés</a>. Si désactivé, vous <strong>devrez faire le nécessaire</strong> pour rendre vos services accessibles en utilisant la méthode de votre choix. Changer ce paramètre <strong>pourra</strong> nécessiter le redéploiement de vos applications.`,
 		'target.url.help': `Toutes les applications déployées sur cette cible seront disponibles en tant que <strong>sous-domaine</strong> de cette URL racine (sans sous-chemin). Elle doit être <strong>unique</strong> parmi les cibles. Vous <strong>DEVEZ</strong> configurer un <strong>DNS wildcard</strong> pour les sous-domaines de telle sorte que <code>*.&lt;url configurée&gt;</code> redirige vers l'IP de cette cible.`,
 		'target.provider': 'Fournisseur',
 		'target.provider.docker.help': "Docker engine <strong>DOIT</strong> être installé sur l'hôte.",
@@ -163,7 +163,7 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 			"Si vous souhaitez déclencher un déploiement pour une application, vous aurez besoin de ce jeton. Vous pouvez également <strong>Afficher la commande cURL</strong> depuis la page de déploiement et l'utiliser dans votre pipeline car il inclut le jeton dans l'en-tête approprié.",
 		'profile.key': 'Clé API',
 		'profile.key.help':
-			"Passez ce jeton dans l'entête <code>Authorization: Bearer</code> pour communiquer avec l'API seelf. <strong>Vous devez le garder secret !</strong>",
+			"Passez ce jeton dans l'entête <code>Authorization: Bearer</code> pour communiquer avec l'API checkship. <strong>Vous devez le garder secret !</strong>",
 		'profile.key.refresh': "Regénérer la clé d'API",
 		'profile.key.refresh.confirm':
 			"L'ancienne clé ne sera plus valide. Confirmez-vous cette action ?",
@@ -237,10 +237,10 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 		'breadcrumb.not_found': 'Ressource introuvable',
 		// Footer
 		'footer.description': (version: string) =>
-			`seelf v${version.substring(0, 16)} — Plateforme de déploiement auto-hébergée`,
+			`checkship v${version.substring(0, 16)} — Plateforme de déploiement auto-hébergée`,
 		'footer.source': 'Source',
 		'footer.documentation': 'Docs',
-		'footer.donate': '❤️ Donner',
+		'footer.credits': 'Crédits',
 		// Shared
 		'console.copy_to_clipboard': 'Copier dans le presse-papiers',
 		'console.select_all': 'Tout sélectionner',

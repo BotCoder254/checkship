@@ -3,8 +3,8 @@ package refresh_api_key
 import (
 	"context"
 
-	"github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/pkg/bus"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 )
 
 type Command struct {

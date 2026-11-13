@@ -12,18 +12,18 @@
 		<p>{l.translate('footer.description', [version])}</p>
 		<Stack as="ul">
 			<li>
-				<Link href="https://github.com/YuukanOO/seelf/" external newWindow>
+				<Link href="https://github.com/checkship-deploy/checkship/" external newWindow>
 					{l.translate('footer.source')}
 				</Link>
 			</li>
 			<li>
-				<Link href="https://yuukanoo.github.io/seelf/guide/quickstart.html" external newWindow>
+				<Link href="https://checkship-deploy.github.io/checkship/guide/quickstart.html" external newWindow>
 					{l.translate('footer.documentation')}
 				</Link>
 			</li>
 			<li>
-				<Link href="https://yuukanoo.github.io/seelf/contributing/donating.html" external newWindow>
-					{l.translate('footer.donate')}
+				<Link href="https://checkship-deploy.github.io/checkship/contributing/credits.html" external newWindow>
+					{l.translate('footer.credits')}
 				</Link>
 			</li>
 		</Stack>

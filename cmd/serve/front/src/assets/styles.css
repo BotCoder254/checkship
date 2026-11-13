@@ -37,6 +37,9 @@
 	--co-shadow-4: rgba(255, 255, 255, 0.54);
 	--co-shadow--4: rgba(0, 0, 0, 0.7); /** FIXME: shadow may not be the appropriate name here */
 
+	/** Brand: used by the logo only, it never follows the accent (primary) tone. Dark value since the UI is dark-only. */
+	--co-brand: #7f95ff;
+
 	/** Types */
 	--fo-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
 		Helvetica Neue, Arial, Noto Sans, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',

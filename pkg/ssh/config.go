@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/YuukanOO/seelf/pkg/monad"
-	"github.com/YuukanOO/seelf/pkg/ostools"
+	"github.com/checkship-deploy/checkship/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/ostools"
 	"github.com/kevinburke/ssh_config"
 )
 

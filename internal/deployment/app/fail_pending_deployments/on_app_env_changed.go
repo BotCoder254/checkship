@@ -3,9 +3,9 @@ package fail_pending_deployments
 import (
 	"context"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/monad"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/monad"
 )
 
 func OnAppEnvChangedHandler(writer domain.DeploymentsWriter) bus.SignalHandler[domain.AppEnvChanged] {

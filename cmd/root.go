@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"github.com/YuukanOO/seelf/cmd/config"
-	"github.com/YuukanOO/seelf/cmd/serve"
-	"github.com/YuukanOO/seelf/cmd/version"
-	"github.com/YuukanOO/seelf/pkg/log"
+	"github.com/checkship-deploy/checkship/cmd/config"
+	"github.com/checkship-deploy/checkship/cmd/serve"
+	"github.com/checkship-deploy/checkship/cmd/version"
+	"github.com/checkship-deploy/checkship/pkg/log"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ func Root() *cobra.Command {
 	logger, loggerErr := log.NewLogger()
 
 	rootCmd := &cobra.Command{
-		Use:          "seelf",
+		Use:          "checkship",
 		SilenceUsage: true,
 		Version:      version.Current(),
 		Short:        "Painless self-hosting in a single binary.",

@@ -8,17 +8,17 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/YuukanOO/seelf/internal/deployment/app/expose_seelf_container"
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/internal/deployment/infra/provider"
-	"github.com/YuukanOO/seelf/pkg/log"
-	"github.com/YuukanOO/seelf/pkg/monad"
-	"github.com/YuukanOO/seelf/pkg/must"
-	"github.com/YuukanOO/seelf/pkg/ssh"
-	ptypes "github.com/YuukanOO/seelf/pkg/types"
-	"github.com/YuukanOO/seelf/pkg/validate"
-	"github.com/YuukanOO/seelf/pkg/validate/numbers"
-	vstrings "github.com/YuukanOO/seelf/pkg/validate/strings"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/expose_checkship_container"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/provider"
+	"github.com/checkship-deploy/checkship/pkg/log"
+	"github.com/checkship-deploy/checkship/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/must"
+	"github.com/checkship-deploy/checkship/pkg/ssh"
+	ptypes "github.com/checkship-deploy/checkship/pkg/types"
+	"github.com/checkship-deploy/checkship/pkg/validate"
+	"github.com/checkship-deploy/checkship/pkg/validate/numbers"
+	vstrings "github.com/checkship-deploy/checkship/pkg/validate/strings"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/compose/v2/pkg/api"
@@ -37,12 +37,12 @@ var (
 )
 
 const (
-	AppLabel               = "app.seelf.application"        // ID of the application
-	EnvironmentLabel       = "app.seelf.environment"        // Environment of the application
-	TargetLabel            = "app.seelf.target"             // ID of the target
-	ExposedLabel           = "app.seelf.exposed"            // Force the exposure of a service (used when exposing seelf itself for example)
-	SubdomainLabel         = "app.seelf.subdomain"          // Subdomain to use for the service, only for http entrypoints
-	CustomEntrypointsLabel = "app.seelf.custom_entrypoints" // Boolean representing wether or not a service use custom entrypoints
+	AppLabel               = "app.checkship.application"        // ID of the application
+	EnvironmentLabel       = "app.checkship.environment"        // Environment of the application
+	TargetLabel            = "app.checkship.target"             // ID of the target
+	ExposedLabel           = "app.checkship.exposed"            // Force the exposure of a service (used when exposing checkship itself for example)
+	SubdomainLabel         = "app.checkship.subdomain"          // Subdomain to use for the service, only for http entrypoints
+	CustomEntrypointsLabel = "app.checkship.custom_entrypoints" // Boolean representing wether or not a service use custom entrypoints
 )
 
 type (
@@ -50,7 +50,7 @@ type (
 
 	Docker interface {
 		provider.Provider
-		expose_seelf_container.LocalProvider
+		expose_checkship_container.LocalProvider
 	}
 
 	docker struct {
@@ -226,7 +226,7 @@ func (d *docker) Expose(ctx context.Context, target domain.Target, container str
 		return err
 	}
 
-	// Without the restart, traefik may pick the wrong container ip... This will force seelf to restart right now
+	// Without the restart, traefik may pick the wrong container ip... This will force checkship to restart right now
 	return client.api.ContainerRestart(ctx, container, dockercontainer.StopOptions{})
 }
 
@@ -276,7 +276,7 @@ func (d *docker) Deploy(
 		return nil, ErrComposeFailed
 	}
 
-	if url, isManagedBySeelf := target.Url().TryGet(); isManagedBySeelf {
+	if url, isManagedByCheckship := target.Url().TryGet(); isManagedByCheckship {
 		if url.UseSSL() {
 			logger.Infof("you may have to wait for certificates to be generated before your app is available")
 		}

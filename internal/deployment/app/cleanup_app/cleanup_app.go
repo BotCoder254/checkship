@@ -5,10 +5,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	shared "github.com/YuukanOO/seelf/pkg/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	shared "github.com/checkship-deploy/checkship/pkg/domain"
 )
 
 // Check if the cleanup is needed for a specific app, environment and a specific target.

@@ -3,8 +3,8 @@ package cleanup_target
 import (
 	"context"
 
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/bus"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 )
 
 func OnTargetCleanupRequestedHandler(scheduler bus.Scheduler) bus.SignalHandler[domain.TargetCleanupRequested] {

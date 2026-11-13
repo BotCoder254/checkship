@@ -3,8 +3,8 @@ package validate
 import (
 	"strings"
 
-	"github.com/YuukanOO/seelf/pkg/apperr"
-	"github.com/YuukanOO/seelf/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
+	"github.com/checkship-deploy/checkship/pkg/monad"
 )
 
 var ErrValidationFailed = apperr.New("validation_failed")

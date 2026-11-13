@@ -3,7 +3,7 @@ package builder
 import (
 	"context"
 
-	"github.com/YuukanOO/seelf/pkg/storage"
+	"github.com/checkship-deploy/checkship/pkg/storage"
 )
 
 type (

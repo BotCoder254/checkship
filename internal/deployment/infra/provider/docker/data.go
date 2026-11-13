@@ -4,11 +4,11 @@ import (
 	"database/sql/driver"
 	"strconv"
 
-	"github.com/YuukanOO/seelf/internal/deployment/app/get_target"
-	"github.com/YuukanOO/seelf/internal/deployment/domain"
-	"github.com/YuukanOO/seelf/pkg/monad"
-	"github.com/YuukanOO/seelf/pkg/ssh"
-	"github.com/YuukanOO/seelf/pkg/storage"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_target"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/ssh"
+	"github.com/checkship-deploy/checkship/pkg/storage"
 )
 
 const (

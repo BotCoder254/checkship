@@ -1,8 +1,8 @@
 package serve
 
 import (
-	"github.com/YuukanOO/seelf/cmd/startup"
-	"github.com/YuukanOO/seelf/pkg/log"
+	"github.com/checkship-deploy/checkship/cmd/startup"
+	"github.com/checkship-deploy/checkship/pkg/log"
 	"github.com/spf13/cobra"
 )
 

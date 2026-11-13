@@ -12,10 +12,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/YuukanOO/seelf/cmd/startup"
-	"github.com/YuukanOO/seelf/internal/auth/domain"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/log"
+	"github.com/checkship-deploy/checkship/cmd/startup"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/log"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
@@ -26,7 +26,7 @@ var front embed.FS
 
 const (
 	embeddedRootDir = "front/build"
-	sessionName     = "seelf"
+	sessionName     = "checkship"
 )
 
 type (
@@ -108,7 +108,7 @@ func newHttpServer(options ServerOptions, root startup.ServerRoot) *server {
 	v1secured.DELETE("/apps/:id", s.requestAppCleanupHandler())
 
 	// Allow API Key authentication for those routes
-	// FIXME: in the future, maybe all the API should be accessible, but not before https://github.com/YuukanOO/seelf/issues/45
+	// FIXME: in the future, maybe all the API should be accessible, but not before https://github.com/checkship-deploy/checkship/issues/45
 	v1securedAllowApi := v1.Group("", s.authenticate(true))
 	v1securedAllowApi.GET("/apps/:id", s.getAppByIDHandler())
 	v1securedAllowApi.POST("/apps/:id/deployments", s.queueDeploymentHandler())

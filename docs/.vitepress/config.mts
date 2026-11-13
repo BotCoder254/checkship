@@ -2,10 +2,10 @@ import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  base: "/seelf/",
+  base: "/checkship/",
   ignoreDeadLinks: "localhostLinks",
-  title: "seelf documentation",
-  head: [["link", { rel: "icon", href: "/seelf/favicon.svg" }]],
+  title: "checkship documentation",
+  head: [["link", { rel: "icon", href: "/checkship/favicon.svg" }]],
   description: "Lightweight self-hosted deployment platform written in Go.",
   themeConfig: {
     siteTitle: false,
@@ -15,7 +15,7 @@ export default defineConfig({
     logo: {
       light: "/logo-light.svg",
       dark: "/logo-dark.svg",
-      alt: "seelf",
+      alt: "checkship",
     },
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -91,13 +91,13 @@ export default defineConfig({
           { text: "Docs", link: "/contributing/docs" },
           { text: "Backend", link: "/contributing/backend" },
           { text: "Frontend", link: "/contributing/frontend" },
-          { text: "Donating", link: "/contributing/donating" },
+          { text: "Credits", link: "/contributing/credits" },
         ],
       },
     ],
 
     socialLinks: [
-      { icon: "github", link: "https://github.com/YuukanOO/seelf" },
+      { icon: "github", link: "https://github.com/checkship-deploy/checkship" },
     ],
   },
 });

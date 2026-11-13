@@ -1,13 +1,13 @@
 package serve
 
 import (
-	"github.com/YuukanOO/seelf/internal/deployment/app/create_app"
-	"github.com/YuukanOO/seelf/internal/deployment/app/get_app_detail"
-	"github.com/YuukanOO/seelf/internal/deployment/app/get_apps"
-	"github.com/YuukanOO/seelf/internal/deployment/app/request_app_cleanup"
-	"github.com/YuukanOO/seelf/internal/deployment/app/update_app"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/http"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/create_app"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_app_detail"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_apps"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/request_app_cleanup"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/update_app"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/http"
 	"github.com/gin-gonic/gin"
 )
 

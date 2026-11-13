@@ -7,14 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YuukanOO/seelf/internal/auth/domain"
-	httputils "github.com/YuukanOO/seelf/pkg/http"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	httputils "github.com/checkship-deploy/checkship/pkg/http"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	userSessionKey      = "seelf-session"
+	userSessionKey      = "checkship-session"
 	apiAuthHeader       = "Authorization"
 	apiAuthPrefix       = "Bearer "
 	apiAuthPrefixLength = len(apiAuthPrefix)

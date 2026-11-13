@@ -4,24 +4,24 @@ import (
 	"context"
 	"time"
 
-	"github.com/YuukanOO/seelf/internal/auth/app/create_first_account"
-	"github.com/YuukanOO/seelf/internal/auth/domain"
-	authinfra "github.com/YuukanOO/seelf/internal/auth/infra"
-	"github.com/YuukanOO/seelf/internal/deployment/app/cleanup_app"
-	"github.com/YuukanOO/seelf/internal/deployment/app/cleanup_target"
-	"github.com/YuukanOO/seelf/internal/deployment/app/configure_target"
-	"github.com/YuukanOO/seelf/internal/deployment/app/delete_app"
-	"github.com/YuukanOO/seelf/internal/deployment/app/delete_target"
-	"github.com/YuukanOO/seelf/internal/deployment/app/deploy"
-	"github.com/YuukanOO/seelf/internal/deployment/app/expose_seelf_container"
-	deploymentdomain "github.com/YuukanOO/seelf/internal/deployment/domain"
-	deploymentinfra "github.com/YuukanOO/seelf/internal/deployment/infra"
-	"github.com/YuukanOO/seelf/pkg/bus"
-	"github.com/YuukanOO/seelf/pkg/bus/memory"
-	bussqlite "github.com/YuukanOO/seelf/pkg/bus/sqlite"
-	"github.com/YuukanOO/seelf/pkg/log"
-	"github.com/YuukanOO/seelf/pkg/monad"
-	"github.com/YuukanOO/seelf/pkg/storage/sqlite"
+	"github.com/checkship-deploy/checkship/internal/auth/app/create_first_account"
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	authinfra "github.com/checkship-deploy/checkship/internal/auth/infra"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/cleanup_app"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/cleanup_target"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/configure_target"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/delete_app"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/delete_target"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/deploy"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/expose_checkship_container"
+	deploymentdomain "github.com/checkship-deploy/checkship/internal/deployment/domain"
+	deploymentinfra "github.com/checkship-deploy/checkship/internal/deployment/infra"
+	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/bus/memory"
+	bussqlite "github.com/checkship-deploy/checkship/pkg/bus/sqlite"
+	"github.com/checkship-deploy/checkship/pkg/log"
+	"github.com/checkship-deploy/checkship/pkg/monad"
+	"github.com/checkship-deploy/checkship/pkg/storage/sqlite"
 )
 
 type (
@@ -125,14 +125,14 @@ func Server(options ServerOptions, logger log.Logger) (ServerRoot, error) {
 		return nil, err
 	}
 
-	// Create the target needed to expose seelf itself and manage certificates if needed
+	// Create the target needed to expose checkship itself and manage certificates if needed
 	if exposedUrl, isSet := options.AppExposedUrl().TryGet(); isSet {
 		container := exposedUrl.User().Get("")
 
-		s.logger.Infow("exposing seelf container using the local target, creating it if needed, the container may restart once done",
+		s.logger.Infow("exposing checkship container using the local target, creating it if needed, the container may restart once done",
 			"container", container)
 
-		if _, err := bus.Send(s.bus, domain.WithUserID(context.Background(), domain.UserID(uid)), expose_seelf_container.Command{
+		if _, err := bus.Send(s.bus, domain.WithUserID(context.Background(), domain.UserID(uid)), expose_checkship_container.Command{
 			Container: container,
 			Url:       exposedUrl.WithoutUser().String(),
 		}); err != nil {
