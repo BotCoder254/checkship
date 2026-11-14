@@ -37,6 +37,7 @@ type (
 		AppsStore        deployment.AppsStore
 		DeploymentsStore deployment.DeploymentsStore
 		RegistriesStore  deployment.RegistriesStore
+		DB               *sqlite.Database // For tests that read through the query gateway
 	}
 
 	SeedBuilder func(*seed)
@@ -70,6 +71,7 @@ func PrepareDatabase(t testing.TB, options ...SeedBuilder) *Context {
 		t.Fatal(err)
 	}
 
+	result.DB = db
 	result.AppsStore = deployment.NewAppsStore(db)
 	result.TargetsStore = deployment.NewTargetsStore(db)
 	result.DeploymentsStore = deployment.NewDeploymentsStore(db)

@@ -15,6 +15,7 @@ import (
 	"github.com/checkship-deploy/checkship/cmd/startup"
 	"github.com/checkship-deploy/checkship/internal/auth/domain"
 	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/live"
 	"github.com/checkship-deploy/checkship/pkg/log"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -45,6 +46,7 @@ type (
 		logger             log.Logger
 		usersReader        domain.UsersReader
 		scheduledJobsStore bus.ScheduledJobsStore
+		live               *live.Hub
 	}
 )
 
@@ -56,6 +58,7 @@ func newHttpServer(options ServerOptions, root startup.ServerRoot) *server {
 		router:             gin.New(),
 		usersReader:        root.UsersReader(),
 		scheduledJobsStore: root.ScheduledJobsStore(),
+		live:               root.Live(),
 		bus:                root.Bus(),
 		logger:             root.Logger(),
 	}
@@ -88,6 +91,10 @@ func newHttpServer(options ServerOptions, root startup.ServerRoot) *server {
 	v1secured.DELETE("/session", s.deleteSessionHandler())
 	v1secured.GET("/jobs", s.listJobsHandler())
 	v1secured.DELETE("/jobs/:id", s.deleteJobsHandler())
+	v1secured.GET("/dashboard/summary", s.dashboardSummaryHandler())
+	v1secured.GET("/dashboard/apps", s.dashboardAppsHandler())
+	v1secured.GET("/dashboard/activity", s.dashboardActivityHandler())
+	v1secured.GET("/events", s.eventsHandler())
 	v1secured.GET("/profile", s.getProfileHandler())
 	v1secured.PATCH("/profile", s.updateProfileHandler())
 	v1secured.PUT("/profile/key", s.refreshProfileKeyHandler())
@@ -128,6 +135,9 @@ func (s *server) Listen() (finalErr error) {
 		Addr:    s.options.ListenAddress(),
 		Handler: s.router,
 	}
+
+	// Event streams never go idle: end them first so the graceful shutdown doesn't wait for them.
+	srv.RegisterOnShutdown(s.live.Close)
 
 	s.logger.Infow("launching web server",
 		"address", srv.Addr,

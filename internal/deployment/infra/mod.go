@@ -102,6 +102,9 @@ func Setup(
 	bus.Register(b, deploymentQueryHandler.GetTargetByID)
 	bus.Register(b, deploymentQueryHandler.GetRegistries)
 	bus.Register(b, deploymentQueryHandler.GetRegistryByID)
+	bus.Register(b, deploymentQueryHandler.GetDashboardSummary)
+	bus.Register(b, deploymentQueryHandler.GetDashboardApps)
+	bus.Register(b, deploymentQueryHandler.GetDashboardActivity)
 
 	bus.On(b, deploy.OnDeploymentCreatedHandler(scheduler))
 	bus.On(b, redeploy.OnAppEnvChangedHandler(appsStore, deploymentsStore, deploymentsStore))
