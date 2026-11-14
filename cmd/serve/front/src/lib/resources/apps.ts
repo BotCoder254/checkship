@@ -167,7 +167,6 @@ function parseEnv(str: string): Record<string, string> {
 	let match: RegExpExecArray | null;
 
 	while ((match = regexEnvKeyValue.exec(str)) !== null) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const { key, value } = match.groups!;
 
 		result[key] = value;

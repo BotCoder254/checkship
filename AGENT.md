@@ -453,6 +453,23 @@ labeled `app.checkship.target=<id>`; never-ready → Skip. `delete_target` → `
 CRUD (`/api/v1/registries`). Passwords and tokens are returned masked via `storage.SecretString` (`****`). The UI sends the password
 only if it changed. All registries are injected as docker auth for every deployment.
 
+### 6.13 Runtime logs (`GET /api/v1/apps/:id/logs`, API key allowed)
+1. `cmd/serve/logs.go` takes a slot in `live.Limiter` (3 per user, 20 in all), then sends `get_app_logs.Query`. The handler resolves the
+   app, the environment's target, and returns a `domain.LogsStream` bound to `Provider.Logs`.
+2. The docker provider (`docker/logs.go`) lists the containers by the app, target and environment labels (`ErrNoContainers` when none),
+   watches `Events` for them, and reads `ContainerLogs(follow, timestamps, tail|since)` per container. `docker/frames.go` turns the stream
+   into lines: multiplexed frames (stdout/stderr) or raw TTY output, pieces of lines over 16 KiB joined with their inner timestamps dropped
+   (docker/cli#4941), lines cut at 64 KiB, `\r` handled. A `start` event follows the new container (redeploys, restarts).
+3. Lines of the first 300 ms are sorted by time, then `consumer.Ready()` is called; the handler only switches to SSE then, so
+   `no_containers` (404) and `logs_unavailable` (409) are plain JSON. After that: `logs` batches (100 ms or 500 lines, `id` = last line
+   time, used as `since` on reconnect), `state` events, `: ping` every 15 s, `error` if the stream fails.
+4. The page (`routes/(main)/apps/[id]/logs/+page.svelte`) reads the stream with `fetch` through `LogsConnection`
+   (`#lib/runtime-logs.svelte.ts`) to see HTTP statuses; parsing, the 5,000-line buffer, dedupe after reconnect, search (`-word`
+   hides) and the copy formats are in `#lib/runtime-logs.ts` (unit tested). Copy goes through `#lib/clipboard.ts` (`copyText`, with
+   a textarea fallback over plain HTTP).
+5. Streams end with the request or on shutdown: `server.shutdown` is cancelled from `srv.RegisterOnShutdown`, because `Shutdown` waits for
+   open requests. `GET /apps/:id/services` (`get_app_services`) returns the container states for the Logs tab's strip.
+
 ### 6.12 Jobs page
 `GET /api/v1/jobs?page=n` (10 per page). Shows status (retrieved = running, errcode = failed, otherwise pending), payload, policy and
 error. A cancel button appears only for `Cancellable` jobs (`DELETE /jobs/:id`; the store refuses non-cancellable ones with a 404).
@@ -478,6 +495,8 @@ error. A cancel button appears only for `Cancellable` jobs (`DELETE /jobs/:id`; 
 | GET /apps/:id/deployments/:n | cookie or API key | get_deployment |
 | POST /apps/:id/deployments/:n/redeploy, /promote | cookie or API key | redeploy / promote |
 | GET /apps/:id/deployments/:n/logs | cookie or API key | raw log file |
+| GET /apps/:id/logs ?environment&tail&since | cookie or API key | get_app_logs → SSE stream (§6.13); 404 `no_containers`, 409 `logs_unavailable`, 429 `too_many_streams` |
+| GET /apps/:id/services ?environment | cookie or API key | get_app_services → container states |
 
 Errors: `apperr.Error{code, detail}`. App errors → **400** (404 for `not_found`). Bind errors → 422. Anything else → 500
 `{code:"unexpected_error"}` (logged). Validation errors are `validation_failed` with `detail` = `{ "field.path": {code} }`,

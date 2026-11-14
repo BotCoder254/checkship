@@ -47,6 +47,9 @@ type (
 		usersReader        domain.UsersReader
 		scheduledJobsStore bus.ScheduledJobsStore
 		live               *live.Hub
+		logsLimiter        *live.Limiter
+		shutdown           context.Context    // Done when the server shuts down: ends the runtime logs streams
+		stopStreams        context.CancelFunc // Cancels shutdown
 	}
 )
 
@@ -59,9 +62,12 @@ func newHttpServer(options ServerOptions, root startup.ServerRoot) *server {
 		usersReader:        root.UsersReader(),
 		scheduledJobsStore: root.ScheduledJobsStore(),
 		live:               root.Live(),
+		logsLimiter:        live.NewLimiter(logsStreamsPerUser, logsStreamsTotal),
 		bus:                root.Bus(),
 		logger:             root.Logger(),
 	}
+
+	s.shutdown, s.stopStreams = context.WithCancel(context.Background())
 
 	_ = s.router.SetTrustedProxies(nil)
 
@@ -124,6 +130,8 @@ func newHttpServer(options ServerOptions, root startup.ServerRoot) *server {
 	v1securedAllowApi.POST("/apps/:id/deployments/:number/redeploy", s.redeployHandler())
 	v1securedAllowApi.POST("/apps/:id/deployments/:number/promote", s.promoteHandler())
 	v1securedAllowApi.GET("/apps/:id/deployments/:number/logs", s.getDeploymentLogsHandler())
+	v1securedAllowApi.GET("/apps/:id/logs", s.appLogsHandler())
+	v1securedAllowApi.GET("/apps/:id/services", s.appServicesHandler())
 
 	s.useSPA()
 
@@ -138,6 +146,7 @@ func (s *server) Listen() (finalErr error) {
 
 	// Event streams never go idle: end them first so the graceful shutdown doesn't wait for them.
 	srv.RegisterOnShutdown(s.live.Close)
+	srv.RegisterOnShutdown(s.stopStreams)
 
 	s.logger.Infow("launching web server",
 		"address", srv.Addr,

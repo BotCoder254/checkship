@@ -16,6 +16,8 @@ export interface FormatProvider {
 }
 
 export type TranslationsArgs<T> = T extends (...args: infer P) => string ? P : never;
+// Each translation function has its own arguments.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TranslationFunc = (this: FormatProvider, ...args: any[]) => string;
 export type Translations = Record<string, string | TranslationFunc>;
 

@@ -46,9 +46,10 @@ export class HttpError extends Error {
 		500: UnexpectedError
 	};
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public constructor(
 		public readonly status: number,
+		// The JSON body of the response, whatever its shape.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		public readonly data?: any
 	) {
 		super(data?.code ?? `HTTP Error ${status}`);

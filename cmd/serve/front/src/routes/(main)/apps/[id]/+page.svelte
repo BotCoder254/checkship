@@ -11,6 +11,7 @@
 	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
 	import Clock01Icon from '@hugeicons/core-free-icons/Clock01Icon';
 	import CommandLineIcon from '@hugeicons/core-free-icons/CommandLineIcon';
+	import ComputerTerminal01Icon from '@hugeicons/core-free-icons/ComputerTerminal01Icon';
 	import ContainerIcon from '@hugeicons/core-free-icons/ContainerIcon';
 	import LinkSquare02Icon from '@hugeicons/core-free-icons/LinkSquare02Icon';
 	import Loading03Icon from '@hugeicons/core-free-icons/Loading03Icon';
@@ -305,6 +306,17 @@
 												? l.translate('detail.follow_logs')
 												: l.translate('detail.logs')}
 										</Button>
+										{#if state === 'live'}
+											<Button
+												variant="outline"
+												size="sm"
+												class="max-md:flex-1"
+												href={routes.appLogs(app.id, environment)}
+											>
+												<Icon icon={ComputerTerminal01Icon} />
+												{l.translate('detail.app_logs')}
+											</Button>
+										{/if}
 										{#if state !== 'deploying' && !deleting}
 											<Button
 												variant="outline"

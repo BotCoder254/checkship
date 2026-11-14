@@ -16,6 +16,8 @@ import (
 	"github.com/checkship-deploy/checkship/internal/deployment/app/deploy"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/expose_checkship_container"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/fail_pending_deployments"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_app_logs"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_app_services"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/get_deployment_log"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/promote"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/queue_deployment"
@@ -82,6 +84,8 @@ func Setup(
 	bus.Register(b, delete_app.Handler(appsStore, appsStore, artifactManager))
 	bus.Register(b, cleanup_app.Handler(targetsStore, deploymentsStore, providerFacade))
 	bus.Register(b, get_deployment_log.Handler(deploymentsStore, artifactManager))
+	bus.Register(b, get_app_logs.Handler(appsStore, targetsStore, providerFacade))
+	bus.Register(b, get_app_services.Handler(appsStore, targetsStore, providerFacade))
 	bus.Register(b, redeploy.Handler(appsStore, deploymentsStore, deploymentsStore))
 	bus.Register(b, promote.Handler(appsStore, deploymentsStore, deploymentsStore))
 	bus.Register(b, create_target.Handler(targetsStore, targetsStore, providerFacade))

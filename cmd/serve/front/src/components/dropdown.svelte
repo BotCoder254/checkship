@@ -34,7 +34,7 @@
 			remoteError = undefined;
 		}}
 	>
-		{#each options as option}
+		{#each options as option, i (i)}
 			{#if typeof option === 'string'}
 				<option value={option}>{option}</option>
 			{:else}

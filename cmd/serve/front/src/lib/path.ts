@@ -11,6 +11,10 @@ const routes = {
 	editApp: (id: string) => `/apps/${id}/edit`,
 	app: (id: string) => `/apps/${id}`,
 	appDeployments: (id: string) => `/apps/${id}/deployments`,
+	appLogs: (id: string, environment?: 'production' | 'staging') =>
+		environment && environment !== 'production'
+			? `/apps/${id}/logs?environment=${environment}`
+			: `/apps/${id}/logs`,
 	createDeployment: (id: string) => `/apps/${id}/deployments/new`,
 	deployment: (id: string, number: number) => `/apps/${id}/deployments/${number}`,
 	targets: '/targets',

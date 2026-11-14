@@ -6,6 +6,7 @@
 	a danger-tinted block behind a confirmation, because the old key stops working at once.
 -->
 <script lang="ts">
+	import { copyText } from '#lib/clipboard.ts';
 	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
 	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
 	import Copy01Icon from '@hugeicons/core-free-icons/Copy01Icon';
@@ -113,12 +114,8 @@
 	}
 
 	async function copyKey() {
-		try {
-			await navigator.clipboard.writeText(apiKey);
-			toast.success(l.translate('profile.key.copied'));
-		} catch {
-			toast.error(l.translate('unexpected_error'));
-		}
+		if (await copyText(apiKey)) toast.success(l.translate('profile.key.copied'));
+		else toast.error(l.translate('copy_blocked'));
 	}
 
 	async function regenerate() {

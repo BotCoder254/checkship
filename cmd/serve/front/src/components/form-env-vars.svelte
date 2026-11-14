@@ -31,6 +31,8 @@
 	</Stack>
 	{#if values.length === 0}
 		<BlankSlate>
+			<!-- The translation is our own markup. -->
+			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 			<p>{@html l.translate('app.environment.vars.blankslate')}</p>
 		</BlankSlate>
 	{:else}
@@ -39,6 +41,7 @@
 				<Stack class="service" wrap="wrap" align="flex-start">
 					<TextInput label="app.environment.vars.service.name" bind:value={value.name} required>
 						<p>
+							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 							{@html l.translate('app.environment.vars.service.name.help', [latestServiceNames])}
 						</p>
 					</TextInput>

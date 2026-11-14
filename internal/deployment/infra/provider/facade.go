@@ -83,6 +83,26 @@ func (f *facade) Cleanup(ctx context.Context, app domain.AppID, target domain.Ta
 	return provider.Cleanup(ctx, app, target, env, strategy)
 }
 
+func (f *facade) Logs(ctx context.Context, target domain.Target, app domain.AppID, env domain.Environment, options domain.LogsOptions, consumer domain.LogsConsumer) error {
+	provider, err := f.providerForTarget(target)
+
+	if err != nil {
+		return err
+	}
+
+	return provider.Logs(ctx, target, app, env, options, consumer)
+}
+
+func (f *facade) Services(ctx context.Context, target domain.Target, app domain.AppID, env domain.Environment) ([]domain.ServiceState, error) {
+	provider, err := f.providerForTarget(target)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return provider.Services(ctx, target, app, env)
+}
+
 func (f *facade) providerForTarget(target domain.Target) (Provider, error) {
 	config := target.Provider()
 

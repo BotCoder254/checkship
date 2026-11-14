@@ -224,6 +224,15 @@ GET {{url}}/apps/{{queueDeployment.response.body.$.app_id}}/deployments/{{queueD
 
 ###
 
+# Follow the runtime logs of the app (server-sent events)
+GET {{url}}/apps/{{queueDeployment.response.body.$.app_id}}/logs?environment=production&tail=50
+
+###
+
+GET {{url}}/apps/{{queueDeployment.response.body.$.app_id}}/services?environment=production
+
+###
+
 DELETE {{url}}/apps/{{createApp.response.body.$.id}}
 
 ###
