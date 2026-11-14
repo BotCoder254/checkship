@@ -133,17 +133,20 @@ test.describe('pages', () => {
 		const create = page.getByRole('button', { name: 'Create target' });
 		await expect(create.locator('svg')).toHaveCount(1);
 		await create.click();
-		await expect(page).toHaveURL(/\/targets\/$/);
+		// Creating opens the target's overview.
+		await expect(page).toHaveURL(/\/targets\/[^/]+\/$/);
+		await expect(page.getByRole('heading', { level: 1, name: 'e2e-local' })).toBeVisible();
+		await page.goto('/targets/');
 
 		const row = page.getByRole('row').filter({ hasText: 'e2e-local' });
 		await expect(row).toBeVisible();
-		await expect(row).toContainText('Local Docker engine');
+		await expect(row).toContainText('This machine · Docker engine');
 		await expectNoLines(page, '[role="row"]');
 		await shot(page, 'targets');
 
 		// Delete is disabled while a target is configuring; wait until configuration has finished
 		// (it fails here: this machine has no Docker), then open its settings.
-		const targetId = await row.evaluate((el) => el.getAttribute('href')!.split('/')[2]);
+		const targetId = (await row.getByRole('link').getAttribute('href'))!.split('/')[2];
 		await expect
 			.poll(
 				async () =>

@@ -468,7 +468,8 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 		'settings.vcs.use': 'Utiliser un dépôt Git',
 		'settings.vcs.use.help': 'Désactivé : fichiers compose ou archives uniquement.',
 		'settings.vcs.url': 'URL du dépôt',
-		'settings.vcs.token.help': 'Seulement pour les dépôts privés. Stocké chiffré.',
+		'settings.vcs.token.help':
+			'Seulement pour les dépôts privés. Plus jamais affiché une fois enregistré.',
 		'settings.environments': 'Environnements',
 		'settings.environments.description':
 			"Chaque environnement tourne sur une cible. Ses variables s'ouvrent dans un tiroir.",
@@ -512,7 +513,7 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 		'jobs.empty.description':
 			"Les déploiements et nettoyages s'affichent ici pendant qu'ils attendent ou s'exécutent.",
 		'registries.drawer.description':
-			'Les identifiants sont stockés chiffrés et utilisés sur chaque cible.',
+			'Docker utilise cet identifiant quand un déploiement tire une image de ce registre, sur chaque cible.',
 		'registries.url.help': "D'où les images sont tirées. Docker Hub est",
 		'registries.auth.label': 'Se connecter à ce registre',
 		'registries.auth.help': 'Nécessaire pour tirer des images privées.',
@@ -626,6 +627,166 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 			`${shown} sur ${total} · page ${page} sur ${pages}`,
 		'detail.list.no_match': 'Aucun déploiement ne correspond',
 		'detail.list.no_match.description': 'Essayez un autre environnement, statut ou recherche.',
+		// Cibles et registres v4 (DESIGN.md §11.8)
+		'targets.kind.local': 'Cette machine · moteur Docker',
+		'targets.count': (n: number) => (n === 1 ? '1 cible' : `${n} cibles`),
+		'targets.count.ready': (n: number) => `${n} prête${n > 1 ? 's' : ''}`,
+		'targets.count.configuring': (n: number) => `${n} en configuration`,
+		'targets.count.failed': (n: number) => `${n} en échec`,
+		'targets.count.deleting': (n: number) => `${n} en suppression`,
+		'targets.column.exposure': 'Expose les services sur',
+		'targets.column.used_by': 'Utilisée par',
+		'targets.exposure.automatic': 'proxy automatique',
+		'targets.exposure.manual': 'vous routez le trafic vous-même',
+		'targets.state.deleting': 'Suppression',
+		'targets.state.configuring': 'Configuration',
+		'targets.state.failed': 'Configuration en échec',
+		'targets.state.ready_at': (date: string) => `Prête · configurée le ${date}`,
+		'targets.configured_at': (date: string) => `configurée le ${date}`,
+		'targets.used_by': (n: number) => (n === 1 ? '1 application' : `${n} applications`),
+		'targets.used_by.none': 'Aucune application',
+		'targets.explainer':
+			"Une cible est un moteur Docker sur lequel checkship déploie : cette machine, ou un serveur joint en SSH. Chaque environnement d'application tourne sur une cible. Les déploiements attendent pendant la configuration et échouent tant qu'elle est en échec.",
+		'targets.tabs': 'Cible',
+		'targets.never_ready': "Jamais prête jusqu'ici",
+		'targets.deleting.title': 'Suppression de cette cible',
+		'targets.deleting.description':
+			"checkship retire ce qu'il y a installé. La cible quitte la liste une fois terminé.",
+		'targets.failed.title': "checkship n'a pas pu configurer cette cible",
+		'targets.failed.error': 'Erreur',
+		'targets.failed.consequence':
+			"Les déploiements vers elle échouent avec target_configuration_failed tant qu'elle n'est pas prête.",
+		'targets.check.local_docker':
+			'Docker tourne-t-il sur cette machine, et checkship atteint-il son socket ?',
+		'targets.check.reach': (host: string, port: number) =>
+			`La machine de checkship atteint-elle ${host} sur le port ${port} ?`,
+		'targets.check.key': (user: string) =>
+			`La partie publique de la clé est-elle dans ~${user}/.ssh/authorized_keys sur le serveur ?`,
+		'targets.check.docker': (user: string) =>
+			`Docker est-il installé, et ${user} peut-il l'utiliser ?`,
+		'targets.configuring.description':
+			"checkship s'y connecte et prépare Docker. Les déploiements vers elle attendent qu'elle soit prête.",
+		'targets.connection': 'Connexion',
+		'targets.provider': 'Fournisseur',
+		'targets.provider.local': 'Docker sur cette machine',
+		'targets.provider.ssh': 'Docker via SSH',
+		'targets.key.saved': 'Enregistrée · plus jamais affichée',
+		'targets.key.none': "Aucune : la configuration SSH de l'utilisateur de checkship",
+		'targets.host_fixed':
+			"L'hôte ne peut pas changer après la création ; pour changer de serveur, créez une nouvelle cible.",
+		'targets.exposure': 'Exposition',
+		'targets.proxy': 'Proxy',
+		'targets.proxy.automatic': 'Automatique : checkship le déploie',
+		'targets.proxy.manual': 'Manuel : vous routez le trafic vers les conteneurs',
+		'targets.root_url': 'URL racine',
+		'targets.apps_get': 'Les apps reçoivent',
+		'targets.dns.this_server': 'ce serveur',
+		'targets.no_url': "pas d'URL de checkship",
+		'targets.apps': 'Applications sur cette cible',
+		'targets.apps.count': (apps: number, envs: number) =>
+			`${apps === 1 ? '1 application' : `${apps} applications`} · ${envs === 1 ? '1 environnement' : `${envs} environnements`}`,
+		'targets.apps.none': (name: string) =>
+			`Aucune application n'utilise ${name}. Vous pouvez la supprimer depuis Réglages.`,
+		'targets.apps.none_never_ready': (name: string) =>
+			`Aucune application n'utilise ${name}. Elle n'a jamais été prête : la supprimer ne nettoie rien sur le serveur.`,
+		'targets.section.general.new': 'Un libellé pour les listes et les sélecteurs.',
+		'targets.section.general.edit': 'Renommer ne change rien sur le serveur.',
+		'targets.where': 'Où elle tourne',
+		'targets.section.where': 'checkship déploie avec Docker, ici ou sur un serveur joint en SSH.',
+		'targets.section.connection.edit': 'Enregistrer un changement ici reconfigure la cible.',
+		'targets.where.local': 'Cette machine',
+		'targets.where.local.help': 'Le moteur Docker à côté de checkship.',
+		'targets.where.local.taken': (name: string) =>
+			`Déjà ajoutée sous le nom ${name} : une cible par moteur Docker.`,
+		'targets.where.ssh': 'Un serveur via SSH',
+		'targets.where.ssh.help': 'Tout serveur Linux avec Docker que checkship peut joindre.',
+		'targets.host.help': 'Ne pourra plus changer.',
+		'targets.host.fixed':
+			"L'hôte identifie la cible et ne peut pas changer. Pour changer de serveur, créez une nouvelle cible.",
+		'targets.default': (value: string | number) => `Par défaut ${value}`,
+		'targets.optional': 'facultative',
+		'targets.key.what': 'le fichier de clé',
+		'targets.key.hint':
+			'Une clé privée OpenSSH ou PEM sans phrase de passe. Ou collez-la ci-dessous.',
+		'targets.key.hint.saved':
+			'Une clé est enregistrée. Déposez ou collez-en une nouvelle pour la remplacer.',
+		'targets.key.placeholder.saved': 'Enregistrée · collez une nouvelle clé pour la remplacer',
+		'targets.key.help': (user: string) =>
+			`Mettez sa partie publique dans ~${user}/.ssh/authorized_keys sur le serveur. Laissez vide pour utiliser la configuration SSH de l'utilisateur de checkship. Une fois enregistrée, elle n'est plus jamais affichée.`,
+		'targets.section.exposure': 'Comment les applications de cette cible obtiennent leurs URL.',
+		'targets.section.exposure.edit': 'Enregistrer un changement ici reconfigure la cible.',
+		'targets.expose.help':
+			'checkship déploie un proxy sur la cible et donne une URL à chaque service.',
+		'targets.expose.manual': 'Pas de proxy : routez vous-même le trafic vers les conteneurs.',
+		'targets.url.help':
+			"Racine seulement : un chemin ou une requête sont retirés. Aucune autre cible ne peut l'utiliser.",
+		'targets.url.preview': 'Les apps reçoivent',
+		'targets.url.dns': 'pointez',
+		'targets.next.title': 'Ce qui se passe à la création',
+		'targets.next.1':
+			"La cible démarre en Configuration : checkship s'y connecte et prépare Docker.",
+		'targets.next.2':
+			"Avec l'exposition automatique, il déploie le proxy qui route les URL de vos apps.",
+		'targets.next.3':
+			'Elle passe Prête, ou En échec avec un code à corriger avant de Reconfigurer. Les déploiements attendent entre-temps.',
+		'targets.delete.configuring': 'Attendez la fin de la configuration.',
+		'targets.delete.title': (name: string) => `Supprimer ${name} ?`,
+		'targets.delete.never_ready':
+			"Elle n'a jamais été prête : checkship la supprime sans rien nettoyer sur le serveur.",
+		'targets.blocked.title': (name: string) => `${name} est encore utilisée`,
+		'targets.blocked.description': (name: string) =>
+			`checkship ne peut pas supprimer une cible utilisée par des environnements. Déplacez-les vers une autre cible dans leurs réglages, puis supprimez ${name}.`,
+		'registries.note':
+			'Ajoutez un registre seulement pour les images privées ; les publiques se tirent sans. Utilisez des jetons en lecture seule : checkship ne fait que tirer. Mots de passe et jetons ne sont plus jamais affichés une fois enregistrés.',
+		'registries.preset': 'Registre',
+		'registries.preset.help':
+			"Un préréglage remplit le nom et l'URL, et indique quel jeton créer. Autre : toute URL de registre.",
+		'registries.preset.docker': 'Docker Hub',
+		'registries.preset.github': 'GitHub',
+		'registries.preset.gitlab': 'GitLab',
+		'registries.preset.quay': 'Quay',
+		'registries.preset.other': 'Autre',
+		'registries.recognised': (name: string) => `${name}, reconnu à son URL`,
+		'registries.custom': 'Registre personnalisé',
+		'registries.url.docker':
+			"L'adresse de connexion de Docker Hub ; les images sans hôte de registre, comme postgres:17, viennent d'ici.",
+		'registries.url.gitlab':
+			"GitLab auto-hébergé : utilisez l'hôte de registre de votre instance. Aucun autre registre ne peut l'utiliser.",
+		'registries.url.unique': "Aucun autre registre ne peut l'utiliser.",
+		'registries.auth.off_removes':
+			"Désactivez pour tirer anonymement ; l'identifiant enregistré est supprimé.",
+		'registries.password': 'Mot de passe ou jeton',
+		'registries.password.saved': 'Enregistré · saisissez-en un nouveau pour le remplacer',
+		'registries.user.docker': "Votre nom d'utilisateur Docker.",
+		'registries.user.github': "Votre nom d'utilisateur GitHub.",
+		'registries.user.gitlab': "Le nom d'utilisateur du jeton de déploiement.",
+		'registries.user.quay': 'Le compte robot, namespace+robot.',
+		'registries.user.example.docker': 'acmebot',
+		'registries.user.example.github': 'acme-ci',
+		'registries.user.example.gitlab': 'gitlab+deploy-token-1',
+		'registries.user.example.quay': 'acme+deploy',
+		'registries.token.docker': "Un jeton d'accès personnel en lecture seule.",
+		'registries.token.github': "Un jeton d'accès personnel (classic) avec read:packages.",
+		'registries.token.gitlab': 'Un jeton de déploiement avec read_registry.',
+		'registries.token.quay': 'Le jeton du compte robot.',
+		'registries.token.other': 'Préférez un jeton en lecture seule à un mot de passe.',
+		'registries.where': 'Où le créer',
+		'registries.where.docker': 'Docker Hub › Account settings › Personal access tokens.',
+		'registries.where.github': 'GitHub › Settings › Developer settings › Tokens (classic).',
+		'registries.where.gitlab': 'Projet › Settings › Repository › Deploy tokens.',
+		'registries.where.quay': 'Quay › Organization › Robot accounts.',
+		'registries.note.docker':
+			"Docker ne l'affiche qu'une fois ; copiez-le avant de fermer la page.",
+		'registries.note.github': "GitHub Packages n'accepte que les jetons classic.",
+		'registries.note.gitlab': 'La portée read_registry suffit pour tirer.',
+		'registries.note.quay': 'Donnez au robot la lecture sur les dépôts que vous déployez.',
+		'registries.never_shown': "Une fois enregistré, checkship ne l'affiche plus jamais.",
+		'registries.used.title': 'Quand il est utilisé',
+		'registries.used.description': (name: string) =>
+			`Sur chaque cible, pour chaque déploiement qui tire une image de ${name}. Un changement s'applique au prochain déploiement.`,
+		'detail.promote.to_production': (number: number) => `Promouvoir #${number} en production`,
+		'detail.filter.search.label': 'Recherche',
+		'detail.filter.all_environments': 'Tous les environnements',
 		copy: 'Copier',
 		copied: 'Copié dans le presse-papiers',
 		cancel: 'Annuler',

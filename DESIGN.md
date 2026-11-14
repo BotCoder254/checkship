@@ -516,6 +516,22 @@ Added 2026-11-14 after research into Vercel, Render, Railway and Coolify (the "A
 - **Deployments tab** (`deployments/+page.svelte`): environment and status as segmented controls and a search on number, branch or commit, all filtered on the server (`status`, `search` and `per_page` query parameters, 20 per page). The deployment each environment serves is marked Live. Each row opens its preview; its menu (Railway) has View logs, Promote to production (successful staging rows), Redeploy and Copy link. Promote and Redeploy confirm in a dialog.
 - **Not added, on purpose:** restart and stop, runtime logs, metrics, a terminal, rollback without rebuilding. checkship has no endpoint for them yet; they can join the Deploy menu and the tabs when it does.
 
+### 11.8 Targets and registries
+
+Added 2026-11-14, researched (Coolify servers and proxy, Dokploy remote servers and registries, Docker, GitHub, GitLab and Quay docs) and checked line by line against the Go backend.
+
+- **Targets list:** one row per Docker engine with where it is (`This machine · Docker engine` or `user@host:port`, with the server's defaults docker and 22 filled in), how it exposes services, its state and how many applications use it. Ready shows when it was configured: `last_ready_version` is a time, not a version. Failed shows its error and a Reconfigure button on the row. A target being deleted shows Deleting. Rows open the target.
+- **Target page** (`routes/(main)/targets/[id]`): tabs Overview and Settings. The overview has the state (failed: the error in its own block, three things to check, Reconfigure), Connection and Exposure as fact cards, and the applications that deploy to it.
+- **Form, following `infra/provider/docker/data.go` and `domain/target.go`:**
+  - One target per Docker engine: "This machine" is offered only while no local target exists.
+  - The host identifies a remote target and can't change (`target_provider_update_not_permitted`): read-only in Settings.
+  - User defaults to docker, port to 22. The private key is optional (else the SSH config of the user running checkship); it can be dropped as a file or pasted.
+  - A URL means automatic exposure: root only, unique among targets; the form previews the app URLs and the wildcard DNS record.
+  - Changing the URL, exposure, user, port or key reconfigures the target; renaming doesn't.
+- **Delete:** refused while environments use the target (`target_in_use`): the dialog lists them, each linking to its settings. Refused while configuring. A target never ready is deleted without cleanup.
+- **Secrets are masked, not encrypted.** `storage.SecretString` replaces every character with `*` in API responses; nothing is encrypted at rest. Copy says "never shown again", never "encrypted". The form never fills a masked value back in.
+- **Registries:** a new registry starts from a preset with its official mark (`#lib/registry-logos.ts`: Simple Icons 16.37.0, CC0, traced from each brand's kit; Quay's mark from quay/quay). Marks keep their brand colours (Docker blue, GitLab orange, Quay blues); GitHub's uses the text colour, as GitHub allows black, white or grey. Each preset fills the name and URL and names the token: Docker Hub a read-only personal access token, GitHub a classic token with `read:packages`, GitLab a deploy token with `read_registry`, Quay a robot account (`namespace+robot`). Saved registries are recognised from their URL. Server rules: name required, URL required and unique, username and password together; turning sign-in off removes the login. Docker uses each login, keyed by the URL, for every deployment on every target.
+
 ---
 
 ## 12. UI library: research and choice

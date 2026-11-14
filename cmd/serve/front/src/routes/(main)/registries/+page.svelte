@@ -6,6 +6,7 @@
 	import Add01Icon from '@hugeicons/core-free-icons/Add01Icon';
 	import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
 	import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
+	import InformationCircleIcon from '@hugeicons/core-free-icons/InformationCircleIcon';
 	import Key01Icon from '@hugeicons/core-free-icons/Key01Icon';
 	import PackageIcon from '@hugeicons/core-free-icons/PackageIcon';
 	import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
@@ -20,6 +21,8 @@
 	import service, { type Registry } from '#lib/resources/registries.ts';
 	import { cn } from '#lib/utils.js';
 	import RegistryForm from './registry-form.svelte';
+	import RegistryLogo from '#lib/components/registry-logo.svelte';
+	import { presetForUrl } from '#lib/registry-presets.ts';
 
 	const { data: registries } = service.queryAll();
 
@@ -84,6 +87,7 @@
 		</div>
 
 		{#each $registries as registry (registry.id)}
+			{@const preset = presetForUrl(registry.url)}
 			<button
 				type="button"
 				role="row"
@@ -97,7 +101,10 @@
 					role="cell"
 					class="flex size-9 items-center justify-center rounded-md bg-raised text-muted-foreground max-md:row-span-2"
 				>
-					<Icon icon={PackageIcon} class="size-4.5" />
+					{#if preset}<RegistryLogo name={preset.id} class="size-5" />{:else}<Icon
+							icon={PackageIcon}
+							class="size-4.5"
+						/>{/if}
 				</span>
 				<span role="cell" class="flex min-w-0 flex-col gap-0.5">
 					<span class="truncate text-[15px]/[22px] font-semibold">{registry.name}</span>
@@ -114,6 +121,10 @@
 				<Icon icon={ArrowRight01Icon} class="hidden size-4 text-faint md:block" />
 			</button>
 		{/each}
+		<div class="mt-2.5 grid grid-cols-[20px_minmax(0,1fr)] gap-3 rounded-lg bg-sunken px-4 py-3.5">
+			<Icon icon={InformationCircleIcon} class="size-4.5 text-muted-foreground" />
+			<p class="text-[13px]/5 text-muted-foreground">{l.translate('registries.note')}</p>
+		</div>
 	</div>
 {:else if $registries}
 	<EmptyState

@@ -14,6 +14,7 @@ const routes = {
 	deployment: (id: string, number: number) => `/apps/${id}/deployments/${number}`,
 	targets: '/targets',
 	createTarget: '/targets/new',
+	target: (id: string) => `/targets/${id}`,
 	editTarget: (id: string) => `/targets/${id}/edit`,
 	jobs: '/jobs',
 	registries: '/registries',

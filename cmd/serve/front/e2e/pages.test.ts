@@ -87,6 +87,16 @@ test.describe('desktop', () => {
 		await expect(page.getByRole('heading', { level: 3, name: 'Staging' })).toBeVisible();
 		await expect(page.getByRole('heading', { level: 3, name: 'Production' })).toBeVisible();
 		await expect(page.getByText('Deploy to staging first, then promote it here')).toBeVisible();
+		// Stacked: production under staging, both the full width and the same height.
+		const stagingCard = (await page
+			.locator('section[aria-labelledby="card-staging"]')
+			.boundingBox())!;
+		const productionCard = (await page
+			.locator('section[aria-labelledby="card-production"]')
+			.boundingBox())!;
+		expect(productionCard.y).toBeGreaterThan(stagingCard.y + stagingCard.height);
+		expect(Math.round(productionCard.width)).toBe(Math.round(stagingCard.width));
+		expect(Math.round(productionCard.height)).toBe(Math.round(stagingCard.height));
 		await shot(page, 'overview-empty');
 
 		// No Git on this application: one-click Deploy opens the drawer instead.
@@ -212,22 +222,69 @@ test.describe('desktop', () => {
 		await signIn(page, '/registries/');
 		await page.getByRole('button', { name: 'New registry' }).first().click();
 		const drawer = page.getByRole('dialog', { name: 'New registry' });
-		await drawer.getByLabel('Name').fill('e2e registry');
-		await drawer.getByLabel('Url').fill('https://registry.e2e.test');
+		// A preset fills the URL and names the token to create; its mark is drawn.
+		await drawer.getByRole('radio', { name: 'GitHub' }).click();
+		await expect(drawer.getByLabel('Url')).toHaveValue('https://ghcr.io');
+		await expect(drawer.getByRole('radio', { name: 'GitHub' }).locator('svg')).toHaveCount(1);
+		await expect(drawer.getByText('read:packages').first()).toBeVisible();
+		await drawer.getByLabel('Name', { exact: true }).fill('e2e registry');
+		await drawer.getByLabel('Username').fill('e2e-bot');
+		await drawer.getByLabel('Password or token').fill('not-a-real-token');
 		await shot(page, 'registry-drawer');
 		await drawer.getByRole('button', { name: 'Create registry' }).click();
 		await expect(drawer).toHaveCount(0);
 
 		const row = page.getByRole('row').filter({ hasText: 'e2e registry' });
 		await expect(row).toBeVisible();
+		await expect(row).toContainText('e2e-bot');
 		await row.click();
 		const edit = page.getByRole('dialog', { name: 'e2e registry' });
-		await expect(edit.getByLabel('Url')).toHaveValue('https://registry.e2e.test');
+		await expect(edit.getByLabel('Url')).toHaveValue('https://ghcr.io');
+		await expect(edit.getByText('GitHub, recognised from its URL')).toBeVisible();
+		// The saved token is masked by the server, never filled back in.
+		await expect(edit.getByLabel('Password or token')).toHaveValue('');
 		await edit.getByRole('button', { name: 'Delete registry' }).click();
 		const dialog = page.getByRole('alertdialog');
 		await dialog.getByLabel('Type e2e registry to confirm').fill('e2e registry');
 		await dialog.getByRole('button', { name: 'Delete registry' }).click();
 		await expect(row).toHaveCount(0);
+	});
+
+	test('targets: overview, failed state, settings and delete blocked while in use', async ({
+		page
+	}) => {
+		await signIn(page, '/targets/');
+		const { target } = await fixtures(page);
+		const row = page.getByRole('row').filter({ hasText: 'pages-target' });
+		await expect(row).toContainText('e2e@pages.e2e.invalid:22');
+
+		// It can't reach that host: wait for the configuration to fail.
+		await expect
+			.poll(
+				async () =>
+					(await (await page.request.get(`/api/v1/targets/${target}`)).json()).state.status,
+				{ timeout: 30_000 }
+			)
+			.toBe(1);
+		await page.goto(`/targets/${target}/`);
+		await expect(page.getByRole('heading', { level: 1, name: 'pages-target' })).toBeVisible();
+		await expect(page.getByRole('alert').filter({ hasText: 'couldn’t configure' })).toBeVisible();
+		await expect(page.getByText('pages.e2e.invalid on port 22')).toBeVisible();
+		await expect(page.getByRole('link', { name: /pages-app/ })).toBeVisible();
+		await shot(page, 'target-failed');
+
+		await page.getByRole('link', { name: 'Settings' }).last().click();
+		await expect(page).toHaveURL(new RegExp(`/targets/${target}/edit/$`));
+		await expect(page.getByLabel('Host')).toHaveAttribute('readonly', '');
+		await expect(page.getByLabel('User')).toHaveAttribute('placeholder', 'docker');
+
+		await page.getByRole('button', { name: 'Delete target' }).click();
+		const dialog = page.getByRole('alertdialog');
+		await expect(dialog).toContainText('pages-target is still in use');
+		await expect(dialog.getByRole('link', { name: /pages-app/ }).first()).toBeVisible();
+		await expect(dialog.getByRole('button', { name: 'Delete target' })).toBeDisabled();
+		await shot(page, 'target-delete-blocked');
+		await dialog.getByRole('button', { name: 'Close' }).click();
 	});
 
 	test('jobs: rows open their details in a drawer', async ({ page }) => {
@@ -281,9 +338,9 @@ test.describe('desktop', () => {
 		await shot(page, 'deployments-menu');
 		await page.keyboard.press('Escape');
 
-		await page.getByRole('searchbox', { name: 'Branch, commit or #number' }).fill('no-such-branch');
+		await page.getByRole('searchbox', { name: 'Search' }).fill('no-such-branch');
 		await expect(page.getByText('No deployment matches')).toBeVisible();
-		await page.getByRole('searchbox', { name: 'Branch, commit or #number' }).fill('');
+		await page.getByRole('searchbox', { name: 'Search' }).fill('');
 		await expect(row).toBeVisible();
 		await shot(page, 'deployments-tab');
 	});
@@ -300,7 +357,8 @@ test.describe('desktop', () => {
 			`/apps/${app}/`,
 			`/apps/${app}/edit/`,
 			`/apps/${app}/deployments/new/`,
-			`/apps/${app}/deployments/`
+			`/apps/${app}/deployments/`,
+			'/targets/new/'
 		]) {
 			await page.goto(path);
 			await expect(page.locator('main h1')).toBeVisible();

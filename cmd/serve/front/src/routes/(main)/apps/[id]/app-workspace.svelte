@@ -177,7 +177,7 @@
 							</Button>
 						{/snippet}
 					</DropdownMenu.Trigger>
-					<DropdownMenu.Content align="end" sideOffset={6} class="w-80 p-1.5">
+					<DropdownMenu.Content align="end" sideOffset={6} class="w-74 p-1.5">
 						{#if app.version_control}
 							<DropdownMenu.Label
 								class="px-2.5 pt-2 pb-1 text-[11.5px] font-semibold tracking-wide text-faint uppercase"
@@ -187,7 +187,7 @@
 							{#each ['production', 'staging'] as const as environment (environment)}
 								{@const branch = environment === 'production' ? productionBranch : stagingBranch}
 								<DropdownMenu.Item
-									class="gap-2.5 px-2.5 py-2"
+									class="min-h-11 gap-2.5 px-2.5 py-1.5"
 									onSelect={() => quickDeploy(environment)}
 								>
 									<Icon icon={Rocket01Icon} class="text-muted-foreground" />
@@ -210,7 +210,7 @@
 							{l.translate('detail.menu.other')}
 						</DropdownMenu.Label>
 						<DropdownMenu.Item
-							class="gap-2.5 px-2.5 py-2"
+							class="min-h-11 gap-2.5 px-2.5 py-1.5"
 							onSelect={() => openDeploy('production', 'raw')}
 						>
 							<Icon icon={File01Icon} class="text-muted-foreground" />
@@ -222,7 +222,7 @@
 							</span>
 						</DropdownMenu.Item>
 						<DropdownMenu.Item
-							class="gap-2.5 px-2.5 py-2"
+							class="min-h-11 gap-2.5 px-2.5 py-1.5"
 							onSelect={() => openDeploy('production', 'archive')}
 						>
 							<Icon icon={Upload04Icon} class="text-muted-foreground" />
@@ -239,7 +239,10 @@
 							>
 								{l.translate('detail.menu.again')}
 							</DropdownMenu.Label>
-							<DropdownMenu.Item class="gap-2.5 px-2.5 py-2" onSelect={redeployProduction}>
+							<DropdownMenu.Item
+								class="min-h-11 gap-2.5 px-2.5 py-1.5"
+								onSelect={redeployProduction}
+							>
 								<Icon icon={RepeatIcon} class="text-muted-foreground" />
 								<span class="flex flex-col">
 									<span class="text-[13.5px] font-medium">

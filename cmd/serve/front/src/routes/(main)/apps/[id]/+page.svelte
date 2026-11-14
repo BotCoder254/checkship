@@ -7,7 +7,6 @@
 <script lang="ts">
 	import ArrowDown02Icon from '@hugeicons/core-free-icons/ArrowDown02Icon';
 	import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
-	import ArrowRight02Icon from '@hugeicons/core-free-icons/ArrowRight02Icon';
 	import CancelCircleIcon from '@hugeicons/core-free-icons/CancelCircleIcon';
 	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
 	import Clock01Icon from '@hugeicons/core-free-icons/Clock01Icon';
@@ -156,18 +155,19 @@
 					<p class="text-[13px] text-muted-foreground">{l.translate('detail.environments.help')}</p>
 				</div>
 
-				<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_176px_minmax(0,1fr)]">
+				<!-- Stacked, each card the full width and the same height (owner's call, 2026-11-14):
+				     staging, then Promote, then production. -->
+				<div class="flex flex-col gap-3">
 					{#each ['staging', 'connector', 'production'] as const as slot (slot)}
 						{#if slot === 'connector'}
-							<div class="flex items-center justify-center gap-3 text-center lg:flex-col">
+							<div class="flex flex-wrap items-center gap-x-3.5 gap-y-2 px-1 md:px-6">
 								<span
 									class={cn(
-										'flex size-10 items-center justify-center rounded-full bg-raised',
+										'flex size-9 shrink-0 items-center justify-center rounded-full bg-raised',
 										canPromote ? 'text-primary' : 'text-faint'
 									)}
 								>
-									<Icon icon={ArrowRight02Icon} class="hidden size-5 lg:block" />
-									<Icon icon={ArrowDown02Icon} class="size-5 lg:hidden" />
+									<Icon icon={ArrowDown02Icon} class="size-4.5" />
 								</span>
 								{#if staging}
 									<Button
@@ -177,9 +177,9 @@
 										onclick={() => (promoteOpen = true)}
 									>
 										<Icon icon={Rocket01Icon} />
-										{l.translate('detail.promote', [staging.deployment_number])}
+										{l.translate('detail.promote.to_production', [staging.deployment_number])}
 									</Button>
-									<span class="hidden max-w-40 text-xs text-muted-foreground lg:block">
+									<span class="text-[12.5px] text-muted-foreground">
 										{#if !staging.state.finished_at}
 											{l.translate('detail.promote.wait', [staging.deployment_number])}
 										{:else if !canPromote}
@@ -191,7 +191,7 @@
 										{/if}
 									</span>
 								{:else}
-									<span class="max-w-40 text-xs text-muted-foreground">
+									<span class="text-[12.5px] text-muted-foreground">
 										{l.translate('detail.promote.none')}
 									</span>
 								{/if}
@@ -205,12 +205,12 @@
 							<section
 								aria-labelledby="card-{environment}"
 								class={cn(
-									'flex min-w-0 flex-col gap-4 rounded-lg bg-sunken p-5',
+									'grid min-w-0 items-center gap-x-8 gap-y-4 rounded-lg bg-sunken px-5 py-5 md:h-39 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_150px] md:px-6',
 									state === 'deploying' && 'ring-1 ring-warning ring-inset'
 								)}
 							>
-								<div class="flex items-center justify-between gap-3">
-									<div class="flex items-center gap-2.5">
+								<div class="flex min-w-0 flex-col gap-2.5">
+									<div class="flex flex-wrap items-center gap-2.5">
 										<h3 id="card-{environment}" class="text-lg/[26px] font-semibold">
 											{l.translate(`deploy.environment.${environment}`)}
 										</h3>
@@ -231,40 +231,47 @@
 												{l.translate(`detail.card.${state}`)}
 											</span>
 										{/if}
+										<a
+											href={routes.editTarget(target.id)}
+											class="flex h-6 items-center gap-1.5 rounded-sm bg-raised px-2 text-xs font-medium text-ink outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+										>
+											<Icon icon={ServerStack01Icon} class="size-3.5" />
+											{l.translate('app.on_target', [target.name])}
+										</a>
 									</div>
-									<a
-										href={routes.editTarget(target.id)}
-										class="flex h-6 items-center gap-1.5 rounded-sm bg-raised px-2 text-xs font-medium text-ink outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-									>
-										<Icon icon={ServerStack01Icon} class="size-3.5" />
-										{l.translate('app.on_target', [target.name])}
-									</a>
+									{#if url}
+										<a
+											href={url}
+											target="_blank"
+											rel="noopener noreferrer"
+											class="flex min-w-0 items-center gap-1.5 self-start rounded-sm font-mono text-[13.5px] text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+										>
+											<span class="truncate">{url}</span>
+											<Icon icon={LinkSquare02Icon} class="size-3.5 shrink-0" />
+										</a>
+									{:else}
+										<p class="truncate text-[13px] text-muted-foreground">
+											{l.translate('app.no_url')}
+										</p>
+									{/if}
+									{#if latest}
+										{@const badge = deploymentBadge(latest.state)}
+										<div class="flex flex-wrap items-center gap-3">
+											<StatusBadge
+												state={badge.state}
+												label="{badge.label} · #{latest.deployment_number}"
+											/>
+											<span class="text-[12.5px] whitespace-nowrap text-muted-foreground"
+												>{timing(latest)}</span
+											>
+										</div>
+									{/if}
 								</div>
 
-								{#if url}
-									<a
-										href={url}
-										target="_blank"
-										rel="noopener noreferrer"
-										class="flex items-center gap-1.5 self-start truncate rounded-sm font-mono text-[13.5px] text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-									>
-										{url}
-										<Icon icon={LinkSquare02Icon} class="size-3.5 shrink-0" />
-									</a>
-								{:else}
-									<p class="text-[13px] text-muted-foreground">{l.translate('app.no_url')}</p>
-								{/if}
-
 								{#if latest}
-									{@const badge = deploymentBadge(latest.state)}
-									<div class="flex flex-wrap items-center justify-between gap-3">
-										<StatusBadge
-											state={badge.state}
-											label="{badge.label} · #{latest.deployment_number}"
-										/>
-										<span class="text-[12.5px] text-muted-foreground">{timing(latest)}</span>
-									</div>
-									<dl class="grid grid-cols-[96px_minmax(0,1fr)] gap-x-3 gap-y-2 text-[13px]/5">
+									<dl
+										class="grid min-w-0 grid-cols-[96px_minmax(0,1fr)] gap-x-3 gap-y-2 text-[13px]/5"
+									>
 										<dt class="text-muted-foreground">{l.translate('deployment.source')}</dt>
 										<dd class="truncate">
 											{sourceLabel(latest)}
@@ -286,10 +293,11 @@
 										<dt class="text-muted-foreground">{l.translate('deployment.queued_by')}</dt>
 										<dd class="truncate">{latest.requested_by.email}</dd>
 									</dl>
-									<div class="mt-auto flex flex-wrap gap-1.5">
+									<div class="flex gap-1.5 md:flex-col">
 										<Button
 											variant="outline"
 											size="sm"
+											class="max-md:flex-1"
 											onclick={() => actions.openPreview(latest.deployment_number)}
 										>
 											<Icon icon={CommandLineIcon} />
@@ -301,6 +309,7 @@
 											<Button
 												variant="outline"
 												size="sm"
+												class="max-md:flex-1"
 												onclick={() => {
 													redeployNumber = latest.deployment_number;
 													redeployOpen = true;
@@ -312,10 +321,10 @@
 										{/if}
 									</div>
 								{:else}
-									<div class="flex flex-col items-start gap-3">
-										<p class="text-sm text-muted-foreground">
-											{l.translate(`app.env.empty.${environment}`)}
-										</p>
+									<p class="text-sm text-muted-foreground">
+										{l.translate(`app.env.empty.${environment}`)}
+									</p>
+									<div class="flex md:flex-col">
 										{#if !deleting}
 											<Button
 												variant="outline"

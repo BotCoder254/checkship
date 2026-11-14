@@ -23,7 +23,8 @@
 	import EmptyState from '#lib/components/empty-state.svelte';
 	import type { IconData } from '#lib/components/icon.svelte';
 	import Icon from '#lib/components/icon.svelte';
-	import Segmented from '#lib/components/segmented.svelte';
+	import { Label } from '#lib/components/ui/label/index.js';
+	import * as Select from '#lib/components/ui/select/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -65,6 +66,18 @@
 		void searched;
 		page = 1;
 	});
+
+	const environmentLabel: Record<typeof environment, string> = {
+		all: l.translate('detail.filter.all_environments'),
+		production: l.translate('deploy.environment.production'),
+		staging: l.translate('deploy.environment.staging')
+	};
+	const statusLabel: Record<typeof status, string> = {
+		any: l.translate('detail.filter.any'),
+		succeeded: l.translate('status.succeeded'),
+		failed: l.translate('status.failed'),
+		running: l.translate('status.running')
+	};
 
 	const statusValue: Record<typeof status, DeploymentStatus | undefined> = {
 		any: undefined,
@@ -126,46 +139,55 @@
 <AppWorkspace {app} apiKey={data.user.api_key} tab="deployments">
 	{#snippet children(actions: AppActions)}
 		<div class="flex flex-col gap-3.5">
-			<div class="flex flex-wrap items-center gap-3">
-				<span id="filter-env" class="sr-only">{l.translate('deployment.environment')}</span>
-				<Segmented
-					bind:value={environment}
-					labelledby="filter-env"
-					class="max-sm:w-full"
-					items={[
-						{ value: 'all', label: l.translate('detail.filter.all') },
-						{ value: 'production', label: l.translate('deploy.environment.production') },
-						{ value: 'staging', label: l.translate('deploy.environment.staging') }
-					]}
-				/>
-				<span id="filter-status" class="sr-only">{l.translate('jobs.status')}</span>
-				<Segmented
-					bind:value={status}
-					labelledby="filter-status"
-					class="max-sm:w-full"
-					items={[
-						{ value: 'any', label: l.translate('detail.filter.any') },
-						{
-							value: 'succeeded',
-							label: l.translate('status.succeeded'),
-							icon: CheckmarkCircle02Icon
-						},
-						{ value: 'failed', label: l.translate('status.failed'), icon: CancelCircleIcon },
-						{ value: 'running', label: l.translate('status.running'), icon: Loading03Icon }
-					]}
-				/>
-				<div class="relative min-w-60 flex-1">
-					<Input
-						type="search"
-						bind:value={search}
-						aria-label={l.translate('detail.filter.search')}
-						placeholder={l.translate('detail.filter.search')}
-						class="pr-9"
-					/>
-					<Icon
-						icon={Search01Icon}
-						class="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
-					/>
+			<!-- Search with a readable fixed width, then the two filters as dropdowns. -->
+			<div class="grid items-end gap-3 sm:grid-cols-[minmax(0,320px)_190px_190px]">
+				<div class="flex flex-col gap-1">
+					<Label for="filter-search" class="text-xs font-semibold text-muted-foreground">
+						{l.translate('detail.filter.search.label')}
+					</Label>
+					<div class="relative">
+						<Input
+							id="filter-search"
+							type="search"
+							bind:value={search}
+							placeholder={l.translate('detail.filter.search')}
+							class="pr-9"
+						/>
+						<Icon
+							icon={Search01Icon}
+							class="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
+						/>
+					</div>
+				</div>
+				<div class="flex flex-col gap-1">
+					<Label for="filter-env" class="text-xs font-semibold text-muted-foreground">
+						{l.translate('deployment.environment')}
+					</Label>
+					<Select.Root type="single" bind:value={environment}>
+						<Select.Trigger id="filter-env" class="w-full">
+							{environmentLabel[environment]}
+						</Select.Trigger>
+						<Select.Content>
+							{#each Object.entries(environmentLabel) as [value, label] (value)}
+								<Select.Item {value} {label}>{label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+				<div class="flex flex-col gap-1">
+					<Label for="filter-status" class="text-xs font-semibold text-muted-foreground">
+						{l.translate('jobs.status')}
+					</Label>
+					<Select.Root type="single" bind:value={status}>
+						<Select.Trigger id="filter-status" class="w-full">
+							{statusLabel[status]}
+						</Select.Trigger>
+						<Select.Content>
+							{#each Object.entries(statusLabel) as [value, label] (value)}
+								<Select.Item {value} {label}>{label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
 				</div>
 			</div>
 
@@ -263,17 +285,18 @@
 										{#snippet child({ props })}
 											<Button
 												{...props}
-												variant="ghost"
+												variant="outline"
 												size="icon-sm"
+												class="data-[state=open]:bg-line-strong"
 												aria-label={l.translate('detail.row.menu', [d.deployment_number])}
 											>
 												<Icon icon={MoreHorizontalIcon} />
 											</Button>
 										{/snippet}
 									</DropdownMenu.Trigger>
-									<DropdownMenu.Content align="end" sideOffset={4} class="w-60 p-1.5">
+									<DropdownMenu.Content align="end" sideOffset={4} class="w-[212px] p-1.5">
 										<DropdownMenu.Item
-											class="gap-2.5 px-2.5 py-2"
+											class="h-9 gap-2.5 px-2.5 whitespace-nowrap"
 											onSelect={() => actions.openPreview(d.deployment_number)}
 										>
 											<Icon icon={CommandLineIcon} class="text-muted-foreground" />
@@ -282,7 +305,7 @@
 										{#if !app.cleanup_requested_at}
 											{#if d.environment === 'staging' && d.state.status === DeploymentStatus.Succeeded}
 												<DropdownMenu.Item
-													class="gap-2.5 px-2.5 py-2"
+													class="h-9 gap-2.5 px-2.5 whitespace-nowrap"
 													onSelect={() => {
 														promoteNumber = d.deployment_number;
 														promoteOpen = true;
@@ -294,7 +317,7 @@
 											{/if}
 											{#if d.state.finished_at}
 												<DropdownMenu.Item
-													class="gap-2.5 px-2.5 py-2"
+													class="h-9 gap-2.5 px-2.5 whitespace-nowrap"
 													onSelect={() => {
 														redeploy = d;
 														redeployOpen = true;
@@ -305,7 +328,10 @@
 												</DropdownMenu.Item>
 											{/if}
 										{/if}
-										<DropdownMenu.Item class="gap-2.5 px-2.5 py-2" onSelect={() => copyLink(d)}>
+										<DropdownMenu.Item
+											class="h-9 gap-2.5 px-2.5 whitespace-nowrap"
+											onSelect={() => copyLink(d)}
+										>
 											<Icon icon={Copy01Icon} class="text-muted-foreground" />
 											{l.translate('detail.row.copy')}
 										</DropdownMenu.Item>

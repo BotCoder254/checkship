@@ -8,12 +8,16 @@
 	import service, { type CreateTarget } from '#lib/resources/targets.ts';
 	import TargetForm from '../target-form.svelte';
 
-	const submit = (data: CreateTarget) => service.create(data).then(() => goto(routes.targets));
+	let { data } = $props();
+
+	const submit = (target: CreateTarget) =>
+		service.create(target).then((t) => goto(routes.target(t.id)));
 </script>
 
 <TargetForm
 	title={l.translate('breadcrumb.target.new')}
 	crumbs={[{ href: routes.targets, label: l.translate('breadcrumb.targets') }]}
+	localTarget={data.localTarget}
 	handler={submit}
 >
 	{#snippet actions(submitting)}
