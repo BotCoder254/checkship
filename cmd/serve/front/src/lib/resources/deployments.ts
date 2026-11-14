@@ -129,7 +129,7 @@ class RemoteDeploymentsService implements DeploymentsService {
 	queryLogs(appid: string, number: number, poll?: boolean): QueryResult<string> {
 		return this._fetcher.query(`/api/v1/apps/${appid}/deployments/${number}/logs`, {
 			refreshInterval: poll ? this._options.runningDeploymentsPollingInterval : undefined,
-			cache: 'no-store' // Don't know why, but sometimes in my tests, the server responds with 304 with outdated logs...
+			cache: 'no-store' // The log grows while the deployment runs: always ask the server for the latest content
 		});
 	}
 

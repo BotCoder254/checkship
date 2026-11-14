@@ -215,6 +215,7 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 			"Il semblerait que le déploiement que vous recherchez n'existe pas. Retournez à",
 		'deployment.not_found.cta': "la page d'application",
 		'deployment.waiting_for_logs': 'En attente des logs...',
+		'deployment.logs.failed': 'Impossible de charger les logs, nouvel essai...',
 		'deployment.target': 'deployé sur',
 		'deployment.target.deleted': 'cible supprimée',
 		// Menu
