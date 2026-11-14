@@ -18,6 +18,10 @@ type (
 		AppID       string              `json:"-"`
 		Page        monad.Maybe[int]    `form:"page"`
 		Environment monad.Maybe[string] `form:"environment"`
+		Status      monad.Maybe[uint8]  `form:"status"`
+		// Matches a deployment number (with or without #) or a Git branch or commit.
+		Search  monad.Maybe[string] `form:"search"`
+		PerPage monad.Maybe[int]    `form:"per_page"`
 	}
 
 	Deployment struct {
