@@ -121,7 +121,6 @@ export default class CacheFetchService implements FetchService {
 			return;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-empty-function
 		await this.revalidate(cache, options, at).catch(() => {});
 	}
 

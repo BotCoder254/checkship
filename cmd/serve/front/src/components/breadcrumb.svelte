@@ -24,7 +24,7 @@
 <div class="breadcrumb">
 	{#if segments.length > 1}
 		<Stack gap={0}>
-			{#each segments.slice(0, segments.length - 1) as segment}
+			{#each segments.slice(0, segments.length - 1) as segment, i (i)}
 				<div class="segment">
 					{#if isString(segment)}
 						{segment}

@@ -131,7 +131,7 @@ function waitTill(fn: () => void, timeout: number): Promise<void> {
 				fn();
 				clearInterval(interval);
 				resolve();
-			} catch (err) {
+			} catch {
 				if (Date.now() - start > timeout) {
 					clearInterval(interval);
 					reject();
@@ -145,7 +145,7 @@ class MockFetch {
 	public input?: RequestInfo | URL;
 	public init?: RequestInit;
 
-	constructor(public readonly data: any) {
+	constructor(public readonly data: unknown) {
 		this.fetch = this.fetch.bind(this);
 	}
 

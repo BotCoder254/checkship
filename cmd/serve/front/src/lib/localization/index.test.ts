@@ -84,7 +84,7 @@ describe('the LocalLocalizationService', () => {
 	});
 
 	it('should returns the translation key if the translation does not exist', () => {
-		expect(service.translate('not-found' as any)).toBe('not-found');
+		expect(service.translate('not-found' as never)).toBe('not-found');
 	});
 
 	it('should correctly translate a string', () => {

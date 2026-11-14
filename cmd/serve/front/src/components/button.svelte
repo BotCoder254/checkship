@@ -5,6 +5,8 @@
 
 	export let text: AppTranslationsString;
 
+	// Svelte 4 reads $$Props to type the component's props.
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	type $$Props = ComponentProps<ButtonBase> & {
 		text: AppTranslationsString;
 	};

@@ -78,6 +78,8 @@
 			<Display class="large" label="deployment.services">
 				{#if latestUrl}
 					<Panel class="outdated" title="deployment.outdated" format="inline" variant="warning">
+						<!-- The translation is our own markup. -->
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 						<p>{@html l.translate('deployment.outdated.description', [latestUrl])}</p>
 					</Panel>
 				{/if}
