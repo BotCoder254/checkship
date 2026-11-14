@@ -43,7 +43,7 @@
 
 	const { data: apps } = appsService.queryAll();
 	const { data: targets } = targetsService.queryAll();
-	const { data: jobs } = jobsService.queryAll(1);
+	const { data: jobs } = jobsService.queryAll({ page: 1 });
 
 	const path = $derived(page.url.pathname);
 	const failingTargets = $derived(

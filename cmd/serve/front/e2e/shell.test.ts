@@ -192,31 +192,58 @@ test.describe('pages', () => {
 		await shot(page, 'applications-with-recent');
 	});
 
-	test('profile: API key dialog, every action has an icon', async ({ page }) => {
+	test('profile: sections save on their own, the key is masked', async ({ page }) => {
 		await signIn(page, '/profile/');
 		await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
 
-		for (const name of ['Save', 'Copy', 'Regenerate API Key']) {
-			await expect(page.getByRole('button', { name }).locator('svg')).toHaveCount(1);
+		for (const name of [
+			'Sign out',
+			'Save email',
+			'Change password',
+			'Reveal',
+			'Copy',
+			'Regenerate'
+		]) {
+			await expect(
+				page.getByRole('button', { name, exact: true }).first().locator('svg')
+			).toHaveCount(1);
 		}
 
-		await page.getByRole('button', { name: 'Regenerate API Key' }).click();
+		// Nothing to save until the email changes.
+		await expect(page.getByRole('button', { name: 'Save email' })).toBeDisabled();
+
+		// The password is typed twice and checked here, without calling the API.
+		await page.getByLabel('New password').fill('one');
+		await page.getByLabel('Repeat it').fill('two');
+		await page.getByRole('button', { name: 'Change password' }).click();
+		await expect(page.getByText('The two passwords don’t match.')).toBeVisible();
+
+		// The key is masked until revealed.
+		const key = (await (await page.request.get('/api/v1/profile')).json()).api_key as string;
+		await expect(page.getByText(key, { exact: true })).toHaveCount(0);
+		await page.getByRole('button', { name: 'Reveal' }).click();
+		await expect(page.getByText(key, { exact: true })).toBeVisible();
+		await page.getByRole('button', { name: 'Hide' }).click();
+
+		await page.getByRole('button', { name: 'Regenerate', exact: true }).click();
 		await expect(page.getByRole('alertdialog')).toContainText('Regenerate the API key?');
 		await shot(page, 'profile-regenerate');
 		await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel' }).click();
+		await shot(page, 'profile');
 	});
 
 	test('pages fill the workspace: no max width, not centred', async ({ page }) => {
 		await page.setViewportSize({ width: 1920, height: 1000 });
-		await signIn(page, '/profile/');
+		await signIn(page, '/jobs/');
 		const main = (await page.locator('main').boundingBox())!;
 		const title = (await page.getByRole('heading', { level: 1 }).boundingBox())!;
-		const save = (await page.getByRole('button', { name: 'Save' }).boundingBox())!;
-		// 40px padding on every side from 1024px: the title starts at the left edge, Save ends at the right.
+		const pause = (await page.getByRole('button', { name: 'Pause updates' }).boundingBox())!;
+		// 40px padding on every side from 1024px: the title starts at the left edge, the header
+		// button ends at the right.
 		expect(Math.round(title.x - main.x)).toBe(40);
-		expect(Math.round(main.x + main.width - (save.x + save.width))).toBe(40);
+		expect(Math.round(main.x + main.width - (pause.x + pause.width))).toBe(40);
 		// And 40px above the header buttons.
-		expect(Math.round(save.y - main.y)).toBe(40);
+		expect(Math.round(pause.y - main.y)).toBe(40);
 	});
 });
 

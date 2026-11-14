@@ -532,6 +532,19 @@ Added 2026-11-14, researched (Coolify servers and proxy, Dokploy remote servers 
 - **Secrets are masked, not encrypted.** `storage.SecretString` replaces every character with `*` in API responses; nothing is encrypted at rest. Copy says "never shown again", never "encrypted". The form never fills a masked value back in.
 - **Registries:** a new registry starts from a preset with its official mark (`#lib/registry-logos.ts`: Simple Icons 16.37.0, CC0, traced from each brand's kit; Quay's mark from quay/quay). Marks keep their brand colours (Docker blue, GitLab orange, Quay blues); GitHub's uses the text colour, as GitHub allows black, white or grey. Each preset fills the name and URL and names the token: Docker Hub a read-only personal access token, GitHub a classic token with `read:packages`, GitLab a deploy token with `read_registry`, Quay a robot account (`namespace+robot`). Saved registries are recognised from their URL. Server rules: name required, URL required and unique, username and password together; turning sign-in off removes the login. Docker uses each login, keyed by the URL, for every deployment on every target.
 
+### 11.9 Jobs and profile
+
+Added 2026-11-14, researched (Oban Web, SolidQueueWeb, Bull Board; SaaS UI patterns for API keys, profile and settings pages; Zuplo's API key practices) and checked against `pkg/bus/sqlite/store.go` and `internal/auth/app`.
+
+- **Jobs list** (`routes/(main)/jobs`): the live queue, 10 per page, oldest first (the server's order, said on the page). The header shows the count, a Live dot (polls every 5 s) and that failed jobs retry on their own every 15 seconds. Pause updates stops polling; it also pauses while a job's drawer is open and while the tab is hidden.
+- **Row states, from the server's fields** (`#lib/job.ts`): Running (`retrieved`), Failed, retrying (an error; "next try in N s" from `not_before`), Waiting (a running job of its group, or an earlier job on its resource for jobs that wait for it, is on the same page; "after welcome #5"), Pending. Each row is named for what it acts on: a deployment as "app #N" with its environment (read from the group, `deployment.deployment.deploy.<app>-<env>-<id>`), cleanups by app, target jobs by target. The third column shows the error, else the resource id.
+- **State filter:** `GET /api/v1/jobs?status=running|failed|pending` (`bus.GetJobsFilters.Status`); pending means not retrieved and never failed.
+- **Actions follow the policy:** Cancel only on cancellable jobs (cleanups), behind a confirmation naming the job. No Retry (automatic) and no bulk actions (the API cancels one job at a time). Deployments can't be cancelled.
+- **Job drawer:** state, last error with what happens next, For (links to the deployment, app or target), Resource, Group (one job of a group runs at a time), Queued, Not before, the policy in plain words, and the JSON payload with Copy. Footer: Open deployment/application/target, and Cancel job or Close.
+- **Profile** (`routes/(main)/profile`): who you are (avatar, email, account created) with Sign out, then sections that save on their own and confirm it: Account (email, valid and unique, `email_already_taken`), Password (typed twice and compared in the page; the API only needs it non-empty and doesn't ask for the current one), Interface (language, applied at once with a reload).
+- **API key:** the server returns it in full, so the page masks it (first and last four) with Reveal and Copy. A highlighted cURL example shows how CI uses it. Regenerate sits in a danger-tinted block behind a confirmation: the old key stops working at once.
+- **Not added, no API:** sessions and "sign out everywhere", two-factor, account deletion, key last-used date, several keys.
+
 ---
 
 ## 12. UI library: research and choice

@@ -287,9 +287,30 @@ test.describe('desktop', () => {
 		await dialog.getByRole('button', { name: 'Close' }).click();
 	});
 
-	test('jobs: rows open their details in a drawer', async ({ page }) => {
+	test('jobs: live queue, state filter, details in a drawer', async ({ page }) => {
 		await signIn(page, '/jobs/');
 		await expect(page.getByRole('heading', { level: 1, name: 'Jobs' })).toBeVisible();
+		await expect(page.getByText('Live · updates every 5 s')).toBeVisible();
+		await page.getByRole('button', { name: 'Pause updates' }).click();
+		await expect(page.getByText('Updates paused')).toBeVisible();
+		await page.getByRole('button', { name: 'Resume updates' }).click();
+
+		// The API filters by state.
+		for (const status of ['running', 'failed', 'pending']) {
+			const res = await page.request.get(`/api/v1/jobs?status=${status}`);
+			expect(res.ok()).toBe(true);
+			for (const job of (await res.json()).data as { retrieved: boolean; error_code?: string }[]) {
+				expect(job.retrieved).toBe(status === 'running');
+				if (status !== 'running') expect(!!job.error_code).toBe(status === 'failed');
+			}
+		}
+
+		await page.getByLabel('State').click();
+		await page.getByRole('option', { name: 'Failed, retrying' }).click();
+		await expect(page.getByLabel('State')).toHaveText('Failed, retrying');
+		await page.getByLabel('State').click();
+		await page.getByRole('option', { name: 'Any state' }).click();
+
 		const rows = page.getByRole('row').filter({ has: page.getByRole('button') });
 		if ((await rows.count()) === 0) {
 			await expect(page.getByText('The queue is empty')).toBeVisible();
@@ -298,6 +319,7 @@ test.describe('desktop', () => {
 		await rows.first().getByRole('button').first().click();
 		const drawer = page.getByRole('dialog');
 		await expect(drawer.getByRole('heading', { name: 'Payload' })).toBeVisible();
+		await expect(drawer.getByRole('heading', { name: 'Policy' })).toBeVisible();
 		await shot(page, 'job-drawer');
 	});
 

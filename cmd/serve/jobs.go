@@ -7,7 +7,8 @@ import (
 )
 
 type listJobsFilters struct {
-	Page int `form:"page"`
+	Page   int    `form:"page"`
+	Status string `form:"status"`
 }
 
 func (s *server) listJobsHandler() gin.HandlerFunc {
@@ -16,6 +17,11 @@ func (s *server) listJobsHandler() gin.HandlerFunc {
 
 		if request.Page != 0 {
 			filters.Page.Set(request.Page)
+		}
+
+		switch status := bus.JobStatus(request.Status); status {
+		case bus.JobStatusRunning, bus.JobStatusFailed, bus.JobStatusPending:
+			filters.Status.Set(status)
 		}
 
 		jobs, err := s.scheduledJobsStore.GetAllJobs(ctx.Request.Context(), filters)

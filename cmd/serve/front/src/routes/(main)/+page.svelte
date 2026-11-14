@@ -19,7 +19,7 @@
 	import { deploymentBadge, deploymentMoment } from '#lib/status.ts';
 
 	const { data: apps } = service.queryAll();
-	const { data: jobs } = jobsService.queryAll(1);
+	const { data: jobs } = jobsService.queryAll({ page: 1 });
 
 	const failed = $derived(
 		($apps ?? []).filter(
