@@ -1,0 +1,39 @@
+services:
+  db:
+    restart: unless-stopped
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_DB: app
+      POSTGRES_PASSWORD: change-me # Overridden by the checkship app variables of the "db" service
+    # The /tcp suffix makes checkship expose Postgres on a TCP entrypoint of the target.
+    # checkship picks a free host port the first time and keeps it afterwards.
+    ports:
+      - "5432:5432/tcp"
+    volumes:
+      - pgdata:/var/lib/postgresql # Postgres 18 images keep their data under this directory
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  pgadmin:
+    restart: unless-stopped
+    build: ./pgadmin # pgAdmin 4 with the "db" server already registered
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com # Overridden by the checkship app variables of the "pgadmin" service
+      PGADMIN_DEFAULT_PASSWORD: change-me # Overridden by the checkship app variables of the "pgadmin" service
+      PGADMIN_DISABLE_POSTFIX: "true"
+    # A port without /tcp is served over http by the target proxy: this is the application's default url.
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+
+volumes:
+  pgdata:
+  pgadmin:
