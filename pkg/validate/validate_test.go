@@ -119,6 +119,40 @@ func Test_Struct(t *testing.T) {
 	})
 }
 
+func Test_Array(t *testing.T) {
+	t.Run("should key errors by index", func(t *testing.T) {
+		err := validate.Array([]string{"john", "doe"}, func(value string, _ int) error {
+			if value == "doe" {
+				return errAlwaysFail
+			}
+
+			return nil
+		})
+
+		fieldErrs, ok := apperr.As[validate.FieldErrors](err)
+
+		assert.True(t, ok)
+		assert.DeepEqual(t, validate.FieldErrors{"1": errAlwaysFail}, fieldErrs)
+	})
+
+	t.Run("should flatten nested struct errors", func(t *testing.T) {
+		err := validate.Struct(validate.Of{
+			"people": validate.Array([]string{"john"}, func(string, int) error {
+				return validate.Struct(validate.Of{"name": errAlwaysFail})
+			}),
+		})
+
+		fieldErrs, ok := apperr.As[validate.FieldErrors](err)
+
+		assert.True(t, ok)
+		assert.DeepEqual(t, validate.FieldErrors{"people.0.name": errAlwaysFail}, fieldErrs)
+	})
+
+	t.Run("should return nil without errors", func(t *testing.T) {
+		assert.Nil(t, validate.Array([]string{"john"}, func(string, int) error { return nil }))
+	})
+}
+
 func Test_If(t *testing.T) {
 	t.Run("return the validation error only if expression is true", func(t *testing.T) {
 		err := validate.Struct(validate.Of{

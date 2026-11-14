@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/checkship-deploy/checkship/pkg/apperr"
@@ -77,6 +78,24 @@ func Field[T any](value T, validators ...Validator[T]) error {
 		if err := validator(value); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// Validates each element of a slice with the given function. Errors are keyed by
+// the element index so nested field errors flatten to "<field>.<index>.<subfield>".
+func Array[T any](values []T, fn func(T, int) error) error {
+	fieldErrs := make(FieldErrors)
+
+	for i, value := range values {
+		if err := fn(value, i); err != nil {
+			fieldErrs[strconv.Itoa(i)] = err
+		}
+	}
+
+	if len(fieldErrs) > 0 {
+		return fieldErrs
 	}
 
 	return nil

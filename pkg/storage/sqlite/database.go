@@ -19,6 +19,7 @@ const (
 	dbDriverName                     = "sqlite3"
 	migrateSourceName                = "embed"
 	transactionContextKey contextKey = "sqlitetx"
+	afterCommitContextKey contextKey = "sqliteaftercommit"
 )
 
 var _ builder.Executor = (*Database)(nil) // Ensure Database implements the Executor interface
@@ -115,7 +116,36 @@ func (db *Database) WithTransaction(ctx context.Context) (context.Context, *sql.
 		panic(err)
 	}
 
-	return context.WithValue(ctx, transactionContextKey, tx), tx, true
+	ctx = context.WithValue(ctx, transactionContextKey, tx)
+	ctx = context.WithValue(ctx, afterCommitContextKey, &afterCommitHooks{})
+
+	return ctx, tx, true
+}
+
+type afterCommitHooks struct {
+	fns []func()
+}
+
+// Runs fn once the transaction attached to ctx has been committed, so other connections
+// can see what it wrote. Without a transaction, fn runs right away. On rollback, fn
+// never runs.
+func AfterCommit(ctx context.Context, fn func()) {
+	hooks, ok := ctx.Value(afterCommitContextKey).(*afterCommitHooks)
+
+	if !ok {
+		fn()
+		return
+	}
+
+	hooks.fns = append(hooks.fns, fn)
+}
+
+func runAfterCommitHooks(ctx context.Context) {
+	if hooks, ok := ctx.Value(afterCommitContextKey).(*afterCommitHooks); ok {
+		for _, fn := range hooks.fns {
+			fn()
+		}
+	}
 }
 
 // Retrieve the transaction in the given context if any, or nil if it doesn't
@@ -193,8 +223,8 @@ func WriteAndDispatch[T event.Source](
 			if err := tx.Rollback(); err != nil {
 				finalErr = err
 			}
-		} else {
-			finalErr = tx.Commit()
+		} else if finalErr = tx.Commit(); finalErr == nil {
+			runAfterCommitHooks(ctx)
 		}
 	}()
 

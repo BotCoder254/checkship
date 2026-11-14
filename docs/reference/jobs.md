@@ -4,6 +4,10 @@ A number of **background tasks** are managed by **checkship**. You can check the
 
 For the vast majority of cases, you may never have to look at them as they are processed without issues.
 
+Jobs are processed by [runners](/guide/configuration#runners). A job starts as soon as it is queued if its runner has a free worker, otherwise as soon as one becomes free. A job shown as running is being processed by a worker.
+
+Deployments of the same application environment run one at a time, in the order they were queued. The same goes for configurations of the same target.
+
 ::: info
 By default, **jobs in error** state are retried every **15 seconds**. This is because some errors (such as the `target_configuration_in_progress`) are expected and will delay the job.
 :::

@@ -130,9 +130,8 @@ current values, which persists the generated HTTP secret. Then `PostLoad()` vali
 | http.port | HTTP_PORT, PORT | 8080 | |
 | http.secure | HTTP_SECURE | unset → derived from EXPOSED_ON scheme | cookie `Secure` flag + `Location` header scheme |
 | http.secret | HTTP_SECRET | random 64 chars | cookie signing/encryption key |
-| runners.poll_interval | RUNNERS_POLL_INTERVAL | 4s | scheduler polling |
-| runners.deployment | RUNNERS_DEPLOYMENT_COUNT | 4 | deploy workers |
-| runners.cleanup | RUNNERS_CLEANUP_COUNT | 2 | cleanup/config/delete workers |
+| runners | RUNNERS_CONFIGURATION | deploy runner (4s, 4 workers) + catch-all (4s, 2) | list of `{poll_interval, count, jobs}`; env format `4s;4;deployment.command.deploy\|4s;2;`. Code in `cmd/config/runners.go` |
+| runners.poll_interval/deployment/cleanup | RUNNERS_POLL_INTERVAL, RUNNERS_DEPLOYMENT_COUNT, RUNNERS_CLEANUP_COUNT | | deprecated, still read into the default pair of runners with a warning |
 | — | CHECKSHIP_ADMIN_EMAIL, ADMIN_EMAIL | | first user only |
 | — | CHECKSHIP_ADMIN_PASSWORD, ADMIN_PASSWORD | | first user only |
 | — | EXPOSED_ON | | `<scheme>://<container>@<root-domain>` e.g. `http://checkship@docker.localhost` |
@@ -182,10 +181,11 @@ $TMPDIR/checkship-archive-*            # uploaded tar.gz archives (never cleaned
                             Scheduler.Queue(job) → scheduled_jobs table
                                        │
   ┌────────────────────────────────────┴─────────────────────────────┐
-  │ Scheduler (pkg/bus/scheduler.go): poll every 4s, worker groups:  │
-  │   • deployment group (4 workers): deployment.command.deploy      │
-  │   • cleanup group   (2 workers): cleanup_app, delete_app,        │
+  │ Scheduler (pkg/bus/scheduler.go), one poller per runner:         │
+  │   • deploy runner (4 workers): deployment.command.deploy         │
+  │   • catch-all runner (2 workers): cleanup_app, delete_app,       │
   │       configure_target, cleanup_target, delete_target            │
+  │ woken after commit, poll every 4s as fallback                    │
   │ each job → bus.Send(msg) → Done (delete row) | Retry (+15s)      │
   └────────────────────────────────────┬─────────────────────────────┘
                                        ▼
@@ -203,14 +203,15 @@ $TMPDIR/checkship-archive-*            # uploaded tar.gz archives (never cleaned
 2. `sqlite.Open(dsn)`.
 3. `bussqlite.NewScheduledJobsStore(db).Setup()` migrates the `scheduler` module and resets `retrieved=true` jobs
    to `false`, so jobs that were running during a crash are picked up again.
-4. `bus.NewScheduler(...)` with 2 worker groups (not started yet).
+4. `bus.NewScheduler(store, logger, bus)`. Jobs can be queued from here on; nothing runs until step 9.
 5. `authinfra.Setup` registers auth handlers and migrates `auth`.
 6. `deploymentinfra.Setup` builds the stores, artifact manager, source facade (raw, archive, git) and provider facade (docker),
    registers all request + signal handlers, migrates `deployment`, then **fails all `Running` deployments**
    with errcode `server_reset`.
 7. `create_first_account`: if no user exists, it needs ADMIN_EMAIL and ADMIN_PASSWORD (otherwise it errors with a help message).
 8. If `EXPOSED_ON` is set, `expose_checkship_container` runs (see §6.8).
-9. `scheduler.Start()`, then the HTTP server listens. Graceful shutdown on SIGINT/SIGTERM (5s), then
+9. `options.RunnersDefinitions(bus.Marshallable.Keys(), logger)` checks the runners config against every registered job
+   type (unknown or unhandled names stop startup), then `scheduler.Start(runners...)`, then the HTTP server listens. Graceful shutdown on SIGINT/SIGTERM (5s), then
    `scheduler.Stop()` waits for running jobs and the DB closes.
 
 ### 5.3 The bus (`pkg/bus`)
@@ -241,12 +242,23 @@ $TMPDIR/checkship-archive-*            # uploaded tar.gz archives (never cleaned
 ### 5.5 Scheduler / jobs (`pkg/bus/scheduler.go`, `pkg/bus/sqlite/store.go`)
 Table `scheduled_jobs(id, resource_id, [group], message_name, message_data JSON, queued_at, not_before, policy, errcode, retrieved)`.
 
-- **Picking** (`GetNextPendingJobs`, an atomic `UPDATE ... RETURNING`): at most **one job per group**, only if no job of that
-  group is currently `retrieved`, the job has `not_before <= now`, and, with the `WaitForOthersResourceID` policy, it is the
-  **only** remaining job for its `resource_id`. The default group is the job id (no serialization).
+- **Runners** (`RunnerDefinition{PollInterval, Workers, Messages}`, built from the config in `cmd/config/runners.go`): each has its own
+  poller goroutine and workers. The poller claims at most as many jobs as it has idle workers, so `retrieved = true` (shown as
+  "running") means a worker has it. It polls on start, on its ticker, and when woken: `Queue` wakes the runner of the message
+  through `store.AfterCommit` (`sqlite.AfterCommit`, run by `WriteAndDispatch` after `tx.Commit()`), and a worker wakes its
+  runner when it finishes a job. A handler panic is recovered and goes through `Retry` as `job panicked: ...`.
+- **Stop:** each runner's `done` is closed; the poller is the only sender on the jobs channel and closes it, workers finish their
+  current job. Jobs claimed but not handed over are given back with `Release`.
+- **Picking** (`GetNextPendingJobs(ctx, limit, names...)`, an atomic `UPDATE ... RETURNING`): at most **one job per group**, only if
+  no job of that group is currently `retrieved`, the job is due (`julianday(not_before) <= julianday('now')`; a plain string
+  compare with `DATETIME('now')` skips jobs queued in the current second), and, with the `WaitForOthersResourceID` policy, it is the
+  **only** remaining job for its `resource_id`. The group head is chosen across all message types **before** filtering on the
+  runner's names, so a runner never jumps ahead of an older job of the same group waiting for another runner. Heads are ordered by
+  the raw `not_before` string (nanoseconds; julianday only keeps milliseconds). The default group is the job id (no serialization).
 - **Policies (bit flags):** `1 RetryPreserveOrder` (on error, shift the whole group by +14+n seconds), `2 WaitForOthersResourceID`,
   `4 Cancellable` (deletable via `DELETE /api/v1/jobs/:id`), `8 Merge` (if a non-retrieved job with the same resource and name exists, replace its payload instead of inserting).
-- **Done:** the row is deleted. **Error:** `Retry` sets `errcode` and `not_before = now+15s`. A message with no handler is retried forever.
+- **Done:** the row is deleted. **Error:** `Retry` sets `errcode` and `not_before = now+15s`. A job type no runner handles is refused at
+  startup.
 - SQL trigger `on_deployment_failed_cleanup_jobs`: when a deployment becomes Failed(2), it deletes pending jobs whose
   `resource_id = appId-number`.
 
@@ -536,7 +548,8 @@ History notes: v1→v2 migration `1706004450_add_target` created a default targe
   Register it in `internal/<ctx>/infra/mod.go`. Expose it via a gin handler in `cmd/serve/*.go` + a route in `server.go`.
   Add a test using `fixture.PrepareDatabase(t, fixture.WithUsers(...), ...)` and `pkg/assert`.
 - **Background job:** the command also implements `ResourceID()`. Queue it from an `On<Event>Handler(scheduler)` with
-  `bus.WithGroup` / `bus.WithPolicy`. Add it to a `WorkerGroup` in `cmd/startup/server.go` (otherwise it's never processed) and add a
+  `bus.WithGroup` / `bus.WithPolicy`. The catch-all runner (last runner without `jobs`) picks it up; if the runners config
+  lists every job explicitly, startup fails until the new name is added. List it in `docs/guide/configuration.md#runners` and add a
   translation key named after the message for the Jobs page.
   ⚠ `message_name` values are **persisted** in `scheduled_jobs`, so renaming them breaks queued jobs.
 - **Entity change:** add an event struct + `Name_()`, mutate only through `apply`, handle the event in the store's `Write` switch.

@@ -176,25 +176,60 @@ func (s *store) GetAllJobs(ctx context.Context, filters bus.GetJobsFilters) (sto
 		Paginate(s.db, ctx, jobQueryMapper, filters.Page.Get(1), 10)
 }
 
-func (s *store) GetNextPendingJobs(ctx context.Context) ([]bus.ScheduledJob, error) {
-	// This query will lock the database to make sure we can't retrieved the same job twice.
+// Claims up to limit jobs, at most one per group, and marks them as retrieved.
+// The head of each group is chosen across every message type before filtering on
+// messageNames, so a runner never starts a job while an older job of the same group,
+// handled by another runner, is still waiting. No messageNames means every type.
+//
+// The due check uses julianday: the driver stores times as
+// "2006-01-02 15:04:05.999999999-07:00", which compares as greater than DATETIME('now')
+// for the rest of the second, so a job queued a moment ago would not be found.
+// Ordering stays on the raw strings, julianday only keeps milliseconds and two jobs
+// queued in the same millisecond would tie.
+func (s *store) GetNextPendingJobs(ctx context.Context, limit int, messageNames ...string) ([]bus.ScheduledJob, error) {
+	if limit <= 0 {
+		return nil, nil
+	}
+
+	// A single UPDATE ... RETURNING is atomic, so two runners can't claim the same job.
 	return builder.
 		Query[bus.ScheduledJob](`
 			UPDATE scheduled_jobs
 			SET retrieved = true
-			WHERE id IN (SELECT id FROM (
-				SELECT id, MIN(not_before) FROM scheduled_jobs sj
-				WHERE 
-					sj.retrieved = false
-					AND sj.not_before <= DATETIME('now')
-					AND sj.[group] NOT IN (SELECT DISTINCT [group] FROM scheduled_jobs WHERE retrieved = true)
-					AND (sj.policy & ? = 0 OR (SELECT COUNT(resource_id) FROM scheduled_jobs WHERE resource_id = sj.resource_id) <= 1)
+			WHERE id IN (
+				SELECT id FROM (
+					SELECT id, message_name, MIN(not_before) AS not_before FROM scheduled_jobs sj
+					WHERE
+						sj.retrieved = false
+						AND julianday(sj.not_before) <= julianday('now')
+						AND sj.[group] NOT IN (SELECT DISTINCT [group] FROM scheduled_jobs WHERE retrieved = true)
+						AND (sj.policy & ? = 0 OR (SELECT COUNT(resource_id) FROM scheduled_jobs WHERE resource_id = sj.resource_id) <= 1)
 					GROUP BY sj.[group]
-				)
+				) heads
+				WHERE TRUE`, bus.JobPolicyWaitForOthersResourceID).
+		S(builder.Array("AND heads.message_name IN", messageNames)).
+		F(`
+				ORDER BY heads.not_before
+				LIMIT ?
 			)
-			RETURNING id, message_name, message_data, policy`, bus.JobPolicyWaitForOthersResourceID).
+			RETURNING id, message_name, message_data, policy`, limit).
 		All(s.db, ctx, jobMapper)
 }
+
+// Gives claimed jobs back to the queue, used when a runner stops before a worker
+// picked them up.
+func (s *store) Release(ctx context.Context, ids ...string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	return builder.
+		Command("UPDATE scheduled_jobs SET retrieved = false WHERE TRUE").
+		S(builder.Array("AND id IN", ids)).
+		Exec(s.db, ctx)
+}
+
+func (s *store) AfterCommit(ctx context.Context, fn func()) { sqlite.AfterCommit(ctx, fn) }
 
 func (s *store) Retry(ctx context.Context, j bus.ScheduledJob, jobErr error) error {
 	// If we don't need to preserve the order of related tasks, we simply update the job to queue it again

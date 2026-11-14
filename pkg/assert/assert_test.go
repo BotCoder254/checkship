@@ -129,6 +129,74 @@ false`)
 	})
 }
 
+func Test_ArrayEqual(t *testing.T) {
+	t.Run("should fail given a different number of elements", func(t *testing.T) {
+		mock := new(mockT)
+
+		assert.ArrayEqual(mock, []int{1, 2, 3}, []int{1, 2}, "with wrong number of elements")
+
+		shouldHaveFailed(t, mock, `should have same length - with wrong number of elements
+	expected:
+3
+
+	got:
+2`)
+	})
+
+	t.Run("should fail given different elements", func(t *testing.T) {
+		mock := new(mockT)
+
+		assert.ArrayEqual(mock, []int{2, 1}, []int{3, 4}, "with different elements")
+
+		shouldHaveFailed(t, mock, `should have been equal - with different elements
+	expected:
+[]int{1, 2}
+
+	got:
+[]int{3, 4}`)
+	})
+
+	t.Run("should pass given the same elements in another order without sorting the inputs", func(t *testing.T) {
+		mock := new(mockT)
+		expected, actual := []int{1, 2}, []int{2, 1}
+
+		assert.ArrayEqual(mock, expected, actual)
+
+		shouldHaveSucceeded(t, mock)
+		assert.DeepEqual(t, []int{2, 1}, actual)
+	})
+
+	t.Run("should pass given empty slices", func(t *testing.T) {
+		mock := new(mockT)
+
+		assert.ArrayEqual(mock, []int{}, nil)
+
+		shouldHaveSucceeded(t, mock)
+	})
+}
+
+func Test_ArrayEqualFunc(t *testing.T) {
+	type item struct{ value int }
+
+	compare := func(a, b item) int { return a.value - b.value }
+
+	t.Run("should pass given the same elements in another order", func(t *testing.T) {
+		mock := new(mockT)
+
+		assert.ArrayEqualFunc(mock, []item{{2}, {1}}, []item{{1}, {2}}, compare)
+
+		shouldHaveSucceeded(t, mock)
+	})
+
+	t.Run("should fail given different elements", func(t *testing.T) {
+		mock := new(mockT)
+
+		assert.ArrayEqualFunc(mock, []item{{1}}, []item{{2}}, compare)
+
+		assert.True(t, mock.hasFailed)
+	})
+}
+
 func Test_NotEqual(t *testing.T) {
 	t.Run("should correctly fail given the expected value", func(t *testing.T) {
 		mock := new(mockT)
