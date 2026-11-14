@@ -1,6 +1,10 @@
-import { POLLING_INTERVAL_MS } from '$lib/config';
-import fetcher, { type FetchOptions, type FetchService, type QueryResult } from '$lib/fetcher';
-import type { ByUserData } from '$lib/resources/users';
+import { POLLING_INTERVAL_MS } from '#lib/config.ts';
+import fetcher, {
+	type FetchOptions,
+	type FetchService,
+	type QueryResult
+} from '#lib/fetcher/index.ts';
+import type { ByUserData } from '#lib/resources/users.ts';
 
 export enum TargetStatus {
 	Configuring = 0,
@@ -78,7 +82,10 @@ type Options = {
 };
 
 export class RemoteTargetsService implements TargetsService {
-	constructor(private readonly _fetcher: FetchService, private readonly _options: Options) {}
+	constructor(
+		private readonly _fetcher: FetchService,
+		private readonly _options: Options
+	) {}
 
 	create(payload: CreateTarget): Promise<Target> {
 		return this._fetcher.post('/api/v1/targets', payload);

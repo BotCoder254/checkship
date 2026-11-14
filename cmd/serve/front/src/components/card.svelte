@@ -35,7 +35,8 @@
 	}
 
 	.body {
-		background-image: linear-gradient(to top, var(--co-background-5), 94%, transparent),
+		background-image:
+			linear-gradient(to top, var(--co-background-5), 94%, transparent),
 			repeating-linear-gradient(
 				-45deg,
 				transparent,

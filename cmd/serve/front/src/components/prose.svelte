@@ -1,3 +1,7 @@
+<!--
+	Legacy rich-text wrapper (DESIGN.md §11.2), replaced by Tailwind as pages migrate. Uses Svelte's
+	scoped styles: the CSS-modules preprocessor doesn't rewrite a dynamic class on <svelte:element>.
+-->
 <script lang="ts">
 	let className: string = '';
 
@@ -11,27 +15,27 @@
 	<slot />
 </svelte:element>
 
-<style module>
-	.prose a {
+<style>
+	.prose :global(a) {
 		color: var(--co-primary-4);
 	}
 
-	.prose a:hover,
-	.prose a:focus {
+	.prose :global(a:hover),
+	.prose :global(a:focus) {
 		text-decoration: underline;
 		text-underline-offset: 2px;
 	}
 
-	.prose strong {
+	.prose :global(strong) {
 		color: var(--co-text-5);
 		font-weight: 600;
 	}
 
-	.prose code {
+	.prose :global(code) {
 		font-family: var(--fo-mono);
 	}
 
-	.prose > * + * {
+	.prose > :global(* + *) {
 		margin-block-start: var(--sp-4);
 	}
 </style>

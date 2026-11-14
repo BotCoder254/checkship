@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"strings"
 
 	"github.com/checkship-deploy/checkship/internal/deployment/app"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/get_app_deployments"
@@ -110,8 +111,14 @@ func (s *gateway) GetAllDeploymentsByApp(ctx context.Context, cmd get_app_deploy
 			LEFT JOIN targets ON targets.id = deployments.config_target
 			WHERE deployments.app_id = ?`, cmd.AppID).
 		S(builder.MaybeValue(cmd.Environment, "AND deployments.config_environment = ?")).
+		S(builder.MaybeValue(cmd.Status, "AND deployments.state_status = ?")).
+		S(builder.Maybe(cmd.Search, func(search string) (string, []any) {
+			return `AND (CAST(deployments.deployment_number AS TEXT) = ?
+				OR (deployments.source_discriminator = 'git' AND deployments.source LIKE ?))`,
+				[]any{strings.TrimPrefix(search, "#"), "%" + search + "%"}
+		})).
 		F("ORDER BY deployments.deployment_number DESC").
-		Paginate(s.db, ctx, deploymentMapper(nil), cmd.Page.Get(1), 5)
+		Paginate(s.db, ctx, deploymentMapper(nil), cmd.Page.Get(1), cmd.PerPage.Get(5))
 }
 
 func (s *gateway) GetDeploymentByID(ctx context.Context, cmd get_deployment.Query) (get_deployment.Deployment, error) {

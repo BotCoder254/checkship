@@ -1,8 +1,8 @@
 <script lang="ts">
 	import BlankSlate from '$components/blank-slate.svelte';
 	import ArrowRight from '$assets/icons/arrow-right.svelte';
-	import type { AppTranslationsString } from '$lib/localization';
-	import l from '$lib/localization';
+	import type { AppTranslationsString } from '#lib/localization/index.ts';
+	import l from '#lib/localization/index.ts';
 
 	type T = $$Generic<{ id: string }>;
 
@@ -23,7 +23,7 @@
 				<th>{l.translate(label)}</th>
 			{/each}
 			{#if $$slots.expanded}
-				<th />
+				<th></th>
 			{/if}
 		</tr>
 	</thead>

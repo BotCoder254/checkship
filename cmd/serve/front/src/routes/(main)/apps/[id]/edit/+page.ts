@@ -1,5 +1,5 @@
-import service from '$lib/resources/apps';
-import targetsService from '$lib/resources/targets';
+import service from '#lib/resources/apps.ts';
+import targetsService from '#lib/resources/targets.ts';
 import { error } from '@sveltejs/kit';
 
 export const load = async ({ params, fetch, depends }) => {
@@ -13,6 +13,6 @@ export const load = async ({ params, fetch, depends }) => {
 			targets
 		};
 	} catch {
-		throw error(404);
+		error(404);
 	}
 };

@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { DeploymentStatus, type Deployment } from '$lib/resources/deployments';
+	import { DeploymentStatus, type Deployment } from '#lib/resources/deployments.ts';
 	import Loader from '$components/loader.svelte';
 	import Stack from '$components/stack.svelte';
 	import DeploymentPill from '$components/deployment-pill.svelte';
 	import StatusIndicator from './status-indicator.svelte';
-	import l from '$lib/localization';
-	import select from '$lib/select';
+	import l from '#lib/localization/index.ts';
+	import select from '#lib/select.ts';
 	import type { ComponentProps } from 'svelte';
 
 	export let data: Maybe<Deployment[]> = undefined;

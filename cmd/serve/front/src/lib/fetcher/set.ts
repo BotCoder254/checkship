@@ -1,5 +1,5 @@
-import { browser } from '$app/environment';
-import { invalidate, invalidateAll } from '$app/navigation';
+import { browser } from '$app/env';
+import { invalidate, refreshAll } from '$app/navigation';
 import CacheData from './data';
 
 /**
@@ -18,7 +18,10 @@ export default class CacheSet {
 	private readonly _baseKeyMapping: Map<string, string[]> = new Map();
 	private readonly _data: Map<string, CacheData> = new Map();
 
-	public constructor(private readonly _invalidator?: Invalidator, ...initialData: CacheData[]) {
+	public constructor(
+		private readonly _invalidator?: Invalidator,
+		...initialData: CacheData[]
+	) {
 		initialData.forEach((data) => {
 			this._data.set(data.key, data);
 			this._baseKeyMapping.set(data.baseKey, [
@@ -83,7 +86,7 @@ export class SvelteInvalidator implements Invalidator {
 
 	async invalidateAll(): Promise<void> {
 		if (browser) {
-			return invalidateAll();
+			return refreshAll(); // SvelteKit 3: replaces the deprecated invalidateAll(), the app does not use page.state
 		}
 	}
 }

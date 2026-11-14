@@ -1,4 +1,4 @@
-import type { Environment } from '$lib/resources/deployments';
+import type { Environment } from '#lib/resources/deployments.ts';
 
 export type CurlPayload =
 	| {

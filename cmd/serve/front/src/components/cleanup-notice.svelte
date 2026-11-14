@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Panel from '$components/panel.svelte';
-	import l from '$lib/localization';
+	import l from '#lib/localization/index.ts';
 
 	export let requested_at: Maybe<string>;
 </script>

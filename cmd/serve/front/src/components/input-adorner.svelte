@@ -1,6 +1,6 @@
 <script lang="ts">
 	import InputHelp from '$components/input-help.svelte';
-	import l, { type AppTranslationsString } from '$lib/localization';
+	import l, { type AppTranslationsString } from '#lib/localization/index.ts';
 
 	export let label: AppTranslationsString;
 	export let error: Maybe<string> = undefined;

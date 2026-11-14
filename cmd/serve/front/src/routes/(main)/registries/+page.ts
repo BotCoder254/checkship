@@ -1,4 +1,4 @@
-import service from '$lib/resources/registries';
+import service from '#lib/resources/registries.ts';
 
 export const load = async ({ fetch, depends }) => {
 	const registries = await service.fetchAll({ fetch, depends });

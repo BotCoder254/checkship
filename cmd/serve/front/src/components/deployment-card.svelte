@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { type DeploymentDetail, DeploymentStatus } from '$lib/resources/deployments';
+	import { type DeploymentDetail, DeploymentStatus } from '#lib/resources/deployments.ts';
 	import type { ComponentProps } from 'svelte';
-	import routes from '$lib/path';
+	import routes from '#lib/path.ts';
 	import Card from '$components/card.svelte';
 	import Link from '$components/link.svelte';
 	import Stack from '$components/stack.svelte';
@@ -9,7 +9,7 @@
 	import DeploymentPill from '$components/deployment-pill.svelte';
 	import Display from '$components/display.svelte';
 	import ServiceInfo from '$components/service-info.svelte';
-	import l from '$lib/localization';
+	import l from '#lib/localization/index.ts';
 
 	export let data: DeploymentDetail;
 	export let latestUrl: Maybe<string> = undefined; // If set, show the oudated panel

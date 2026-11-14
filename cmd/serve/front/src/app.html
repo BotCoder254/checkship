@@ -1,9 +1,22 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<script>
+			// Dark is the default until every page is migrated (DESIGN.md §13.5). mode-watcher 1.1.0
+			// stores "system" when it is first imported, before <ModeWatcher defaultMode> is read, so the
+			// default never applies. Seed it here, before the app loads, only when nobody has chosen yet.
+			// Remove this (and defaultMode) when switching the default to "system".
+			try {
+				if (!localStorage.getItem('mode-watcher-mode')) {
+					localStorage.setItem('mode-watcher-mode', 'dark');
+				}
+			} catch {
+				// Storage blocked (private mode): mode-watcher falls back to the system setting.
+			}
+		</script>
 		%sveltekit.head%
 	</head>
 	<body>

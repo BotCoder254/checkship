@@ -19,6 +19,7 @@ import (
 	"github.com/checkship-deploy/checkship/pkg/bus"
 	"github.com/checkship-deploy/checkship/pkg/bus/memory"
 	bussqlite "github.com/checkship-deploy/checkship/pkg/bus/sqlite"
+	"github.com/checkship-deploy/checkship/pkg/live"
 	"github.com/checkship-deploy/checkship/pkg/log"
 	"github.com/checkship-deploy/checkship/pkg/monad"
 	"github.com/checkship-deploy/checkship/pkg/storage/sqlite"
@@ -32,6 +33,7 @@ type (
 		Logger() log.Logger
 		UsersReader() domain.UsersReader
 		ScheduledJobsStore() bus.ScheduledJobsStore
+		Live() *live.Hub
 	}
 
 	ServerOptions interface {
@@ -53,6 +55,7 @@ type (
 		usersReader    domain.UsersReader
 		schedulerStore bus.ScheduledJobsStore
 		scheduler      bus.RunnableScheduler
+		live           *live.Hub
 	}
 )
 
@@ -115,6 +118,11 @@ func Server(options ServerOptions, logger log.Logger) (ServerRoot, error) {
 		return nil, err
 	}
 
+	// Live hints for the dashboard (server-sent events): 5 streams per user, 100 in all, 32 buffered
+	// hints per stream. Registered before anything runs, the bus handlers map isn't synchronized.
+	s.live = live.NewHub(5, 100, 32)
+	deploymentinfra.RegisterLiveHints(s.bus, s.live.Publish)
+
 	// Create the first account if needed
 	uid, err := bus.Send(s.bus, context.Background(), create_first_account.Command{
 		Email:    options.DefaultEmail(),
@@ -157,3 +165,4 @@ func (s *serverRoot) Bus() bus.Dispatcher                        { return s.bus 
 func (s *serverRoot) Logger() log.Logger                         { return s.logger }
 func (s *serverRoot) UsersReader() domain.UsersReader            { return s.usersReader }
 func (s *serverRoot) ScheduledJobsStore() bus.ScheduledJobsStore { return s.schedulerStore }
+func (s *serverRoot) Live() *live.Hub                            { return s.live }

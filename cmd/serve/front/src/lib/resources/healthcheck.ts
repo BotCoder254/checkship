@@ -1,4 +1,4 @@
-import fetcher, { type FetchOptions, type FetchService } from '$lib/fetcher';
+import fetcher, { type FetchOptions, type FetchService } from '#lib/fetcher/index.ts';
 
 export type HealthCheckResult = {
 	version: string;

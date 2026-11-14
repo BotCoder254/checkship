@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { messageFromAttributes } from '$lib/form';
+	import { messageFromAttributes } from '#lib/form.ts';
 	import InputAdorner from '$components/input-adorner.svelte';
-	import type { AppTranslationsString } from '$lib/localization';
+	import type { AppTranslationsString } from '#lib/localization/index.ts';
 
 	export let label: AppTranslationsString;
 	export let type: HtmlInputType = 'text';
@@ -36,7 +36,7 @@
 		{disabled}
 		{placeholder}
 		{autofocus}
-		{autocomplete}
+		autocomplete={autocomplete as HTMLInputElement['autocomplete'] | undefined}
 		on:blur={() => {
 			touched = true;
 			remoteError = undefined;

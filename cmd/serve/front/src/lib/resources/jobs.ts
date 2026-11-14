@@ -1,6 +1,10 @@
-import { POLLING_INTERVAL_MS } from '$lib/config';
-import fetcher, { type FetchOptions, type FetchService, type QueryResult } from '$lib/fetcher';
-import type { Paginated } from '$lib/pagination';
+import { POLLING_INTERVAL_MS } from '#lib/config.ts';
+import fetcher, {
+	type FetchOptions,
+	type FetchService,
+	type QueryResult
+} from '#lib/fetcher/index.ts';
+import type { Paginated } from '#lib/pagination.ts';
 
 export type Job = {
 	id: string;
@@ -22,18 +26,32 @@ export enum JobPolicy {
 	Mergeable = 8
 }
 
+/** Filter on GET /api/v1/jobs (cmd/serve/jobs.go). */
+export type JobStatusFilter = 'running' | 'failed' | 'pending';
+
+export type JobsFilters = {
+	page: number;
+	status?: JobStatusFilter;
+};
+
 export interface JobsService {
 	delete(id: string): Promise<void>;
-	fetchAll(page: number, options?: FetchOptions): Promise<Paginated<Job>>;
-	queryAll(page: number): QueryResult<Paginated<Job>>;
+	fetchAll(filters: JobsFilters, options?: FetchOptions): Promise<Paginated<Job>>;
+	/** Polls every few seconds unless `live` is false. */
+	queryAll(filters: JobsFilters, live?: boolean): QueryResult<Paginated<Job>>;
 }
+
+const params = ({ page, status }: JobsFilters) => (status ? { page, status } : { page });
 
 type Options = {
 	pollingInterval: number;
 };
 
 export class RemoteJobsService implements JobsService {
-	constructor(private readonly _fetcher: FetchService, private readonly _options: Options) {}
+	constructor(
+		private readonly _fetcher: FetchService,
+		private readonly _options: Options
+	) {}
 
 	delete(id: string): Promise<void> {
 		return this._fetcher.delete(`/api/v1/jobs/${id}`, {
@@ -41,21 +59,17 @@ export class RemoteJobsService implements JobsService {
 		});
 	}
 
-	queryAll(page: number): QueryResult<Paginated<Job>> {
+	queryAll(filters: JobsFilters, live = true): QueryResult<Paginated<Job>> {
 		return this._fetcher.query('/api/v1/jobs', {
-			refreshInterval: this._options.pollingInterval,
-			params: {
-				page
-			}
+			refreshInterval: live ? this._options.pollingInterval : undefined,
+			params: params(filters)
 		});
 	}
 
-	fetchAll(page: number, options?: FetchOptions): Promise<Paginated<Job>> {
+	fetchAll(filters: JobsFilters, options?: FetchOptions): Promise<Paginated<Job>> {
 		return this._fetcher.get('/api/v1/jobs', {
 			...options,
-			params: {
-				page
-			}
+			params: params(filters)
 		});
 	}
 }

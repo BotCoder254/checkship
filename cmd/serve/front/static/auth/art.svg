@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="900" viewBox="0 0 720 900" fill="none">
+  <!--
+    Sign-in art source (luminance map, white on black). The dither turns black into the canvas
+    token and white into the accent token, so this file never carries brand colours itself. Everything stays inside
+    the viewBox with the glow fading to 0 before the edges, so a "contain" fit never shows a seam.
+  -->
+  <defs>
+    <radialGradient id="glow" cx="360" cy="400" r="330" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.78"/>
+      <stop offset="0.36" stop-color="#fff" stop-opacity="0.44"/>
+      <stop offset="0.7" stop-color="#fff" stop-opacity="0.17"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="720" height="900" fill="#000"/>
+  <circle cx="360" cy="400" r="330" fill="url(#glow)"/>
+  <circle cx="360" cy="400" r="232" stroke="#fff" stroke-opacity="0.34" stroke-width="2"/>
+  <circle cx="360" cy="400" r="292" stroke="#fff" stroke-opacity="0.32" stroke-width="2" stroke-dasharray="4 10"/>
+  <circle cx="196" cy="236" r="7" fill="#fff"/>
+  <circle cx="612" cy="476" r="6" fill="#fff" fill-opacity="0.85"/>
+  <circle cx="300" cy="684" r="5" fill="#fff" fill-opacity="0.7"/>
+  <g transform="translate(204 244) scale(13)" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15.37 3.66A9 9 0 1 0 20.56 9.22"/>
+    <path d="M7.25 11.75 10.75 15.25 20 4"/>
+  </g>
+</svg>

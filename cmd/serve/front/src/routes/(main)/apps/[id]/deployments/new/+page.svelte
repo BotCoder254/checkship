@@ -1,179 +1,59 @@
+<!--
+	New deployment as a page (DESIGN.md §11.6): the application page opens the same form in a drawer;
+	this route keeps links and bookmarks working. 760px column, Deploy in the header.
+-->
 <script lang="ts">
+	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
+	import Rocket01Icon from '@hugeicons/core-free-icons/Rocket01Icon';
 	import { goto } from '$app/navigation';
-	import Breadcrumb from '$components/breadcrumb.svelte';
-	import Button from '$components/button.svelte';
-	import CleanupNotice from '$components/cleanup-notice.svelte';
-	import Console from '$components/console.svelte';
-	import Dropdown, { type DropdownOption } from '$components/dropdown.svelte';
-	import FormErrors from '$components/form-errors.svelte';
-	import FormSection from '$components/form-section.svelte';
-	import Form from '$components/form.svelte';
-	import InputFile from '$components/input-file.svelte';
-	import Stack from '$components/stack.svelte';
-	import TextArea from '$components/text-area.svelte';
-	import TextInput from '$components/text-input.svelte';
-	import { controls } from '$lib/aria.js';
-	import { buildCommand, type CurlPayload } from '$lib/curl';
-	import { buildFormData } from '$lib/form';
-	import l from '$lib/localization';
-	import routes from '$lib/path';
-	import service, {
-		type Environment,
-		type QueueDeployment,
-		type SourceDataDiscriminator
-	} from '$lib/resources/deployments';
-	import select from '$lib/select';
+	import Icon from '#lib/components/icon.svelte';
+	import PageHeader from '#lib/components/page-header.svelte';
+	import SettingsSection from '#lib/components/settings-section.svelte';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import l from '#lib/localization/index.ts';
+	import routes from '#lib/path.ts';
+	import DeployForm from '../deploy-form.svelte';
 
-	export let data;
-
-	let environment: Environment = 'production';
-	let kind: SourceDataDiscriminator = data.app.version_control ? 'git' : 'raw';
-	let raw = '';
-	let archive: Maybe<FileList> = undefined;
-	let branch = '';
-	let hash: Maybe<string> = undefined;
-	let curlPanelVisible = false;
-
-	const options: Environment[] = ['production', 'staging'];
-	const kindOptions = (
-		[
-			{ label: l.translate('deployment.payload.raw'), value: 'raw' },
-			{ label: l.translate('deployment.payload.archive'), value: 'archive' },
-			{ label: l.translate('deployment.payload.vcs'), value: 'git' }
-		] satisfies DropdownOption<SourceDataDiscriminator>[]
-	).filter((k) => (!data.app.version_control ? k.value !== 'git' : true));
-
-	async function submit() {
-		const payload = select<SourceDataDiscriminator, () => QueueDeployment>(kind, {
-			archive: () =>
-				buildFormData({
-					environment,
-					archive: archive![0]
-				}),
-			git: () => ({
-				environment,
-				git: {
-					branch,
-					hash: hash ? hash : undefined
-				}
-			}),
-			raw: () => ({
-				environment,
-				raw
-			})
-		})?.();
-
-		if (!payload) {
-			return;
-		}
-
-		const { deployment_number } = await service.queue(data.app.id, payload);
-		await goto(routes.deployment(data.app.id, deployment_number));
-	}
-
-	function toggleCurlPanel() {
-		curlPanelVisible = !curlPanelVisible;
-	}
-
-	$: curlCommand = curlPanelVisible // Only build the command if the panel is visible
-		? buildCommand({
-				apiKey: data.user.api_key,
-				appId: data.app.id,
-				environment,
-				origin: location.origin,
-				payload:select<SourceDataDiscriminator, CurlPayload>(kind, {
-					raw: { kind: 'raw', raw },
-					git: { kind: 'git', branch, hash },
-					archive: { kind: 'archive', filename: archive?.[0]?.name }
-				})!
-		  })
-		: undefined;
+	let { data } = $props();
+	let loading = $state(false);
 </script>
 
-<Form handler={submit} let:submitting let:errors>
-	<Breadcrumb
-		segments={[
-			{ path: routes.apps, title: l.translate('breadcrumb.applications') },
-			{ path: routes.app(data.app.id), title: data.app.name },
-			l.translate('breadcrumb.deployment.new')
+<div class="flex flex-col">
+	<PageHeader
+		title={l.translate('breadcrumb.deployment.new')}
+		crumbs={[
+			{ href: routes.apps, label: l.translate('breadcrumb.applications') },
+			{ href: routes.app(data.app.id), label: data.app.name }
 		]}
 	>
-		{#if data.app.cleanup_requested_at}
-			<CleanupNotice requested_at={data.app.cleanup_requested_at} />
-		{:else}
-			<Button type="submit" loading={submitting} text="deployment.deploy" />
-		{/if}
-	</Breadcrumb>
+		{#snippet actions()}
+			{#if !data.app.cleanup_requested_at}
+				<Button type="submit" form="deploy-page" {loading}>
+					<Icon icon={Rocket01Icon} />
+					{l.translate('deployment.deploy')}
+				</Button>
+			{/if}
+		{/snippet}
+	</PageHeader>
 
-	<Stack direction="column">
-		<FormErrors {errors} />
-
-		<div>
-			<FormSection title="deployment.environment">
-				<Dropdown label="deployment.environment" {options} bind:value={environment} />
-			</FormSection>
-
-			<FormSection title="deployment.payload">
-				<svelte:fragment slot="actions">
-					<Button
-						variant="outlined"
-						on:click={toggleCurlPanel}
-						use={[controls, { expanded: curlPanelVisible, controls: 'curl-command-panel' }]}
-						text="deployment.payload.toggle_curl_command"
-					/>
-				</svelte:fragment>
-
-				<Stack direction="column">
-					{#if curlPanelVisible}
-						<Console
-							id="curl-command-panel"
-							title="command"
-							titleElement="h3"
-							copyToClipboardEnabled
-							selectAllEnabled
-							data={curlCommand}
-						/>
-					{/if}
-
-					<Dropdown label="deployment.payload.kind" options={kindOptions} bind:value={kind} />
-					{#if kind === 'raw'}
-						<TextArea
-							code
-							rows={20}
-							required
-							label="deployment.payload.raw.content"
-							bind:value={raw}
-							remoteError={errors?.['raw.content']}
-						>
-							<p>{l.translate('deployment.payload.raw.content.help')}</p>
-						</TextArea>
-					{:else if kind === 'git'}
-						<TextInput
-							label="deployment.payload.vcs.branch"
-							bind:value={branch}
-							required
-							remoteError={errors?.['git.branch']}
-						/>
-						<TextInput
-							label="deployment.payload.vcs.commit"
-							bind:value={hash}
-							remoteError={errors?.['git.hash']}
-						>
-							<p>{l.translate('deployment.payload.vcs.commit.help')}</p>
-						</TextInput>
-					{:else if kind === 'archive'}
-						<InputFile accept="application/gzip" label="file" required bind:files={archive} />
-					{/if}
-				</Stack>
-			</FormSection>
-		</div>
-	</Stack>
-</Form>
-
-<style module>
-	.container {
-		background-color: var(--co-background-5);
-		border-radius: var(--ra-4);
-		padding: var(--sp-6);
-	}
-</style>
+	{#if data.app.cleanup_requested_at}
+		<Alert.Root variant="destructive">
+			<Icon icon={Alert02Icon} />
+			<Alert.Title class="font-semibold">{l.translate('apps.deletion_requested')}</Alert.Title>
+		</Alert.Root>
+	{:else}
+		<SettingsSection
+			title={l.translate('deploy.section')}
+			description={l.translate('deploy.section.description')}
+		>
+			<DeployForm
+				id="deploy-page"
+				app={data.app}
+				apiKey={data.user.api_key}
+				bind:loading
+				onqueued={(d) => goto(routes.deployment(data.app.id, d.deployment_number))}
+			/>
+		</SettingsSection>
+	{/if}
+</div>

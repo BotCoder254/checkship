@@ -161,7 +161,18 @@ func (s *store) GetAllJobs(ctx context.Context, filters bus.GetJobsFilters) (sto
 			,policy
 			,retrieved
 		`).
-		F("FROM scheduled_jobs ORDER BY queued_at").
+		F("FROM scheduled_jobs WHERE TRUE").
+		S(builder.Maybe(filters.Status, func(status bus.JobStatus) (string, []any) {
+			switch status {
+			case bus.JobStatusRunning:
+				return "AND retrieved = true", nil
+			case bus.JobStatusFailed:
+				return "AND retrieved = false AND errcode IS NOT NULL", nil
+			default:
+				return "AND retrieved = false AND errcode IS NULL", nil
+			}
+		})).
+		F("ORDER BY queued_at").
 		Paginate(s.db, ctx, jobQueryMapper, filters.Page.Get(1), 10)
 }
 

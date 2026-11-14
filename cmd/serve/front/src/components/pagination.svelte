@@ -2,10 +2,10 @@
 	import { createEventDispatcher } from 'svelte';
 	import Stack from '$components/stack.svelte';
 	import ButtonBase from '$components/button-base.svelte';
-	import type { Paginated } from '$lib/pagination';
+	import type { Paginated } from '#lib/pagination.ts';
 	import ArrowRight from '$assets/icons/arrow-right.svelte';
 	import ArrowLeft from '$assets/icons/arrow-left.svelte';
-	import l from '$lib/localization';
+	import l from '#lib/localization/index.ts';
 
 	const dispatcher = createEventDispatcher();
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import InputAdorner from '$components/input-adorner.svelte';
-	import { messageFromAttributes } from '$lib/form';
-	import type { AppTranslationsString } from '$lib/localization';
+	import { messageFromAttributes } from '#lib/form.ts';
+	import type { AppTranslationsString } from '#lib/localization/index.ts';
 
 	let touched = false;
 
@@ -36,8 +36,7 @@
 		{placeholder}
 		{readonly}
 		bind:value
-		on:blur={() => (touched = true)}
-	/>
+		on:blur={() => (touched = true)}></textarea>
 	<slot slot="help" />
 </InputAdorner>
 

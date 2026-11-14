@@ -1,129 +1,233 @@
+<!--
+	Deployment (DESIGN.md §5, §11.5): breadcrumb title, state in the status line, Promote and
+	Redeploy behind a confirmation dialog, then Source, Services and Logs as sections (headings and
+	space, no lines). Polls while the deployment runs or its target is being configured.
+-->
 <script lang="ts">
+	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
+	import Copy01Icon from '@hugeicons/core-free-icons/Copy01Icon';
+	import RefreshIcon from '@hugeicons/core-free-icons/RefreshIcon';
+	import Rocket01Icon from '@hugeicons/core-free-icons/Rocket01Icon';
+	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
-	import BlankSlate from '$components/blank-slate.svelte';
-	import Breadcrumb from '$components/breadcrumb.svelte';
-	import Button from '$components/button.svelte';
-	import CleanupNotice from '$components/cleanup-notice.svelte';
-	import Console from '$components/console.svelte';
-	import DeploymentCard from '$components/deployment-card.svelte';
-	import FormErrors from '$components/form-errors.svelte';
-	import Stack from '$components/stack.svelte';
-	import { submitter } from '$lib/form';
-	import routes from '$lib/path';
-	import service from '$lib/resources/deployments';
-	import { TargetStatus } from '$lib/resources/targets';
-	import l from '$lib/localization';
+	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
+	import Icon from '#lib/components/icon.svelte';
+	import PageHeader from '#lib/components/page-header.svelte';
+	import StatusBadge from '#lib/components/status-badge.svelte';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import l from '#lib/localization/index.ts';
+	import routes from '#lib/path.ts';
+	import service from '#lib/resources/deployments.ts';
+	import { TargetStatus } from '#lib/resources/targets.ts';
+	import { deploymentBadge } from '#lib/status.ts';
 
-	export let data;
+	let { data } = $props();
 
-	$: isStale =
-		data.app.latest_deployments[data.deployment.environment]?.deployment_number !==
-		data.deployment.deployment_number;
+	const app = $derived(data.app);
+	const number = $derived(data.deployment.deployment_number);
+	const latestNumber = $derived(
+		app.latest_deployments[data.deployment.environment]?.deployment_number
+	);
+	const isStale = $derived(latestNumber !== undefined && latestNumber !== number);
 
-	$: latestUrl = isStale
-		? routes.deployment(
-				data.app.id,
-				data.app.latest_deployments[data.deployment.environment]!.deployment_number
-		  )
-		: undefined;
+	// Recomputed for each deployment shown (promote and redeploy navigate to a new one on this
+	// page); set to false below once it has finished.
+	let poll = $derived(
+		!data.deployment.state.finished_at || data.deployment.target.status === TargetStatus.Configuring
+	);
 
-	$: pollNeeded =
-		!data.deployment.state.finished_at ||
-		data.deployment.target.status === TargetStatus.Configuring; // Poll or not based on wether the deployment has ended or the target is configuring
+	const deploymentQuery = $derived(service.queryByAppAndNumber(app.id, number, poll));
+	const logsQuery = $derived(service.queryLogs(app.id, number, poll));
+	const deploymentStore = $derived(deploymentQuery.data);
+	const logsStore = $derived(logsQuery.data);
+	const deployment = $derived($deploymentStore ?? data.deployment);
+	const logs = $derived($logsStore);
 
-	$: ({ data: deployment } = service.queryByAppAndNumber(
-		data.app.id,
-		data.deployment.deployment_number,
-		pollNeeded
-	));
-	$: ({ data: logs } = service.queryLogs(
-		data.app.id,
-		data.deployment.deployment_number,
-		pollNeeded
-	));
-
-	$: {
-		// Here we want to stop the polling if the deployment match the page's deployment
-		// and it has ended.
+	// Stop polling once this deployment has finished and its target is no longer configuring.
+	$effect(() => {
 		if (
-			pollNeeded &&
-			$deployment?.deployment_number === data.deployment.deployment_number &&
-			$deployment?.state.finished_at &&
-			$deployment?.target.status !== TargetStatus.Configuring
+			poll &&
+			deployment.state.finished_at &&
+			deployment.target.status !== TargetStatus.Configuring
 		) {
-			pollNeeded = false;
+			poll = false;
 		}
+	});
+
+	let promoteOpen = $state(false);
+	let redeployOpen = $state(false);
+	let logsElement = $state<HTMLPreElement>();
+
+	// Keep the newest lines in view while the deployment runs.
+	$effect(() => {
+		void logs;
+		if (poll && logsElement) logsElement.scrollTop = logsElement.scrollHeight;
+	});
+
+	const badge = $derived(deploymentBadge(deployment.state));
+	const services = $derived(deployment.state.services ?? []);
+
+	function timing() {
+		const { started_at, finished_at } = deployment.state;
+		if (started_at && finished_at) {
+			return l.translate('deployment.finished_line', [
+				l.time(finished_at),
+				l.duration(started_at, finished_at)
+			]);
+		}
+		if (started_at) return l.translate('deployment.started_line', [l.time(started_at)]);
+		return l.translate('deployment.queued_line', [l.time(deployment.requested_at)]);
 	}
 
-	$: ({
-		loading: redeploying,
-		errors: redeployErr,
-		submit: redeploy
-	} = submitter(
-		() =>
-			service
-				.redeploy(data.app.id, data.deployment.deployment_number)
-				.then((d) => goto(routes.deployment(data.app.id, d.deployment_number))),
-		{
-			confirmation: l.translate('deployment.redeploy.confirm', [data.deployment.deployment_number])
+	async function copyLogs() {
+		try {
+			await navigator.clipboard.writeText(logs ?? '');
+			toast.success(l.translate('copied'));
+		} catch {
+			toast.error(l.translate('unexpected_error'));
 		}
-	));
-
-	$: ({
-		loading: promoting,
-		errors: promoteErr,
-		submit: promote
-	} = submitter(
-		() =>
-			service
-				.promote(data.app.id, data.deployment.deployment_number)
-				.then((d) => goto(routes.deployment(data.app.id, d.deployment_number))),
-		{
-			confirmation: l.translate('deployment.promote.confirm', [data.deployment.deployment_number])
-		}
-	));
+	}
 </script>
 
-<Breadcrumb
-	segments={[
-		{ path: routes.apps, title: l.translate('breadcrumb.applications') },
-		{ path: routes.app(data.app.id), title: data.app.name },
-		l.translate('breadcrumb.deployment.name', [data.deployment.deployment_number])
+<PageHeader
+	title={l.translate('breadcrumb.deployment.name', [number])}
+	crumbs={[
+		{ href: routes.apps, label: l.translate('breadcrumb.applications') },
+		{ href: routes.app(app.id), label: app.name }
 	]}
 >
-	{#if data.app.cleanup_requested_at}
-		<CleanupNotice requested_at={data.app.cleanup_requested_at} />
-	{:else}
-		{#if data.deployment.environment !== 'production'}
-			<Button
-				loading={$promoting}
-				on:click={promote}
-				variant="outlined"
-				text="deployment.promote"
-			/>
+	{#snippet actions()}
+		{#if !app.cleanup_requested_at}
+			{#if deployment.environment !== 'production'}
+				<Button variant="outline" onclick={() => (promoteOpen = true)}>
+					<Icon icon={Rocket01Icon} />
+					{l.translate('deployment.promote.title')}
+				</Button>
+			{/if}
+			<Button variant="outline" onclick={() => (redeployOpen = true)}>
+				<Icon icon={RefreshIcon} />
+				{l.translate('deployment.redeploy')}
+			</Button>
 		{/if}
-		<Button
-			loading={$redeploying}
-			on:click={redeploy}
-			variant="outlined"
-			text="deployment.redeploy"
-		/>
-	{/if}
-</Breadcrumb>
+	{/snippet}
+	{#snippet status()}
+		<StatusBadge state={badge.state} label={badge.label} />
+		<span>
+			{l.translate('deployment.status_line', [
+				deployment.environment,
+				deployment.target.name ?? l.translate('deployment.target.deleted')
+			])} · {timing()}
+		</span>
+		{#if deployment.state.error_code}
+			<span class="font-mono text-xs">{deployment.state.error_code}</span>
+		{/if}
+	{/snippet}
+</PageHeader>
 
-<Stack direction="column">
-	<FormErrors errors={$redeployErr} title="deployment.redeploy.failed" />
-	<FormErrors errors={$promoteErr} title="deployment.promote.failed" />
-
-	{#if $deployment}
-		<DeploymentCard {latestUrl} data={$deployment} />
+<div class="flex flex-col gap-9">
+	{#if app.cleanup_requested_at}
+		<Alert.Root variant="destructive">
+			<Icon icon={Alert02Icon} />
+			<Alert.Title class="font-semibold">{l.translate('cleanup_requested')}</Alert.Title>
+		</Alert.Root>
+	{:else if isStale && latestNumber !== undefined}
+		<Alert.Root variant="warning">
+			<Icon icon={Alert02Icon} />
+			<Alert.Title class="font-semibold">{l.translate('deployment.outdated')}</Alert.Title>
+			<Alert.Description>
+				<a href={routes.deployment(app.id, latestNumber)} class="font-semibold underline">
+					{l.translate('deployment.outdated.link', [latestNumber])}
+				</a>
+			</Alert.Description>
+		</Alert.Root>
 	{/if}
 
-	{#if $logs}
-		<Console title="deployment.logs" data={$logs} />
-	{:else}
-		<BlankSlate>
-			<p>{l.translate('deployment.waiting_for_logs')}</p>
-		</BlankSlate>
-	{/if}
-</Stack>
+	<div class="grid gap-9 md:grid-cols-2">
+		<section class="flex flex-col gap-3">
+			<h2 class="text-base font-semibold">{l.translate('deployment.source')}</h2>
+			<dl class="grid grid-cols-[120px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
+				<dt class="text-muted-foreground">{l.translate('deployment.source.kind')}</dt>
+				<dd>{l.translate(`deployment.source.${deployment.source.discriminator}`)}</dd>
+				{#if deployment.source.discriminator === 'git'}
+					<dt class="text-muted-foreground">{l.translate('deployment.payload.vcs.branch')}</dt>
+					<dd>{deployment.source.data.branch}</dd>
+					<dt class="text-muted-foreground">{l.translate('deployment.payload.vcs.commit')}</dt>
+					<dd class="font-mono text-[13px]">{deployment.source.data.hash.slice(0, 7)}</dd>
+				{/if}
+				<dt class="text-muted-foreground">{l.translate('deployment.queued_by')}</dt>
+				<dd class="truncate">{deployment.requested_by.email}</dd>
+			</dl>
+		</section>
+
+		<section class="flex flex-col gap-3">
+			<h2 class="text-base font-semibold">{l.translate('deployment.services.title')}</h2>
+			{#if services.length > 0}
+				<ul class="flex flex-col gap-1.5">
+					{#each services as service (service.name)}
+						{@const urls = service.entrypoints.filter((e) => e.url).map((e) => e.url!)}
+						<li class="flex flex-col gap-1 rounded-md bg-sunken px-3.5 py-2.5 text-sm">
+							<span class="flex items-center justify-between gap-3">
+								<span class="font-semibold">{service.name}</span>
+								{#if urls.length === 0}
+									<span class="text-muted-foreground">{l.translate('deployment.not_exposed')}</span>
+								{/if}
+							</span>
+							{#each urls as url (url)}
+								<a
+									href={url}
+									target="_blank"
+									rel="noopener noreferrer"
+									class="truncate font-mono text-[13px] text-primary hover:underline"
+								>
+									{url}
+								</a>
+							{/each}
+							<span class="truncate font-mono text-xs text-muted-foreground">{service.image}</span>
+						</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="text-sm text-muted-foreground">{l.translate('deployment.waiting_for_logs')}</p>
+			{/if}
+		</section>
+	</div>
+
+	<section class="flex flex-col gap-3">
+		<div class="flex items-center justify-between gap-3">
+			<h2 class="text-base font-semibold">{l.translate('deployment.logs.title')}</h2>
+			<Button variant="outline" size="sm" onclick={copyLogs} disabled={!logs}>
+				<Icon icon={Copy01Icon} />
+				{l.translate('copy')}
+			</Button>
+		</div>
+		<pre
+			bind:this={logsElement}
+			class="max-h-[70vh] min-h-40 overflow-auto rounded-md bg-canvas px-4 py-3.5 font-mono text-xs/5 whitespace-pre-wrap text-ink">{logs ??
+				l.translate('deployment.waiting_for_logs')}</pre>
+	</section>
+</div>
+
+<ConfirmDialog
+	bind:open={promoteOpen}
+	title={l.translate('deployment.promote.title')}
+	description={l.translate('deployment.promote.description', [number])}
+	confirmLabel={l.translate('deployment.promote.title')}
+	icon={Rocket01Icon}
+	onconfirm={() =>
+		service
+			.promote(app.id, number)
+			.then((d) => goto(routes.deployment(app.id, d.deployment_number)))}
+/>
+
+<ConfirmDialog
+	bind:open={redeployOpen}
+	title={l.translate('deployment.redeploy')}
+	description={l.translate('deployment.redeploy.description', [number, deployment.environment])}
+	confirmLabel={l.translate('deployment.redeploy')}
+	icon={RefreshIcon}
+	onconfirm={() =>
+		service
+			.redeploy(app.id, number)
+			.then((d) => goto(routes.deployment(app.id, d.deployment_number)))}
+/>

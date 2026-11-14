@@ -3,9 +3,9 @@
 	import Button from '$components/button.svelte';
 	import Stack from '$components/stack.svelte';
 	import TextInput from '$components/text-input.svelte';
-	import type { ServiceVariables } from '$lib/resources/apps';
+	import type { ServiceVariables } from '#lib/resources/apps.ts';
 	import TextArea from '$components/text-area.svelte';
-	import l from '$lib/localization';
+	import l from '#lib/localization/index.ts';
 
 	export let values: ServiceVariables[] = [];
 	export let latestServiceNames: Maybe<string[]> = undefined;

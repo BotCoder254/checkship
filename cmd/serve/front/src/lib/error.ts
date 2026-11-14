@@ -47,7 +47,10 @@ export class HttpError extends Error {
 	};
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public constructor(public readonly status: number, public readonly data?: any) {
+	public constructor(
+		public readonly status: number,
+		public readonly data?: any
+	) {
 		super(data?.code ?? `HTTP Error ${status}`);
 	}
 

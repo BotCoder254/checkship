@@ -10,6 +10,9 @@ serve-back: # Launch the backend API and creates an admin user if needed
 test-front: # Launch the frontend tests
 	cd cmd/serve/front && npm i && npm test && cd ../../..
 
+test-e2e: # Launch the end-to-end tests (builds the dashboard, runs the Go server, drives Chromium)
+	cd cmd/serve/front && npm i && npx playwright install chromium && npm run test:e2e && cd ../../..
+
 test-back: # Launch the backend tests
 	go vet ./...
 	go test ./... --cover

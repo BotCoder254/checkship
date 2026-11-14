@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Prose from '$components/prose.svelte';
 	import Stack from '$components/stack.svelte';
-	import l, { type AppTranslationsString } from '$lib/localization';
+	import l, { type AppTranslationsString } from '#lib/localization/index.ts';
 
 	export let title: AppTranslationsString;
 	export let variant: 'help' | 'danger' | 'warning' | 'success' = 'help';

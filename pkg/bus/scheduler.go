@@ -55,8 +55,12 @@ type (
 	}
 
 	GetJobsFilters struct {
-		Page monad.Maybe[int] `form:"page"`
+		Page   monad.Maybe[int]       `form:"page"`
+		Status monad.Maybe[JobStatus] `form:"status"`
 	}
+
+	// Where a job stands in the queue, used to filter the list of jobs.
+	JobStatus string
 
 	// Adapter used to store scheduled jobs. Could be anything from a database to a file or
 	// an in-memory store.
@@ -261,6 +265,12 @@ func (s *defaultScheduler) startGroupRunners() {
 		}
 	}
 }
+
+const (
+	JobStatusRunning JobStatus = "running" // Retrieved by a worker
+	JobStatusFailed  JobStatus = "failed"  // Waiting for a retry after an error
+	JobStatusPending JobStatus = "pending" // Waiting for its turn, never failed
+)
 
 // Attach the job being queued to a specific group meaning only one job of a group
 // can be processed at a time.

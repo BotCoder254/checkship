@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Entrypoint } from '$lib/resources/deployments';
+	import type { Entrypoint } from '#lib/resources/deployments.ts';
 
 	export let data: Entrypoint;
 </script>

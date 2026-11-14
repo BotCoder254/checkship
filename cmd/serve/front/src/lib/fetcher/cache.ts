@@ -1,6 +1,6 @@
 import type { StartStopNotifier } from 'svelte/store';
 
-import { HttpError } from '$lib/error';
+import { HttpError } from '#lib/error.ts';
 import type { FetchOptions, FetchService, MutateOptions, QueryOptions, QueryResult } from './index';
 import CacheSet, { type Invalidator } from './set';
 import type CacheData from './data';
@@ -58,7 +58,8 @@ export default class CacheFetchService implements FetchService {
 		}
 
 		// Still mark the dependency with the given key to make sure it will be invalidated correctly
-		options?.depends?.(cache.key);
+		// SvelteKit types require `scheme:` identifiers, but relative URLs are resolved against the page at runtime.
+		options?.depends?.(cache.key as `${string}:${string}`);
 
 		return cache.wait();
 	}
@@ -74,7 +75,7 @@ export default class CacheFetchService implements FetchService {
 		// to extend what should be done once subcribing to the data.
 		if (options?.refreshInterval) {
 			listener = () => {
-				let timer: NodeJS.Timeout;
+				let timer: ReturnType<typeof setTimeout>;
 				let mustStop = false; // Sets to true to handle the case when the fetch has been started and the timeout cleared but the promise is still pending
 
 				const deferRevalidation = () => {

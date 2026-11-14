@@ -1,21 +1,10 @@
 <script lang="ts">
-	import BlankSlate from '$components/blank-slate.svelte';
-	import Breadcrumb from '$components/breadcrumb.svelte';
-	import Link from '$components/link.svelte';
-	import routes from '$lib/path';
-	import l from '$lib/localization';
+	import ErrorState from '#lib/components/error-state.svelte';
+	import l from '#lib/localization/index.ts';
+	import routes from '#lib/path.ts';
 </script>
 
-<Breadcrumb
-	segments={[
-		{ path: routes.registries, title: l.translate('breadcrumb.registries') },
-		l.translate('breadcrumb.not_found')
-	]}
+<ErrorState
+	what="registry"
+	back={{ href: routes.registries, label: l.translate('errors.back.registries') }}
 />
-
-<BlankSlate>
-	<p>
-		{l.translate('registry.not_found')}
-		<Link href={routes.registries}>{l.translate('registry.not_found.cta')}</Link>.
-	</p>
-</BlankSlate>

@@ -41,10 +41,12 @@
 	--co-brand: #7f95ff;
 
 	/** Types */
-	--fo-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-		Helvetica Neue, Arial, Noto Sans, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-		Segoe UI Symbol, 'Noto Color Emoji';
-	--fo-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+	--fo-body:
+		ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue,
+		Arial, Noto Sans, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', Segoe UI Symbol,
+		'Noto Color Emoji';
+	--fo-mono:
+		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
 		monospace;
 
 	--ty-caption: 0.75rem/1rem var(--fo-body);

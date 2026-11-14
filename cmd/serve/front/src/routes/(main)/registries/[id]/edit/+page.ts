@@ -1,4 +1,4 @@
-import service from '$lib/resources/registries';
+import service from '#lib/resources/registries.ts';
 import { error } from '@sveltejs/kit';
 
 export const load = async ({ params, fetch, depends }) => {
@@ -9,6 +9,6 @@ export const load = async ({ params, fetch, depends }) => {
 			registry
 		};
 	} catch {
-		throw error(404);
+		error(404);
 	}
 };

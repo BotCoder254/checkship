@@ -3,12 +3,8 @@
 	export let align: 'flex-start' | 'center' | 'stretch' | 'flex-end' =
 		direction === 'row' ? 'center' : 'stretch';
 	export let justify:
-		| 'flex-start'
-		| 'center'
-		| 'stretch'
-		| 'space-around'
-		| 'space-between'
-		| 'flex-end' = 'flex-start';
+		'flex-start' | 'center' | 'stretch' | 'space-around' | 'space-between' | 'flex-end' =
+		'flex-start';
 	export let gap: number = 4;
 	export let wrap: 'no-wrap' | 'wrap' | 'wrap-reverse' = 'no-wrap';
 	export let style: Maybe<string> = undefined;
@@ -22,22 +18,19 @@
 	export let as: string = 'div';
 </script>
 
+<!--
+	Flex layout set inline: the CSS-modules preprocessor doesn't rewrite a dynamic class on
+	<svelte:element>, so a <style module> rule here never reached the element under Svelte 5.
+	Legacy component (DESIGN.md §11.2): replaced by Tailwind flex utilities as pages migrate.
+-->
 <svelte:element
 	this={as}
 	{...$$restProps}
-	class="stack {className}"
-	style="--stack-gap: var(--sp-{gap}, 0); {style}"
+	class={className || undefined}
+	style="display: flex; flex-direction: {direction}; align-items: {align}; flex-wrap: {wrap ===
+	'no-wrap'
+		? 'nowrap'
+		: wrap}; justify-content: {justify}; gap: var(--sp-{gap}, 0); {style ?? ''}"
 >
 	<slot />
 </svelte:element>
-
-<style module>
-	.stack {
-		display: flex;
-		flex-direction: bind(direction);
-		align-items: bind(align);
-		flex-wrap: bind(wrap);
-		justify-content: bind(justify);
-		gap: var(--stack-gap);
-	}
-</style>

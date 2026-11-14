@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { submitter } from '$lib/form';
+	import { submitter } from '#lib/form.ts';
 
 	let className: string = '';
 

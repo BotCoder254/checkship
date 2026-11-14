@@ -1,26 +1,28 @@
 <script lang="ts">
+	import Add01Icon from '@hugeicons/core-free-icons/Add01Icon';
 	import { goto } from '$app/navigation';
-	import Breadcrumb from '$components/breadcrumb.svelte';
-	import Button from '$components/button.svelte';
-	import routes from '$lib/path';
-	import service, { type CreateApp } from '$lib/resources/apps';
+	import Icon from '#lib/components/icon.svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import l from '#lib/localization/index.ts';
+	import routes from '#lib/path.ts';
+	import service, { type CreateApp } from '#lib/resources/apps.ts';
 	import AppForm from '../app-form.svelte';
-	import l from '$lib/localization';
 
-	export let data;
+	let { data } = $props();
 
-	const submit = (data: CreateApp) => service.create(data).then((a) => goto(routes.app(a.id)));
+	const submit = (app: CreateApp) => service.create(app).then((a) => goto(routes.app(a.id)));
 </script>
 
-<AppForm handler={submit} targets={data.targets}>
-	<Breadcrumb
-		slot="default"
-		let:submitting
-		segments={[
-			{ path: routes.apps, title: l.translate('breadcrumb.applications') },
-			l.translate('breadcrumb.application.new')
-		]}
-	>
-		<Button type="submit" loading={submitting} text="create" />
-	</Breadcrumb>
+<AppForm
+	title={l.translate('breadcrumb.application.new')}
+	crumbs={[{ href: routes.apps, label: l.translate('breadcrumb.applications') }]}
+	targets={data.targets}
+	handler={submit}
+>
+	{#snippet actions(submitting)}
+		<Button type="submit" loading={submitting} disabled={data.targets.length === 0}>
+			<Icon icon={Add01Icon} />
+			{l.translate('settings.create')}
+		</Button>
+	{/snippet}
 </AppForm>

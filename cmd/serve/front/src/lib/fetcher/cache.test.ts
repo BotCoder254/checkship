@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import CacheFetchService, { DEFAULT_NOW_FN } from './cache';
 import CacheData from './data';
 import { get } from 'svelte/store';
-import { HttpError } from '$lib/error';
+import { HttpError } from '#lib/error.ts';
 
 const opts = {
 	dedupeInterval: 3600000, // For tests, make a really long dedupe interval
@@ -161,7 +161,7 @@ class MockFetch {
 						headers: {
 							'content-type': 'application/json'
 						}
-				  })
+					})
 		);
 	}
 }

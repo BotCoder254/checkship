@@ -1,5 +1,5 @@
-import service from '$lib/resources/deployments';
-import appService from '$lib/resources/apps';
+import service from '#lib/resources/deployments.ts';
+import appService from '#lib/resources/apps.ts';
 import { error } from '@sveltejs/kit';
 
 export const load = async ({ fetch, params: { id, number }, depends }) => {
@@ -12,6 +12,6 @@ export const load = async ({ fetch, params: { id, number }, depends }) => {
 			deployment
 		};
 	} catch {
-		throw error(404);
+		error(404);
 	}
 };

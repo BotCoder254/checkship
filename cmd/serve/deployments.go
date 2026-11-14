@@ -3,6 +3,7 @@ package serve
 import (
 	"mime/multipart"
 	"strconv"
+	"strings"
 
 	"github.com/checkship-deploy/checkship/internal/deployment/app/get_app_deployments"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/get_deployment"
@@ -131,7 +132,12 @@ func (s *server) getDeploymentLogsHandler() gin.HandlerFunc {
 type getDeploymentsFilters struct {
 	Page        int    `form:"page"`
 	Environment string `form:"environment"`
+	Status      string `form:"status"`
+	Search      string `form:"search"`
+	PerPage     int    `form:"per_page"`
 }
+
+const maxDeploymentsPerPage = 50
 
 func (s *server) listDeploymentsByAppHandler() gin.HandlerFunc {
 	return http.Bind(s, func(ctx *gin.Context, request getDeploymentsFilters) error {
@@ -145,6 +151,18 @@ func (s *server) listDeploymentsByAppHandler() gin.HandlerFunc {
 
 		if request.Page != 0 {
 			query.Page.Set(request.Page)
+		}
+
+		if status, err := strconv.ParseUint(request.Status, 10, 8); err == nil {
+			query.Status.Set(uint8(status))
+		}
+
+		if search := strings.TrimSpace(request.Search); search != "" {
+			query.Search.Set(search)
+		}
+
+		if request.PerPage > 0 {
+			query.PerPage.Set(min(request.PerPage, maxDeploymentsPerPage))
 		}
 
 		deployments, err := bus.Send(s.bus, ctx.Request.Context(), query)

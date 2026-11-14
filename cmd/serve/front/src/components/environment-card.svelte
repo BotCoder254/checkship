@@ -1,5 +1,5 @@
 <script lang="ts">
-	import service, { type DeploymentDetail } from '$lib/resources/deployments';
+	import service, { type DeploymentDetail } from '#lib/resources/deployments.ts';
 	import DeploymentsList from '$components/deployments-list.svelte';
 	import DeploymentCard from '$components/deployment-card.svelte';
 	import Stack from '$components/stack.svelte';

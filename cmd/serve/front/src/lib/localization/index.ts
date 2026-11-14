@@ -1,6 +1,6 @@
-import { browser } from '$app/environment';
-import en from '$lib/localization/en';
-import fr from '$lib/localization/fr';
+import { browser } from '$app/env';
+import en from '#lib/localization/en.ts';
+import fr from '#lib/localization/fr.ts';
 
 /**
  * Provides formatting methods for a specific locale.
@@ -9,6 +9,10 @@ export interface FormatProvider {
 	date(value: DateValue): string;
 	datetime(value: DateValue): string;
 	duration(start: DateValue, end: DateValue): string;
+	/** "2 min ago", "yesterday": the nearest unit, in the current locale. */
+	relative(value: DateValue): string;
+	/** Clock time, "14:02:59". */
+	time(value: DateValue): string;
 }
 
 export type TranslationsArgs<T> = T extends (...args: infer P) => string ? P : never;
@@ -29,8 +33,10 @@ export type LocaleCode<T extends Locale<Translations>[]> = T[number]['code'];
 /**
  * Localize resources accross the application.
  */
-export interface LocalizationService<T extends Translations, TLocales extends Locale<T>[]>
-	extends FormatProvider {
+export interface LocalizationService<
+	T extends Translations,
+	TLocales extends Locale<T>[]
+> extends FormatProvider {
 	/** Sets the current locale */
 	locale(code: LocaleCode<TLocales>): void;
 	/** Gets the current locale */
@@ -53,9 +59,10 @@ export type LocalLocalizationOptions<T extends Translations, TLocales extends Lo
 	locales: TLocales;
 };
 
-export class LocalLocalizationService<T extends Translations, TLocales extends Locale<T>[]>
-	implements LocalizationService<T, TLocales>
-{
+export class LocalLocalizationService<
+	T extends Translations,
+	TLocales extends Locale<T>[]
+> implements LocalizationService<T, TLocales> {
 	private _currentLocaleCode?: LocaleCode<TLocales>;
 	private _currentTranslations!: T;
 
@@ -84,6 +91,35 @@ export class LocalLocalizationService<T extends Translations, TLocales extends L
 
 	datetime(value: DateValue): string {
 		return new Date(value).toLocaleString(this._currentLocaleCode, this._dateTimeOptions);
+	}
+
+	relative(value: DateValue): string {
+		const seconds = Math.round((new Date(value).getTime() - Date.now()) / 1000);
+		const format = new Intl.RelativeTimeFormat(this._currentLocaleCode, { numeric: 'auto' });
+		const units: [Intl.RelativeTimeFormatUnit, number][] = [
+			['year', 31536000],
+			['month', 2592000],
+			['week', 604800],
+			['day', 86400],
+			['hour', 3600],
+			['minute', 60]
+		];
+
+		for (const [unit, size] of units) {
+			if (Math.abs(seconds) >= size) {
+				return format.format(Math.round(seconds / size), unit);
+			}
+		}
+
+		return format.format(seconds, 'second');
+	}
+
+	time(value: DateValue): string {
+		return new Date(value).toLocaleTimeString(this._currentLocaleCode, {
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit'
+		});
 	}
 
 	duration(start: DateValue, end: DateValue): string {
@@ -170,7 +206,7 @@ const service: LocalizationService<AppTranslations, AppLocales> = new LocalLocal
 		// I don't want to make every translations reactive because it will bloat the application for nothing...
 		window.location.reload();
 	},
-	default: browser ? localStorage.getItem('locale') ?? navigator.language : undefined,
+	default: browser ? (localStorage.getItem('locale') ?? navigator.language) : undefined,
 	fallback: 'en',
 	locales
 });

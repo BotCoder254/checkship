@@ -1,8 +1,12 @@
-import { POLLING_INTERVAL_MS, RUNNING_DEPLOYMENT_POLLING_INTERVAL_MS } from '$lib/config';
-import fetcher, { type FetchOptions, type FetchService, type QueryResult } from '$lib/fetcher';
-import type { Paginated } from '$lib/pagination';
-import type { TargetStatus } from '$lib/resources/targets';
-import type { ByUserData } from '$lib/resources/users';
+import { POLLING_INTERVAL_MS, RUNNING_DEPLOYMENT_POLLING_INTERVAL_MS } from '#lib/config.ts';
+import fetcher, {
+	type FetchOptions,
+	type FetchService,
+	type QueryResult
+} from '#lib/fetcher/index.ts';
+import type { Paginated } from '#lib/pagination.ts';
+import type { TargetStatus } from '#lib/resources/targets.ts';
+import type { ByUserData } from '#lib/resources/users.ts';
 
 export enum DeploymentStatus {
 	Pending = 0,
@@ -83,6 +87,10 @@ export type QueueDeployment =
 export type QueryDeploymentsFilters = {
 	page?: number;
 	environment?: Environment;
+	status?: DeploymentStatus;
+	/** A deployment number (with or without #), or part of a Git branch or commit. */
+	search?: string;
+	per_page?: number;
 };
 
 export interface DeploymentsService {
@@ -105,7 +113,10 @@ type Options = {
 };
 
 class RemoteDeploymentsService implements DeploymentsService {
-	constructor(private readonly _fetcher: FetchService, private readonly _options: Options) {}
+	constructor(
+		private readonly _fetcher: FetchService,
+		private readonly _options: Options
+	) {}
 
 	fetchByAppAndNumber(
 		appid: string,

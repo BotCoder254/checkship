@@ -10,7 +10,7 @@
 <script lang="ts">
 	import ArrowDown from '$assets/icons/arrow-down.svelte';
 	import InputAdorner from '$components/input-adorner.svelte';
-	import type { AppTranslationsString } from '$lib/localization';
+	import type { AppTranslationsString } from '#lib/localization/index.ts';
 
 	type T = $$Generic<string>;
 
