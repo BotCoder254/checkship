@@ -1,4 +1,4 @@
-import service from '$lib/resources/apps';
+import service from '#lib/resources/apps.ts';
 import { error } from '@sveltejs/kit';
 
 export const load = async ({ params, fetch, depends }) => {
@@ -9,6 +9,6 @@ export const load = async ({ params, fetch, depends }) => {
 			app
 		};
 	} catch {
-		throw error(404);
+		error(404);
 	}
 };

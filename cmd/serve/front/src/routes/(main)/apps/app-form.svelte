@@ -14,9 +14,9 @@
 		fromServiceVariablesRecord,
 		type UpdateApp,
 		type CreateAppDataEnvironmentConfig
-	} from '$lib/resources/apps';
-	import type { Target } from '$lib/resources/targets';
-	import l from '$lib/localization';
+	} from '#lib/resources/apps.ts';
+	import type { Target } from '#lib/resources/targets.ts';
+	import l from '#lib/localization/index.ts';
 	import Dropdown, { type DropdownOption } from '$components/dropdown.svelte';
 	import ServiceUrl from './service-url.svelte';
 
@@ -122,7 +122,7 @@
 					? {
 							url,
 							token: token !== initialData.version_control?.token ? token || null : undefined
-					  }
+						}
 					: null,
 				production: productionData,
 				staging: stagingData

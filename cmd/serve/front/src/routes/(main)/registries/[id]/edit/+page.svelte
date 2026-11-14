@@ -2,11 +2,11 @@
 	import { goto } from '$app/navigation';
 	import Breadcrumb from '$components/breadcrumb.svelte';
 	import Button from '$components/button.svelte';
-	import routes from '$lib/path';
+	import routes from '#lib/path.ts';
 	import RegistryForm from '../../registry-form.svelte';
-	import l from '$lib/localization';
-	import service, { type UpdateRegistry } from '$lib/resources/registries';
-	import { submitter } from '$lib/form';
+	import l from '#lib/localization/index.ts';
+	import service, { type UpdateRegistry } from '#lib/resources/registries.ts';
+	import { submitter } from '#lib/form.ts';
 	import FormErrors from '$components/form-errors.svelte';
 	import Stack from '$components/stack.svelte';
 

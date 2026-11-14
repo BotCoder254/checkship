@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Service } from '$lib/resources/deployments';
+	import type { Service } from '#lib/resources/deployments.ts';
 	import Stack from '$components/stack.svelte';
 	import EntrypointPill from '$components/entrypoint-pill.svelte';
 

@@ -1,5 +1,5 @@
-import fetcher, { type FetchOptions, type FetchService } from '$lib/fetcher';
-import type { Profile } from '$lib/resources/users';
+import fetcher, { type FetchOptions, type FetchService } from '#lib/fetcher/index.ts';
+import type { Profile } from '#lib/resources/users.ts';
 
 export interface SessionsService {
 	create(email: string, password: string): Promise<Profile>;

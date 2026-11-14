@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Stack from '$components/stack.svelte';
-	import l from '$lib/localization';
+	import l from '#lib/localization/index.ts';
 </script>
 
 <Stack class="container" direction="column" justify="center" align="center">

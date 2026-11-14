@@ -1,6 +1,6 @@
 import { writable, type Readable } from 'svelte/store';
-import { BadRequestError } from '$lib/error';
-import l, { type AppTranslationsString } from '$lib/localization';
+import { BadRequestError } from '#lib/error.ts';
+import l, { type AppTranslationsString } from '#lib/localization/index.ts';
 
 /**
  * Keys inside SubmitterErrors representing an error not tied to a specific field.

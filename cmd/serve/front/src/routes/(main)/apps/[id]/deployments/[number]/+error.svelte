@@ -2,9 +2,9 @@
 	import BlankSlate from '$components/blank-slate.svelte';
 	import Breadcrumb from '$components/breadcrumb.svelte';
 	import Link from '$components/link.svelte';
-	import routes from '$lib/path';
+	import routes from '#lib/path.ts';
 	import type { PageData } from './$types';
-	import l from '$lib/localization';
+	import l from '#lib/localization/index.ts';
 
 	export let data: PageData; // FIXME: don't know why Svelte does not found them automatically
 </script>

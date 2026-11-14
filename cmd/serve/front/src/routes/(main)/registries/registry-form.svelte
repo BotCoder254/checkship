@@ -2,11 +2,11 @@
 	import Form from '$components/form.svelte';
 	import Stack from '$components/stack.svelte';
 	import FormErrors from '$components/form-errors.svelte';
-	import l from '$lib/localization';
+	import l from '#lib/localization/index.ts';
 	import FormSection from '$components/form-section.svelte';
 	import TextInput from '$components/text-input.svelte';
 	import Checkbox from '$components/checkbox.svelte';
-	import type { CreateRegistry, Registry, UpdateRegistry } from '$lib/resources/registries';
+	import type { CreateRegistry, Registry, UpdateRegistry } from '#lib/resources/registries.ts';
 
 	export let initialData: Maybe<Registry> = undefined;
 	export let disabled: boolean = false;
@@ -41,7 +41,7 @@
 					? {
 							username,
 							password
-					  }
+						}
 					: undefined
 			} satisfies CreateRegistry;
 		} else {
@@ -52,7 +52,7 @@
 					? {
 							username,
 							password: password !== initialData.credentials?.password ? password : undefined
-					  }
+						}
 					: null
 			} satisfies UpdateRegistry;
 		}

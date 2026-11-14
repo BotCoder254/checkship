@@ -6,8 +6,8 @@
 	import Pagination from '$components/pagination.svelte';
 	import Stack from '$components/stack.svelte';
 	import CancelButton from './cancel-button.svelte';
-	import service, { JobPolicy } from '$lib/resources/jobs';
-	import l, { type AppTranslationsString } from '$lib/localization';
+	import service, { JobPolicy } from '#lib/resources/jobs.ts';
+	import l, { type AppTranslationsString } from '#lib/localization/index.ts';
 
 	let page = 1;
 

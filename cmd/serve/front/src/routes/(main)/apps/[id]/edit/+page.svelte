@@ -1,15 +1,15 @@
 <script lang="ts">
 	import Button from '$components/button.svelte';
 	import Breadcrumb from '$components/breadcrumb.svelte';
-	import type { UpdateApp } from '$lib/resources/apps';
+	import type { UpdateApp } from '#lib/resources/apps.ts';
 	import AppForm from '../../app-form.svelte';
-	import service from '$lib/resources/apps';
+	import service from '#lib/resources/apps.ts';
 	import { goto } from '$app/navigation';
-	import routes from '$lib/path';
+	import routes from '#lib/path.ts';
 	import CleanupNotice from '$components/cleanup-notice.svelte';
-	import { submitter } from '$lib/form';
+	import { submitter } from '#lib/form.ts';
 	import FormErrors from '$components/form-errors.svelte';
-	import l from '$lib/localization';
+	import l from '#lib/localization/index.ts';
 
 	export let data;
 

@@ -1,5 +1,5 @@
-import auth from '$lib/auth';
-import service from '$lib/resources/healthcheck';
+import auth from '#lib/auth.ts';
+import service from '#lib/resources/healthcheck.ts';
 
 export const load = async ({ fetch }) => {
 	const user = await auth.checkSession({ fetch, cache: 'no-cache' }); // Don't know why, the cache option is mandatory here

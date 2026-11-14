@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { Deployment } from '$lib/resources/deployments';
+	import type { Deployment } from '#lib/resources/deployments.ts';
 	import Git from '$assets/icons/git.svelte';
 	import Archive from '$assets/icons/archive.svelte';
 	import File from '$assets/icons/file.svelte';
 	import Stack from '$components/stack.svelte';
-	import select from '$lib/select';
-	import routes from '$lib/path';
-	import l from '$lib/localization';
+	import select from '#lib/select.ts';
+	import routes from '#lib/path.ts';
+	import l from '#lib/localization/index.ts';
 
 	export let data: Deployment;
 </script>

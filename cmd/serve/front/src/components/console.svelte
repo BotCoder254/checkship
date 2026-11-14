@@ -1,5 +1,5 @@
 <script lang="ts">
-	import l, { type AppTranslationsString } from '$lib/localization';
+	import l, { type AppTranslationsString } from '#lib/localization/index.ts';
 	import { afterUpdate } from 'svelte';
 	import Stack from './stack.svelte';
 	import Button from './button.svelte';

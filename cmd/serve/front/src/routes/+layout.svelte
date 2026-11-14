@@ -1,7 +1,14 @@
 <script lang="ts">
-	import 'the-new-css-reset/css/reset.css';
-	import '@fontsource/inter/latin-600.css'; // Logo wordmark (Inter 600), bundled so nothing is loaded from a third party
-	import '$assets/styles.css';
+	// Theme, Tailwind and the legacy global CSS (reset + src/assets/styles.css, in a cascade layer).
+	import './layout.css';
+	import { ModeWatcher } from 'mode-watcher';
+	import { Toaster } from '#lib/components/ui/sonner/index.js';
+
+	let { children } = $props();
 </script>
 
-<slot />
+<!-- Dark by default: the pre-migration pages are dark-only. Switch to "system" once they are migrated. -->
+<ModeWatcher defaultMode="dark" />
+<Toaster position="bottom-right" visibleToasts={3} />
+
+{@render children()}

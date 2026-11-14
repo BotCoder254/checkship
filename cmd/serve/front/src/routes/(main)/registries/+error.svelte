@@ -2,8 +2,8 @@
 	import BlankSlate from '$components/blank-slate.svelte';
 	import Breadcrumb from '$components/breadcrumb.svelte';
 	import Link from '$components/link.svelte';
-	import routes from '$lib/path';
-	import l from '$lib/localization';
+	import routes from '#lib/path.ts';
+	import l from '#lib/localization/index.ts';
 </script>
 
 <Breadcrumb

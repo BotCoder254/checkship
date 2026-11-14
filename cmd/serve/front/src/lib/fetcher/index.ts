@@ -17,7 +17,7 @@ export type FetchOptions = {
 	 * cached. It make sure the subsequent invalidates will work as expected because when you
 	 * call `.get` it may returns cached data.
 	 */
-	depends?: (...deps: string[]) => void;
+	depends?: (...deps: `${string}:${string}`[]) => void;
 };
 
 export type QueryOptions = FetchOptions & {

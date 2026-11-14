@@ -1,10 +1,11 @@
-import type { Locale, Translations } from '$lib/localization';
-import routes from '$lib/path';
+import type { Locale, Translations } from '#lib/localization/index.ts';
+import routes from '#lib/path.ts';
 
 const translations = {
 	// Authentication
 	'auth.signin.title': 'Sign in',
 	'auth.signin.description': 'Please fill the form below to access your dashboard.',
+	'auth.tagline': 'Painless self-hosted deployment platform.',
 	// App
 	'app.no_targets': 'No targets found',
 	'app.no_targets.description': `You need at least one target to deploy your application. Head to the <a href="${routes.createTarget}">create target</a> page to create one.`,
@@ -271,7 +272,133 @@ You may reconsider and try to make the target reachable before deleting it.`,
 	config_already_taken: 'A target for this host already exists',
 	invalid_host: 'Invalid host',
 	invalid_ssh_key: 'Invalid SSH key',
-	target_in_use: 'Target is used by at least one application and cannot be deleted.'
+	target_in_use: 'Target is used by at least one application and cannot be deleted.',
+	// Shell (DESIGN.md §5)
+	'nav.main': 'Main',
+	'nav.workspace': 'Workspace',
+	'nav.recent': 'Recent',
+	'nav.documentation': 'Documentation',
+	'nav.documentation.label': 'Documentation, opens in a new tab',
+	'nav.theme': 'Theme',
+	'nav.collapse': 'Collapse sidebar',
+	'nav.expand': 'Expand sidebar',
+	'nav.open_menu': 'Open menu',
+	'nav.close_menu': 'Close menu',
+	'nav.targets_failing': (count: number) =>
+		count === 1 ? '1 target failing' : `${count} targets failing`,
+	'nav.jobs_queued': (count: number) => (count === 1 ? '1 job queued' : `${count} jobs queued`),
+	'nav.version': (version: string) => `checkship ${version}`,
+	'theme.system': 'System',
+	'theme.light': 'Light',
+	'theme.dark': 'Dark',
+	'theme.switch': (current: string) => `Theme: ${current}. Switch theme`,
+	'account.menu': (email: string) => `Account: ${email}`,
+	'account.signed_in': 'Signed in',
+	'account.profile': 'Profile',
+	'account.api_key': 'API key for CI',
+	'account.sign_out': 'Sign out',
+	// Lists
+	'apps.summary': (count: number, failed: number, queued: number) =>
+		[
+			count === 1 ? '1 application' : `${count} applications`,
+			failed > 0
+				? failed === 1
+					? '1 production deployment failed'
+					: `${failed} production deployments failed`
+				: undefined,
+			queued > 0 ? (queued === 1 ? '1 job queued' : `${queued} jobs queued`) : undefined
+		]
+			.filter(Boolean)
+			.join(' · '),
+	'apps.column.application': 'Application',
+	'apps.column.production': 'Production',
+	'apps.column.staging': 'Staging',
+	'apps.no_deployment': 'No deployment yet',
+	'apps.on_target': (name: string) => `on target ${name}`,
+	'apps.deletion_requested': 'Deletion requested',
+	'apps.deletion_requested.description': 'Its resources are being removed from the targets.',
+	'apps.empty.title': 'No applications yet',
+	'apps.empty.description':
+		'An application groups the services of one compose file, deployed to production and staging.',
+	'targets.summary': (count: number, failing: number) =>
+		[count === 1 ? '1 target' : `${count} targets`, failing > 0 ? `${failing} failing` : undefined]
+			.filter(Boolean)
+			.join(' · '),
+	'targets.column.target': 'Target',
+	'targets.column.provider': 'Provider',
+	'targets.column.state': 'State',
+	'targets.local': 'Local Docker engine',
+	'targets.remote': (host: string) => `Docker over SSH · ${host}`,
+	'targets.manual_proxy': 'Services not exposed automatically',
+	'targets.empty.title': 'No targets yet',
+	'targets.empty.description':
+		'A target is a Docker host checkship deploys to, on this machine or over SSH.',
+	'registries.summary': (count: number) => (count === 1 ? '1 registry' : `${count} registries`),
+	'registries.column.registry': 'Registry',
+	'registries.column.auth': 'Authentication',
+	'registries.auth.none': 'No authentication',
+	'registries.auth.user': (username: string) => `Signed in as ${username}`,
+	'registries.empty.title': 'No custom registries',
+	'registries.empty.description':
+		'Add one when your images live in a private registry that needs credentials.',
+	// States
+	'status.pending': 'Pending',
+	'status.running': 'Running',
+	'status.failed': 'Failed',
+	'status.succeeded': 'Succeeded',
+	'status.configuring': 'Configuring',
+	'status.ready': 'Ready',
+	// Deployment page
+	'deployment.promote.title': 'Promote to production',
+	'deployment.promote.description': (number: number) =>
+		`Deployment #${number} will be deployed again to production, with the same source.`,
+	'deployment.redeploy.description': (number: number, environment: string) =>
+		`Deployment #${number} will be deployed again to ${environment}, with the same source.`,
+	'deployment.status_line': (environment: string, target: string) =>
+		`${environment} · target ${target}`,
+	'deployment.finished_line': (time: string, duration: string) =>
+		`finished ${time} · took ${duration}`,
+	'deployment.started_line': (time: string) => `started ${time}`,
+	'deployment.queued_line': (time: string) => `queued ${time}`,
+	'deployment.source': 'Source',
+	'deployment.source.kind': 'Kind',
+	'deployment.source.git': 'Git',
+	'deployment.source.raw': 'Compose file',
+	'deployment.source.archive': 'Archive',
+	'deployment.queued_by': 'Queued by',
+	'deployment.services.title': 'Services',
+	'deployment.not_exposed': 'Not exposed',
+	'deployment.logs.title': 'Logs',
+	'deployment.outdated.link': (number: number) => `Go to deployment #${number}`,
+	// Target settings
+	'target.delete.description': (name: string) =>
+		`Its applications' resources are removed from the host. Type ${name} to confirm.`,
+	'target.delete.type_name': 'Target name',
+	'target.reconfigure.title': 'Reconfigure target',
+	'target.create': 'Create target',
+	'target.remote.label': 'Remote host over SSH',
+	'target.remote.description': 'Off: the Docker engine on the machine running checkship.',
+	'target.page.description':
+		'A target is a Docker host checkship deploys to, on this machine or over SSH.',
+	// Profile
+	'profile.signed_in_since': (date: string) => `Signed in since ${date}`,
+	'profile.account': 'Account',
+	'profile.locale.help': 'The page reloads in the new language.',
+	'profile.content_width': 'Content width',
+	'profile.content_width.help':
+		'How wide pages grow on large screens: 840, 1020 or 1160px. The theme is at the bottom of the sidebar.',
+	'profile.content_width.compact': 'Compact',
+	'profile.content_width.default': 'Default',
+	'profile.content_width.wide': 'Wide',
+	'profile.saved': 'Profile saved',
+	'profile.key.refresh.title': 'Regenerate the API key?',
+	'profile.key.regenerated': 'API key regenerated',
+	// Common
+	copy: 'Copy',
+	copied: 'Copied to clipboard',
+	cancel: 'Cancel',
+	confirm: 'Confirm',
+	delete: 'Delete'
 } satisfies Translations;
 
 export default {

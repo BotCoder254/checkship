@@ -7,7 +7,7 @@
 	class:success={state === 'success'}
 	class:failed={state === 'failed'}
 	class:running={state === 'running'}
-/>
+></span>
 
 <style module>
 	.status-indicator {

@@ -12,17 +12,17 @@
 	import Stack from '$components/stack.svelte';
 	import TextArea from '$components/text-area.svelte';
 	import TextInput from '$components/text-input.svelte';
-	import { controls } from '$lib/aria.js';
-	import { buildCommand, type CurlPayload } from '$lib/curl';
-	import { buildFormData } from '$lib/form';
-	import l from '$lib/localization';
-	import routes from '$lib/path';
+	import { controls } from '#lib/aria.js';
+	import { buildCommand, type CurlPayload } from '#lib/curl.ts';
+	import { buildFormData } from '#lib/form.ts';
+	import l from '#lib/localization/index.ts';
+	import routes from '#lib/path.ts';
 	import service, {
 		type Environment,
 		type QueueDeployment,
 		type SourceDataDiscriminator
-	} from '$lib/resources/deployments';
-	import select from '$lib/select';
+	} from '#lib/resources/deployments.ts';
+	import select from '#lib/select.ts';
 
 	export let data;
 
@@ -81,12 +81,12 @@
 				appId: data.app.id,
 				environment,
 				origin: location.origin,
-				payload:select<SourceDataDiscriminator, CurlPayload>(kind, {
+				payload: select<SourceDataDiscriminator, CurlPayload>(kind, {
 					raw: { kind: 'raw', raw },
 					git: { kind: 'git', branch, hash },
 					archive: { kind: 'archive', filename: archive?.[0]?.name }
 				})!
-		  })
+			})
 		: undefined;
 </script>
 

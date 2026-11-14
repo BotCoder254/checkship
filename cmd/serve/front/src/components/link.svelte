@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { AppTranslationsString } from '$lib/localization';
-	import l from '$lib/localization';
+	import type { AppTranslationsString } from '#lib/localization/index.ts';
+	import l from '#lib/localization/index.ts';
 
 	let className: string = '';
 

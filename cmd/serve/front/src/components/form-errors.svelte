@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { GLOBAL_ERROR_NAME, type SubmitterErrors } from '$lib/form';
+	import { GLOBAL_ERROR_NAME, type SubmitterErrors } from '#lib/form.ts';
 	import Panel from '$components/panel.svelte';
-	import l, { type AppTranslationsString } from '$lib/localization';
+	import l, { type AppTranslationsString } from '#lib/localization/index.ts';
 
 	export let title: AppTranslationsString = 'error';
 	export let errors: SubmitterErrors;

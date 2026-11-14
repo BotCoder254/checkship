@@ -1,8 +1,8 @@
 import { goto } from '$app/navigation';
-import sessions, { type SessionsService } from '$lib/resources/sessions';
-import type { Profile } from '$lib/resources/users';
-import fetcher, { type FetchOptions, type FetchService } from '$lib/fetcher';
-import routes from '$lib/path';
+import sessions, { type SessionsService } from '#lib/resources/sessions.ts';
+import type { Profile } from '#lib/resources/users.ts';
+import fetcher, { type FetchOptions, type FetchService } from '#lib/fetcher/index.ts';
+import routes from '#lib/path.ts';
 
 type AuthOptions = {
 	onLoginSucceeded?(): Promise<void>;
@@ -58,7 +58,8 @@ export class Auth {
 export default new Auth(sessions, fetcher, {
 	onLoginSucceeded: () => {
 		const params = new URLSearchParams(window.location.search);
-		return goto(params.get('redirectTo') ?? routes.apps);
+		// SvelteKit 3 rejects goto() to unknown routes, so a bad redirectTo falls back to the apps page.
+		return goto(params.get('redirectTo') ?? routes.apps).catch(() => goto(routes.apps));
 	},
 	onLogoutSucceeded: (redirectTo) => goto(routes.signin(redirectTo))
 });

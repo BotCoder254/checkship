@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { messageFromAttributes } from '$lib/form';
+	import { messageFromAttributes } from '#lib/form.ts';
 	import InputAdorner from '$components/input-adorner.svelte';
-	import type { AppTranslationsString } from '$lib/localization';
+	import type { AppTranslationsString } from '#lib/localization/index.ts';
 
 	let touched = false;
 

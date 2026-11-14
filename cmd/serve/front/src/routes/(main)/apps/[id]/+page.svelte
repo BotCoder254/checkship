@@ -4,9 +4,9 @@
 	import Button from '$components/button.svelte';
 	import CleanupNotice from '$components/cleanup-notice.svelte';
 	import EnvironmentCard from '$components/environment-card.svelte';
-	import routes from '$lib/path';
-	import service from '$lib/resources/apps';
-	import l from '$lib/localization';
+	import routes from '#lib/path.ts';
+	import service from '#lib/resources/apps.ts';
+	import l from '#lib/localization/index.ts';
 
 	export let data;
 

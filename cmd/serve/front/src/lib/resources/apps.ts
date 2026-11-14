@@ -1,7 +1,11 @@
-import fetcher, { type FetchOptions, type FetchService, type QueryResult } from '$lib/fetcher';
-import { POLLING_INTERVAL_MS } from '$lib/config';
-import type { ByUserData } from '$lib/resources/users';
-import type { Deployment, DeploymentDetail } from '$lib/resources/deployments';
+import fetcher, {
+	type FetchOptions,
+	type FetchService,
+	type QueryResult
+} from '#lib/fetcher/index.ts';
+import { POLLING_INTERVAL_MS } from '#lib/config.ts';
+import type { ByUserData } from '#lib/resources/users.ts';
+import type { Deployment, DeploymentDetail } from '#lib/resources/deployments.ts';
 
 export type App = {
 	id: string;
@@ -81,7 +85,10 @@ type Options = {
 };
 
 export class RemoteAppsService implements AppsService {
-	constructor(private readonly _fetcher: FetchService, private readonly _options: Options) {}
+	constructor(
+		private readonly _fetcher: FetchService,
+		private readonly _options: Options
+	) {}
 
 	create(payload: CreateApp): Promise<AppDetail> {
 		return this._fetcher.post('/api/v1/apps', payload);

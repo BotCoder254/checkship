@@ -1,5 +1,5 @@
-import type { AppTranslations, Locale } from '$lib/localization';
-import routes from '$lib/path';
+import type { AppTranslations, Locale } from '#lib/localization/index.ts';
+import routes from '#lib/path.ts';
 
 export default {
 	code: 'fr',
@@ -9,6 +9,7 @@ export default {
 		'auth.signin.title': 'Connexion',
 		'auth.signin.description':
 			'Remplissez le formulaire ci-dessous pour accéder au tableau de bord.',
+		'auth.tagline': 'Plateforme de déploiement auto-hébergée, sans prise de tête.',
 		// App
 		'app.no_targets': 'Aucune cible trouvée',
 		'app.no_targets.description': `Vous avez besoin d'au moins une cible pour pouvoir déployer votre application. Dirigez-vous vers la <a href="${routes.createTarget}">page de création</a> pour en créer une.`,
@@ -279,6 +280,133 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 		invalid_host: 'Hôte invalide',
 		invalid_ssh_key: 'Clé SSH invalide',
 		target_in_use:
-			"La cible est en cours d'utilisation par au moins une application et ne peut pas être supprimée."
+			"La cible est en cours d'utilisation par au moins une application et ne peut pas être supprimée.",
+		// Shell (DESIGN.md §5)
+		'nav.main': 'Principal',
+		'nav.workspace': 'Espace de travail',
+		'nav.recent': 'Récents',
+		'nav.documentation': 'Documentation',
+		'nav.documentation.label': 'Documentation, ouvre un nouvel onglet',
+		'nav.theme': 'Thème',
+		'nav.collapse': 'Réduire la barre latérale',
+		'nav.expand': 'Déplier la barre latérale',
+		'nav.open_menu': 'Ouvrir le menu',
+		'nav.close_menu': 'Fermer le menu',
+		'nav.targets_failing': (count: number) =>
+			count === 1 ? '1 cible en échec' : `${count} cibles en échec`,
+		'nav.jobs_queued': (count: number) =>
+			count === 1 ? '1 tâche en attente' : `${count} tâches en attente`,
+		'nav.version': (version: string) => `checkship ${version}`,
+		'theme.system': 'Système',
+		'theme.light': 'Clair',
+		'theme.dark': 'Sombre',
+		'theme.switch': (current: string) => `Thème : ${current}. Changer de thème`,
+		'account.menu': (email: string) => `Compte : ${email}`,
+		'account.signed_in': 'Connecté',
+		'account.profile': 'Profil',
+		'account.api_key': "Clé d'API pour la CI",
+		'account.sign_out': 'Se déconnecter',
+		'apps.summary': (count: number, failed: number, queued: number) =>
+			[
+				count === 1 ? '1 application' : `${count} applications`,
+				failed > 0
+					? failed === 1
+						? '1 déploiement de production en échec'
+						: `${failed} déploiements de production en échec`
+					: undefined,
+				queued > 0
+					? queued === 1
+						? '1 tâche en attente'
+						: `${queued} tâches en attente`
+					: undefined
+			]
+				.filter(Boolean)
+				.join(' · '),
+		'apps.column.application': 'Application',
+		'apps.column.production': 'Production',
+		'apps.column.staging': 'Staging',
+		'apps.no_deployment': 'Aucun déploiement',
+		'apps.on_target': (name: string) => `sur la cible ${name}`,
+		'apps.deletion_requested': 'Suppression demandée',
+		'apps.deletion_requested.description':
+			'Ses ressources sont en cours de suppression sur les cibles.',
+		'apps.empty.title': "Aucune application pour l'instant",
+		'apps.empty.description':
+			"Une application regroupe les services d'un fichier compose, déployés en production et en staging.",
+		'targets.summary': (count: number, failing: number) =>
+			[count === 1 ? '1 cible' : `${count} cibles`, failing > 0 ? `${failing} en échec` : undefined]
+				.filter(Boolean)
+				.join(' · '),
+		'targets.column.target': 'Cible',
+		'targets.column.provider': 'Fournisseur',
+		'targets.column.state': 'État',
+		'targets.local': 'Moteur Docker local',
+		'targets.remote': (host: string) => `Docker via SSH · ${host}`,
+		'targets.manual_proxy': 'Services non exposés automatiquement',
+		'targets.empty.title': "Aucune cible pour l'instant",
+		'targets.empty.description':
+			'Une cible est un hôte Docker sur lequel checkship déploie, sur cette machine ou via SSH.',
+		'registries.summary': (count: number) => (count === 1 ? '1 registre' : `${count} registres`),
+		'registries.column.registry': 'Registre',
+		'registries.column.auth': 'Authentification',
+		'registries.auth.none': 'Sans authentification',
+		'registries.auth.user': (username: string) => `Connecté en tant que ${username}`,
+		'registries.empty.title': 'Aucun registre personnalisé',
+		'registries.empty.description':
+			'Ajoutez-en un quand vos images sont dans un registre privé qui demande des identifiants.',
+		'status.pending': 'En attente',
+		'status.running': 'En cours',
+		'status.failed': 'Échec',
+		'status.succeeded': 'Réussi',
+		'status.configuring': 'Configuration',
+		'status.ready': 'Prête',
+		'deployment.promote.title': 'Promouvoir en production',
+		'deployment.promote.description': (number: number) =>
+			`Le déploiement #${number} sera redéployé en production, avec la même source.`,
+		'deployment.redeploy.description': (number: number, environment: string) =>
+			`Le déploiement #${number} sera redéployé en ${environment}, avec la même source.`,
+		'deployment.status_line': (environment: string, target: string) =>
+			`${environment} · cible ${target}`,
+		'deployment.finished_line': (time: string, duration: string) =>
+			`terminé à ${time} · durée ${duration}`,
+		'deployment.started_line': (time: string) => `démarré à ${time}`,
+		'deployment.queued_line': (time: string) => `en file depuis ${time}`,
+		'deployment.source': 'Source',
+		'deployment.source.kind': 'Type',
+		'deployment.source.git': 'Git',
+		'deployment.source.raw': 'Fichier compose',
+		'deployment.source.archive': 'Archive',
+		'deployment.queued_by': 'Demandé par',
+		'deployment.services.title': 'Services',
+		'deployment.not_exposed': 'Non exposé',
+		'deployment.logs.title': 'Journaux',
+		'deployment.outdated.link': (number: number) => `Aller au déploiement #${number}`,
+		'target.delete.description': (name: string) =>
+			`Les ressources de ses applications sont supprimées de l'hôte. Saisissez ${name} pour confirmer.`,
+		'target.delete.type_name': 'Nom de la cible',
+		'target.reconfigure.title': 'Reconfigurer la cible',
+		'target.create': 'Créer la cible',
+		'target.remote.label': 'Hôte distant via SSH',
+		'target.remote.description':
+			'Désactivé : le moteur Docker de la machine qui exécute checkship.',
+		'target.page.description':
+			'Une cible est un hôte Docker sur lequel checkship déploie, sur cette machine ou via SSH.',
+		'profile.signed_in_since': (date: string) => `Inscrit depuis le ${date}`,
+		'profile.account': 'Compte',
+		'profile.locale.help': 'La page se recharge dans la nouvelle langue.',
+		'profile.content_width': 'Largeur du contenu',
+		'profile.content_width.help':
+			'Largeur maximale des pages sur les grands écrans : 840, 1020 ou 1160px. Le thème est en bas de la barre latérale.',
+		'profile.content_width.compact': 'Compacte',
+		'profile.content_width.default': 'Normale',
+		'profile.content_width.wide': 'Large',
+		'profile.saved': 'Profil enregistré',
+		'profile.key.refresh.title': "Régénérer la clé d'API ?",
+		'profile.key.regenerated': "Clé d'API régénérée",
+		copy: 'Copier',
+		copied: 'Copié dans le presse-papiers',
+		cancel: 'Annuler',
+		confirm: 'Confirmer',
+		delete: 'Supprimer'
 	}
 } as const satisfies Locale<AppTranslations>;

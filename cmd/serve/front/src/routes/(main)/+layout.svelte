@@ -1,33 +1,9 @@
 <script lang="ts">
-	import { navigating } from '$app/stores';
-	import BottomBar from './bottom-bar.svelte';
-	import ProgressBar from './progress-bar.svelte';
-	import Topbar from './topbar.svelte';
+	import AppShell from '#lib/components/shell/app-shell.svelte';
 
-	export let data;
+	let { data, children } = $props();
 </script>
 
-<ProgressBar visible={$navigating != null} />
-
-<div class="container">
-	<Topbar user={data.user} />
-	<main class="content">
-		<slot />
-	</main>
-	<BottomBar version={data.health.version} />
-</div>
-
-<style module>
-	.container {
-		display: flex;
-		flex-direction: column;
-		margin: auto;
-		padding-inline: var(--sp-4);
-		max-width: var(--mi-container-width);
-		min-height: 100vh;
-	}
-
-	.content {
-		flex: 1;
-	}
-</style>
+<AppShell user={data.user} version={data.health.version}>
+	{@render children()}
+</AppShell>

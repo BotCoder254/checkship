@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Loader from '$components/loader.svelte';
-	import { type ActionDefinition, useAction } from '$lib/actions';
-	import l, { type AppTranslationsString } from '$lib/localization';
+	import { type ActionDefinition, useAction } from '#lib/actions.ts';
+	import l, { type AppTranslationsString } from '#lib/localization/index.ts';
 
 	type ButtonType = 'button' | 'submit' | 'reset';
 
@@ -63,8 +63,10 @@
 		font: 600 var(--ty-caption);
 		padding: var(--sp-1) var(--sp-3);
 		display: flex;
-		flex-direction: column;
+		flex-direction: row;
 		align-items: center;
+		justify-content: center;
+		gap: var(--sp-2);
 		user-select: none;
 	}
 
@@ -114,30 +116,5 @@
 
 	.button.danger:focus {
 		outline-color: var(--co-danger-3);
-	}
-
-	/** 
-	 * Simple trick to avoid the 1px offset when visually removing the content
-	 * on loading.
-	 */
-	.loading {
-		border-bottom-width: 0;
-	}
-
-	.danger.loading,
-	.outlined.loading {
-		border-bottom-width: 1px;
-	}
-
-	/**
-	 * Since I want the button to keep its original width, let's use the position
-	 * relative here.
-	 */
-	.loading .content {
-		position: relative;
-		left: -10000px;
-		top: auto;
-		height: 1px;
-		overflow: hidden;
 	}
 </style>

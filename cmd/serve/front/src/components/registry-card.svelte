@@ -1,8 +1,8 @@
 <script lang="ts">
 	import Card from '$components/card.svelte';
 	import Link from '$components/link.svelte';
-	import routes from '$lib/path';
-	import type { Registry } from '$lib/resources/registries';
+	import routes from '#lib/path.ts';
+	import type { Registry } from '#lib/resources/registries.ts';
 
 	export let data: Registry;
 </script>

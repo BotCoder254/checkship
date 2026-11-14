@@ -1,4 +1,4 @@
-import fetcher, { type FetchService } from '$lib/fetcher';
+import fetcher, { type FetchService } from '#lib/fetcher/index.ts';
 
 export type Profile = {
 	id: string;

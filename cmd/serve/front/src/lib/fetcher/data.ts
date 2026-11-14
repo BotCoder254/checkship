@@ -33,7 +33,11 @@ export default class CacheData {
 	 * @param baseKey The cache base key without query params (to invalidate them easily).
 	 * @param initialValue The initial value of the cache.
 	 */
-	constructor(public readonly key: string, baseKey?: string, initialValue?: unknown) {
+	constructor(
+		public readonly key: string,
+		baseKey?: string,
+		initialValue?: unknown
+	) {
 		this.baseKey = baseKey ?? key.split('?')[0];
 		this._data = writable();
 		this._error = writable();
@@ -128,7 +132,7 @@ export default class CacheData {
 			data: (listener
 				? {
 						subscribe: (run: Subscriber<unknown>, invalidate?: (value?: unknown) => void) => {
-							const unsubListener = listener(run);
+							const unsubListener = listener(run, () => undefined); // Listeners only use `set`, Svelte 5 also passes `update`
 							const unsubStore = this._data.subscribe(run, invalidate);
 
 							return () => {
@@ -138,7 +142,7 @@ export default class CacheData {
 								unsubStore();
 							};
 						}
-				  }
+					}
 				: this._data) as Readable<Maybe<T>>,
 			error: this._error,
 			loading: this._loading

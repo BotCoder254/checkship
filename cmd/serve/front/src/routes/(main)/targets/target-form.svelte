@@ -1,193 +1,251 @@
+<!--
+	Target form (DESIGN.md §5): a 760px column, sections separated by headings and space, switch
+	rows on a sunken fill with the control on the right. The page header (title, actions) is inside
+	the form so its submit button submits.
+-->
 <script lang="ts">
-	import Form from '$components/form.svelte';
-	import Stack from '$components/stack.svelte';
-	import FormErrors from '$components/form-errors.svelte';
-	import l from '$lib/localization';
+	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
+	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
+	import Loading03Icon from '@hugeicons/core-free-icons/Loading03Icon';
+	import type { Snippet } from 'svelte';
+	import FieldMessage from '#lib/components/field-message.svelte';
+	import Icon from '#lib/components/icon.svelte';
+	import PageHeader from '#lib/components/page-header.svelte';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
+	import { Switch } from '#lib/components/ui/switch/index.js';
+	import { Textarea } from '#lib/components/ui/textarea/index.js';
+	import { GLOBAL_ERROR_NAME, submitter } from '#lib/form.ts';
+	import l, { type AppTranslationsString } from '#lib/localization/index.ts';
 	import {
 		TargetStatus,
 		type CreateTarget,
-		type ProviderTypes,
 		type Target,
 		type UpdateTarget
-	} from '$lib/resources/targets';
-	import FormSection from '$components/form-section.svelte';
-	import TextInput from '$components/text-input.svelte';
-	import Dropdown, { type DropdownOption } from '$components/dropdown.svelte';
-	import TextArea from '$components/text-area.svelte';
-	import Checkbox from '$components/checkbox.svelte';
-	import Panel from '$components/panel.svelte';
+	} from '#lib/resources/targets.ts';
 
-	export let initialData: Maybe<Target> = undefined;
-	export let disabled: boolean = false;
-	export let handler: (data: any) => Promise<unknown>;
-
-	const providerTypes = ['docker'] satisfies DropdownOption<ProviderTypes>[];
-
-	let name = initialData?.name ?? '';
-	let url = initialData?.url ?? '';
-	let provider: ProviderTypes = initialData?.provider.kind ?? providerTypes[0];
-	let isRemote = !!initialData?.provider.data.host || false;
-	let automaticProxyConfiguration = initialData ? !!initialData.url : true;
-
-	const docker = { ...initialData?.provider.data };
-
-	type $$Props = {
+	type Props = {
+		title: string;
+		crumbs: { href: string; label: string }[];
+		/** Header actions; gets whether the form is submitting. */
+		actions: Snippet<[boolean]>;
 		disabled?: boolean;
 	} & (
-		| {
-				initialData: Target;
-				handler: (data: UpdateTarget) => Promise<unknown>;
-		  }
-		| {
-				handler: (data: CreateTarget) => Promise<unknown>;
-		  }
+		| { initialData: Target; handler: (data: UpdateTarget) => Promise<unknown> }
+		| { initialData?: undefined; handler: (data: CreateTarget) => Promise<unknown> }
 	);
 
-	async function submit() {
-		let formData: any;
+	let props: Props = $props();
+	// The form is created once per page; later prop changes don't reset what the person typed.
+	// svelte-ignore state_referenced_locally
+	const initialData = props.initialData;
 
-		if (!initialData) {
-			formData = {
+	let name = $state(initialData?.name ?? '');
+	let url = $state(initialData?.url ?? '');
+	let exposeAutomatically = $state(initialData ? !!initialData.url : true);
+	let isRemote = $state(!!initialData?.provider.data.host);
+	let host = $state(initialData?.provider.data.host ?? '');
+	let user = $state(initialData?.provider.data.user ?? '');
+	let port = $state(initialData?.provider.data.port?.toString() ?? '');
+	let privateKey = $state(initialData?.provider.data.private_key ?? '');
+
+	const { submit, loading, errors } = submitter(() => {
+		const remote = {
+			host: host || undefined,
+			user: user || undefined,
+			port: parseInt(port) || undefined
+		};
+
+		if (!props.initialData) {
+			return props.handler({
 				name,
-				url: automaticProxyConfiguration ? url : undefined,
-				docker:
-					provider === 'docker'
-						? isRemote
-							? {
-									host: docker?.host || undefined,
-									user: docker?.user || undefined,
-									port: parseInt(docker?.port?.toString() ?? '') || undefined,
-									private_key: docker?.private_key || undefined
-							  }
-							: {}
-						: undefined
-			} satisfies CreateTarget;
-		} else {
-			formData = {
-				name,
-				url: automaticProxyConfiguration ? (initialData?.url !== url ? url : undefined) : null,
-				docker:
-					provider === 'docker'
-						? isRemote
-							? {
-									host: docker?.host || undefined,
-									user: docker?.user || undefined,
-									port: parseInt(docker?.port?.toString() ?? '') || undefined,
-									private_key:
-										docker?.private_key !== initialData?.provider.data.private_key
-											? docker?.private_key || null
-											: undefined
-							  }
-							: undefined
-						: undefined
-			} satisfies UpdateTarget;
+				url: exposeAutomatically ? url : undefined,
+				docker: isRemote ? { ...remote, private_key: privateKey || undefined } : {}
+			});
 		}
 
-		await handler(formData);
+		return props.handler({
+			name,
+			url: exposeAutomatically ? (props.initialData.url !== url ? url : undefined) : null,
+			docker: isRemote
+				? {
+						...remote,
+						private_key:
+							privateKey !== props.initialData.provider.data.private_key
+								? privateKey || null
+								: undefined
+					}
+				: undefined
+		});
+	});
+
+	const fieldError = (key: string) => $errors?.[key] ?? undefined;
+	const globalError = $derived($errors?.[GLOBAL_ERROR_NAME]);
+
+	function onsubmit(event: SubmitEvent) {
+		event.preventDefault();
+		if ($loading) return;
+		submit().catch(() => {});
 	}
 </script>
 
-<Form {disabled} handler={submit} let:submitting let:errors>
-	<slot {submitting} />
+<form class="mx-auto flex max-w-190 flex-col" novalidate {onsubmit}>
+	<PageHeader title={props.title} crumbs={props.crumbs}>
+		{#snippet actions()}
+			{@render props.actions($loading)}
+		{/snippet}
+		{#snippet status()}
+			<span>{l.translate('target.page.description')}</span>
+		{/snippet}
+	</PageHeader>
 
-	<Stack direction="column">
-		<FormErrors {errors} />
-
-		{#if initialData?.state.status === TargetStatus.Failed}
-			<Panel title="target.failed" variant="danger">
-				<p>{initialData.state.error_code}</p>
-			</Panel>
-		{:else if initialData?.state.status === TargetStatus.Configuring}
-			<Panel title="target.configuring" variant="warning">
-				<p>{l.translate('target.configuring.description')}</p>
-			</Panel>
-		{:else if initialData?.state.status === TargetStatus.Ready && initialData.state.last_ready_version}
-			<Panel title="target.ready" variant="success">
-				<p>
-					{l.translate('target.ready.description', [initialData.state.last_ready_version])}
-				</p>
-			</Panel>
+	<fieldset class="flex flex-col gap-9" disabled={props.disabled}>
+		{#if globalError}
+			<Alert.Root variant="destructive">
+				<Icon icon={Alert02Icon} />
+				<Alert.Title class="font-semibold">
+					{l.translate(globalError as AppTranslationsString)}
+				</Alert.Title>
+			</Alert.Root>
 		{/if}
 
-		<div>
-			<FormSection title="target.general">
-				<Stack direction="column">
-					<TextInput autofocus label="name" bind:value={name} required remoteError={errors?.name}>
-						<p>{l.translate('target.name.help')}</p>
-					</TextInput>
-					<Checkbox
-						label="target.automatic_proxy_configuration"
-						bind:checked={automaticProxyConfiguration}
-					>
-						<p>{@html l.translate('target.automatic_proxy_configuration.help')}</p>
-					</Checkbox>
-					{#if automaticProxyConfiguration}
-						<TextInput label="url" bind:value={url} required type="url" remoteError={errors?.url}>
-							<p>{@html l.translate('target.url.help')}</p>
-						</TextInput>
-					{/if}
-				</Stack>
-			</FormSection>
+		{#if initialData?.state.status === TargetStatus.Failed}
+			<Alert.Root variant="destructive">
+				<Icon icon={Alert02Icon} />
+				<Alert.Title class="font-semibold">{l.translate('target.failed')}</Alert.Title>
+				<Alert.Description class="font-mono text-xs"
+					>{initialData.state.error_code}</Alert.Description
+				>
+			</Alert.Root>
+		{:else if initialData?.state.status === TargetStatus.Configuring}
+			<Alert.Root variant="warning">
+				<Icon icon={Loading03Icon} class="animate-spin" />
+				<Alert.Title class="font-semibold">{l.translate('target.configuring')}</Alert.Title>
+				<Alert.Description>{l.translate('target.configuring.description')}</Alert.Description>
+			</Alert.Root>
+		{:else if initialData?.state.status === TargetStatus.Ready && initialData.state.last_ready_version}
+			<Alert.Root variant="success">
+				<Icon icon={CheckmarkCircle02Icon} />
+				<Alert.Title class="font-semibold">{l.translate('target.ready')}</Alert.Title>
+				<Alert.Description>
+					{l.translate('target.ready.description', [initialData.state.last_ready_version])}
+				</Alert.Description>
+			</Alert.Root>
+		{/if}
 
-			<FormSection title="target.provider">
-				<Stack direction="column">
-					<Dropdown
-						label="target.provider"
-						disabled={!!initialData}
-						bind:value={provider}
-						options={providerTypes}
-						remoteError={isRemote ? undefined : errors?.docker}
-					>
-						{#if provider === 'docker'}
-							<p>{@html l.translate('target.provider.docker.help')}</p>
-						{/if}
-					</Dropdown>
+		<section class="flex flex-col gap-4.5">
+			<h2 class="text-base font-semibold">{l.translate('target.general')}</h2>
 
-					{#if provider === 'docker'}
-						<Checkbox
-							label="target.docker.is_remote"
+			<div class="flex flex-col gap-1.5">
+				<Label for="target-name">{l.translate('name')}</Label>
+				<Input
+					id="target-name"
+					bind:value={name}
+					required
+					aria-invalid={!!fieldError('name') || undefined}
+					aria-describedby="target-name-message"
+				/>
+				<FieldMessage id="target-name-message" error={fieldError('name')}>
+					{#snippet help()}{l.translate('target.name.help')}{/snippet}
+				</FieldMessage>
+			</div>
+
+			<div class="flex items-center gap-6 rounded-md bg-sunken px-4 py-3.5">
+				<div class="flex min-w-0 flex-1 flex-col gap-0.5">
+					<Label for="target-expose">{l.translate('target.automatic_proxy_configuration')}</Label>
+					<p class="text-sm text-muted-foreground [&_a]:text-primary [&_a]:underline">
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -- our own translation string -->
+						{@html l.translate('target.automatic_proxy_configuration.help')}
+					</p>
+				</div>
+				<Switch id="target-expose" bind:checked={exposeAutomatically} />
+			</div>
+
+			{#if exposeAutomatically}
+				<div class="flex flex-col gap-1.5">
+					<Label for="target-url">{l.translate('url')}</Label>
+					<Input
+						id="target-url"
+						type="url"
+						bind:value={url}
+						placeholder="https://apps.example.com"
+						aria-invalid={!!fieldError('url') || undefined}
+						aria-describedby="target-url-message"
+					/>
+					<FieldMessage id="target-url-message" error={fieldError('url')}>
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -- our own translation string -->
+						{#snippet help()}{@html l.translate('target.url.help')}{/snippet}
+					</FieldMessage>
+				</div>
+			{/if}
+		</section>
+
+		<section class="flex flex-col gap-4.5">
+			<h2 class="text-base font-semibold">{l.translate('target.provider')} · Docker</h2>
+
+			<div class="flex items-center gap-6 rounded-md bg-sunken px-4 py-3.5">
+				<div class="flex min-w-0 flex-1 flex-col gap-0.5">
+					<Label for="target-remote">{l.translate('target.remote.label')}</Label>
+					<p class="text-sm text-muted-foreground">{l.translate('target.remote.description')}</p>
+				</div>
+				<Switch id="target-remote" bind:checked={isRemote} disabled={!!initialData} />
+			</div>
+
+			{#if isRemote}
+				<div class="grid gap-4.5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
+					<div class="flex flex-col gap-1.5">
+						<Label for="target-host">{l.translate('target.docker.host')}</Label>
+						<Input
+							id="target-host"
+							bind:value={host}
 							disabled={!!initialData}
-							bind:checked={isRemote}
-						>
-							<p>{@html l.translate('target.docker.is_remote.help')}</p>
-						</Checkbox>
-
-						{#if isRemote}
-							<TextInput
-								label="target.docker.host"
-								bind:value={docker.host}
-								disabled={!!initialData}
-								required
-								remoteError={errors?.docker ?? errors?.['docker.host']}
-							>
-								<p>{@html l.translate('target.docker.host.help')}</p>
-							</TextInput>
-							<TextInput
-								label="target.docker.user"
-								bind:value={docker.user}
-								placeholder="docker"
-								remoteError={errors?.['docker.user']}
-							/>
-							<TextInput
-								label="target.docker.port"
-								bind:value={docker.port}
-								type="number"
-								placeholder="22"
-								remoteError={errors?.['docker.port']}
-							/>
-							<TextArea
-								label="target.docker.private_key"
-								bind:value={docker.private_key}
-								code
-								rows={7}
-								remoteError={errors?.['docker.private_key']}
-							>
-								<p>{@html l.translate('target.docker.private_key.help')}</p>
-							</TextArea>
-						{/if}
-					{/if}
-				</Stack>
-			</FormSection>
-		</div>
-	</Stack>
-</Form>
+							aria-invalid={!!(fieldError('docker') ?? fieldError('docker.host')) || undefined}
+							aria-describedby="target-host-message"
+						/>
+						<FieldMessage
+							id="target-host-message"
+							error={fieldError('docker') ?? fieldError('docker.host')}
+						/>
+					</div>
+					<div class="flex flex-col gap-1.5">
+						<Label for="target-user">{l.translate('target.docker.user')}</Label>
+						<Input
+							id="target-user"
+							bind:value={user}
+							placeholder="docker"
+							aria-invalid={!!fieldError('docker.user') || undefined}
+						/>
+						<FieldMessage id="target-user-message" error={fieldError('docker.user')} />
+					</div>
+					<div class="flex flex-col gap-1.5">
+						<Label for="target-port">{l.translate('target.docker.port')}</Label>
+						<Input
+							id="target-port"
+							type="number"
+							bind:value={port}
+							placeholder="22"
+							aria-invalid={!!fieldError('docker.port') || undefined}
+						/>
+						<FieldMessage id="target-port-message" error={fieldError('docker.port')} />
+					</div>
+				</div>
+				<div class="flex flex-col gap-1.5">
+					<Label for="target-key">{l.translate('target.docker.private_key')}</Label>
+					<Textarea
+						id="target-key"
+						bind:value={privateKey}
+						rows={7}
+						class="font-mono text-xs"
+						aria-invalid={!!fieldError('docker.private_key') || undefined}
+						aria-describedby="target-key-message"
+					/>
+					<FieldMessage id="target-key-message" error={fieldError('docker.private_key')}>
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -- our own translation string -->
+						{#snippet help()}{@html l.translate('target.docker.private_key.help')}{/snippet}
+					</FieldMessage>
+				</div>
+			{/if}
+		</section>
+	</fieldset>
+</form>

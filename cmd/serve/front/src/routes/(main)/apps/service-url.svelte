@@ -1,5 +1,5 @@
 <script lang="ts">
-	import l from '$lib/localization';
+	import l from '#lib/localization/index.ts';
 
 	export let scheme: string;
 	export let host: string;

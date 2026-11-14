@@ -1,6 +1,10 @@
-import { POLLING_INTERVAL_MS } from '$lib/config';
-import fetcher, { type FetchOptions, type FetchService, type QueryResult } from '$lib/fetcher';
-import type { Paginated } from '$lib/pagination';
+import { POLLING_INTERVAL_MS } from '#lib/config.ts';
+import fetcher, {
+	type FetchOptions,
+	type FetchService,
+	type QueryResult
+} from '#lib/fetcher/index.ts';
+import type { Paginated } from '#lib/pagination.ts';
 
 export type Job = {
 	id: string;
@@ -33,7 +37,10 @@ type Options = {
 };
 
 export class RemoteJobsService implements JobsService {
-	constructor(private readonly _fetcher: FetchService, private readonly _options: Options) {}
+	constructor(
+		private readonly _fetcher: FetchService,
+		private readonly _options: Options
+	) {}
 
 	delete(id: string): Promise<void> {
 		return this._fetcher.delete(`/api/v1/jobs/${id}`, {

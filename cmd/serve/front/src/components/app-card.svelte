@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { isSet } from '$lib/collections';
-	import routes from '$lib/path';
-	import type { App } from '$lib/resources/apps';
+	import { isSet } from '#lib/collections.ts';
+	import routes from '#lib/path.ts';
+	import type { App } from '#lib/resources/apps.ts';
 	import Link from '$components/link.svelte';
 	import Card from '$components/card.svelte';
 	import DeploymentsList from '$components/deployments-list.svelte';

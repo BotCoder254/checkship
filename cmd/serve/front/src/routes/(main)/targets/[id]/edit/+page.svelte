@@ -1,82 +1,71 @@
 <script lang="ts">
+	import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
+	import RefreshIcon from '@hugeicons/core-free-icons/RefreshIcon';
+	import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
 	import { goto } from '$app/navigation';
-	import Breadcrumb from '$components/breadcrumb.svelte';
-	import Button from '$components/button.svelte';
-	import routes from '$lib/path';
+	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
+	import Icon from '#lib/components/icon.svelte';
+	import StatusBadge from '#lib/components/status-badge.svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import l from '#lib/localization/index.ts';
+	import routes from '#lib/path.ts';
+	import service, { TargetStatus, type UpdateTarget } from '#lib/resources/targets.ts';
 	import TargetForm from '../../target-form.svelte';
-	import l from '$lib/localization';
-	import service, { TargetStatus, type UpdateTarget } from '$lib/resources/targets';
-	import { submitter } from '$lib/form';
-	import FormErrors from '$components/form-errors.svelte';
-	import Stack from '$components/stack.svelte';
-	import CleanupNotice from '$components/cleanup-notice.svelte';
 
-	export let data;
+	let { data } = $props();
 
-	const submit = (d: UpdateTarget) =>
-		service.update(data.target.id, d).then(() => goto(routes.targets));
+	let deleteOpen = $state(false);
+	let reconfigureOpen = $state(false);
 
-	const {
-		loading: deleting,
-		errors: deleteErr,
-		submit: deleteTarget
-	} = submitter(() => service.delete(data.target.id).then(() => goto(routes.targets)), {
-		confirmation: l.translate(
-			data.target.state.status === TargetStatus.Failed && data.target.state.last_ready_version
-				? 'target.delete.confirm_failed_status'
-				: 'target.delete.confirm',
-			[data.target.name]
-		)
-	});
+	const target = $derived(data.target);
+	const configuring = $derived(target.state.status === TargetStatus.Configuring);
 
-	const {
-		loading: reconfiguring,
-		errors: reconfigureErr,
-		submit: reconfigureTarget
-	} = submitter(() => service.reconfigure(data.target.id).then(() => goto(routes.targets)), {
-		confirmation: l.translate('target.reconfigure.confirm')
-	});
+	const submit = (d: UpdateTarget) => service.update(target.id, d).then(() => goto(routes.targets));
 </script>
 
-<TargetForm disabled={$deleting} initialData={data.target} handler={submit}>
-	<svelte:fragment slot="default" let:submitting>
-		<Breadcrumb
-			title={l.translate('breadcrumb.target.settings', [data.target.name])}
-			segments={[
-				{ path: routes.targets, title: l.translate('breadcrumb.targets') },
-				data.target.name,
-				l.translate('breadcrumb.settings')
-			]}
-		>
-			{#if data.target.cleanup_requested_at}
-				<CleanupNotice requested_at={data.target.cleanup_requested_at} />
-			{:else}
-				<Button
-					loading={$deleting}
-					on:click={deleteTarget}
-					disabled={data.target.state.status === TargetStatus.Configuring}
-					variant="danger"
-					text="target.delete"
-				/>
-				<Button
-					loading={$reconfiguring}
-					disabled={data.target.state.status === TargetStatus.Configuring}
-					on:click={reconfigureTarget}
-					variant="outlined"
-					text="target.reconfigure"
-				/>
-				<Button type="submit" loading={submitting} text="save" />
-			{/if}
-		</Breadcrumb>
-		<Stack direction="column" class="delete-form-errors">
-			<FormErrors title="target.delete.failed" errors={$deleteErr} />
-			<FormErrors title="target.reconfigure.failed" errors={$reconfigureErr} />
-		</Stack>
-	</svelte:fragment>
+<TargetForm
+	title={l.translate('breadcrumb.target.settings', [target.name])}
+	crumbs={[{ href: routes.targets, label: l.translate('breadcrumb.targets') }]}
+	initialData={target}
+	handler={submit}
+>
+	{#snippet actions(submitting)}
+		{#if target.cleanup_requested_at}
+			<StatusBadge state="deleting" label={l.translate('apps.deletion_requested')} />
+		{:else}
+			<Button variant="destructive" disabled={configuring} onclick={() => (deleteOpen = true)}>
+				<Icon icon={Delete02Icon} />
+				{l.translate('target.delete')}
+			</Button>
+			<Button variant="outline" disabled={configuring} onclick={() => (reconfigureOpen = true)}>
+				<Icon icon={RefreshIcon} />
+				{l.translate('target.reconfigure')}
+			</Button>
+			<Button type="submit" loading={submitting}>
+				<Icon icon={Tick02Icon} />
+				{l.translate('save')}
+			</Button>
+		{/if}
+	{/snippet}
 </TargetForm>
 
-<style module>
-	.delete-form-errors {
-		margin-block-end: var(--sp-4);
-	}
-</style>
+<ConfirmDialog
+	bind:open={deleteOpen}
+	destructive
+	title={l.translate('target.delete')}
+	description={l.translate('target.delete.description', [target.name])}
+	confirmLabel={l.translate('target.delete')}
+	icon={Delete02Icon}
+	typeToConfirm={target.name}
+	typeLabel={l.translate('target.delete.type_name')}
+	onconfirm={() => service.delete(target.id).then(() => goto(routes.targets))}
+/>
+
+<ConfirmDialog
+	bind:open={reconfigureOpen}
+	title={l.translate('target.reconfigure.title')}
+	description={l.translate('target.reconfigure.confirm')}
+	confirmLabel={l.translate('target.reconfigure')}
+	icon={RefreshIcon}
+	onconfirm={() => service.reconfigure(target.id).then(() => goto(routes.targets))}
+/>

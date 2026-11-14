@@ -1,9 +1,9 @@
 <script lang="ts">
 	import Button from '$components/button.svelte';
-	import { submitter } from '$lib/form';
-	import service from '$lib/resources/jobs';
+	import { submitter } from '#lib/form.ts';
+	import service from '#lib/resources/jobs.ts';
 	import Stack from '$components/stack.svelte';
-	import l from '$lib/localization';
+	import l from '#lib/localization/index.ts';
 
 	export let id: string;
 	export let page: number;

@@ -1,0 +1,203 @@
+/*
+ * checkship theme (DESIGN.md §3 palette, §13.3 token mapping).
+ *
+ * Layer order: the legacy layer holds the pre-migration global CSS (reset + src/assets/styles.css).
+ * It sits above Tailwind's base, so old pages keep their look, and below components and
+ * utilities, so the shadcn-svelte components are never overridden by it. Delete the legacy
+ * imports once the last old component is gone (DESIGN.md §13.5 step 10).
+ */
+@layer theme, base, legacy, components, utilities;
+
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn-svelte/tailwind.css';
+@import '@fontsource-variable/inter';
+@import 'the-new-css-reset/css/reset.css' layer(legacy);
+@import '../assets/styles.css' layer(legacy);
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+	/* Palette: DESIGN.md §3, light values, unchanged */
+	--canvas: #eef0f3;
+	--surface: #ffffff;
+	--sunken: #f5f6f8;
+	--line: #dde1e7;
+	--line-strong: #c6ccd5;
+	--ink: #14161a;
+	--muted: #5b6270;
+	--faint: #8a919c;
+	--accent: #2f5bea;
+	--accent-hover: #2549c4;
+	--accent-soft: #e6ecfd;
+	--on-accent: #ffffff;
+	--record: #d93a2b;
+	--record-soft: #fbe7e5;
+	--success: #1f8a4c;
+	--success-soft: #e3f3ea;
+	--warning: #a86a12;
+	--warning-soft: #fbf0dc;
+	--danger: #c4322b;
+	--danger-soft: #fbe6e5;
+
+	/* Logo only, never follows the accent tone (DESIGN.md §10) */
+	--brand: #2f5bea;
+
+	/* Raised: lines are gone (DESIGN.md §1, no dividers), so the line hex becomes a fill one step
+	   above surface: secondary buttons, hover, segmented tracks. Same values, no new colour. */
+	--raised: var(--line);
+	/* Floating panels (menus, selects, dialogs) and the hover fill inside them. */
+	--overlay: var(--surface);
+	--hover: var(--canvas);
+
+	--radius: 6px;
+	/* Profile › Content width sets this on <html>: 840 compact, 1020 default, 1160 wide. */
+	--content-max: 1020px;
+}
+
+.dark {
+	/* Palette: DESIGN.md §3, dark values, unchanged */
+	--canvas: #0b0b0d;
+	--surface: #131316;
+	--sunken: #0f1012;
+	--line: #222327;
+	--line-strong: #32343a;
+	--ink: #f1f1f3;
+	--muted: #a8adb7;
+	--faint: #7e838f;
+	--accent: #7f95ff;
+	--accent-hover: #98a9ff;
+	--accent-soft: #1f2540;
+	--on-accent: #0d1020;
+	--record: #ff6f64;
+	--record-soft: #3a1d1b;
+	--success: #4fce87;
+	--success-soft: #143022;
+	--warning: #e7b45a;
+	--warning-soft: #32260f;
+	--danger: #ff6f64;
+	--danger-soft: #3a1d1b;
+
+	--brand: #7f95ff;
+	--overlay: var(--line);
+	--hover: var(--line-strong);
+}
+
+@theme inline {
+	--font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+
+	/* Our names as utilities: bg-canvas, text-ink, bg-accent-soft, text-success … */
+	--color-canvas: var(--canvas);
+	--color-surface: var(--surface);
+	--color-sunken: var(--sunken);
+	--color-line: var(--line);
+	--color-line-strong: var(--line-strong);
+	--color-ink: var(--ink);
+	--color-faint: var(--faint);
+	--color-accent-hover: var(--accent-hover);
+	--color-accent-soft: var(--accent-soft);
+	--color-on-accent: var(--on-accent);
+	--color-record: var(--record);
+	--color-record-soft: var(--record-soft);
+	--color-success: var(--success);
+	--color-success-soft: var(--success-soft);
+	--color-warning: var(--warning);
+	--color-warning-soft: var(--warning-soft);
+	--color-danger: var(--danger);
+	--color-danger-soft: var(--danger-soft);
+	--color-brand: var(--brand);
+	--color-raised: var(--raised);
+	--color-overlay: var(--overlay);
+	--color-hover: var(--hover);
+
+	/*
+	 * shadcn's names, pointed at ours. Three names collide (accent, muted, border):
+	 * - shadcn `accent` is the hover fill  → our sunken. For the brand blue use `primary`.
+	 * - shadcn `muted` is a background     → our sunken. Our muted text is `text-muted-foreground`.
+	 */
+	--color-background: var(--surface);
+	--color-foreground: var(--ink);
+	--color-card: var(--surface);
+	--color-card-foreground: var(--ink);
+	--color-popover: var(--overlay);
+	--color-popover-foreground: var(--ink);
+	--color-primary: var(--accent);
+	--color-primary-foreground: var(--on-accent);
+	--color-secondary: var(--raised);
+	--color-secondary-foreground: var(--ink);
+	--color-muted: var(--sunken);
+	--color-muted-foreground: var(--muted);
+	--color-accent: var(--hover);
+	--color-accent-foreground: var(--ink);
+	--color-destructive: var(--danger);
+	/* No dividers: borders and separators are transparent. Controls use `input` (faint). */
+	--color-border: transparent;
+	/* Control borders use faint: 4.88:1 dark, 3.18:1 light, so inputs pass WCAG 1.4.11 (3:1). */
+	--color-input: var(--faint);
+	--color-ring: var(--accent);
+	--color-sidebar: var(--canvas);
+	--color-sidebar-foreground: var(--ink);
+	--color-sidebar-primary: var(--accent);
+	--color-sidebar-primary-foreground: var(--on-accent);
+	--color-sidebar-accent: var(--accent-soft);
+	--color-sidebar-accent-foreground: var(--accent);
+	--color-sidebar-border: transparent;
+	--color-sidebar-ring: var(--accent);
+
+	/* Every corner is 6px, inner parts 4px (DESIGN.md §6) */
+	--radius-sm: 4px;
+	--radius-md: 6px;
+	--radius-lg: 6px;
+	--radius-xl: 6px;
+	--radius-2xl: 6px;
+	--radius-3xl: 6px;
+	--radius-4xl: 6px;
+}
+
+/*
+ * The legacy reset (`all: unset`, in the legacy layer) brings back the browser's medium,
+ * text-coloured border, so a component that only sets a border style (border-dashed) would draw a
+ * line. Restore Tailwind's default above it: no width, transparent. Border utilities still win.
+ */
+@layer components {
+	*,
+	::before,
+	::after {
+		border: 0 solid transparent;
+	}
+
+	/* Inter everywhere, including dialogs and menus portalled outside the shell (DESIGN.md §7). */
+	body {
+		font-family: var(--font-sans);
+	}
+}
+
+@layer base {
+	* {
+		@apply border-transparent outline-ring/50;
+	}
+
+	html {
+		@apply bg-canvas font-sans text-ink;
+	}
+
+	::placeholder {
+		color: var(--muted);
+	}
+
+	/* Fallback focus for plain elements: drawn inside, never an outer ring (DESIGN.md §11.5). */
+	:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: -2px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		::before,
+		::after {
+			animation-duration: 1ms !important;
+			transition-duration: 1ms !important;
+		}
+	}
+}

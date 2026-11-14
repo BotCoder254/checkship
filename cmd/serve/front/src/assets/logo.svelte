@@ -3,7 +3,7 @@
 	 * checkship lockup: the ring-and-check mark followed by the wordmark.
 	 * Source of truth: assets/brand/logo-mark.svg and assets/brand/logo.svg at the repository root.
 	 *
-	 * Rules: stroke only, brand blue (--co-brand), wordmark in ink, Inter 600, -0.02em tracking,
+	 * Rules: stroke only, brand blue (--brand, light and dark), wordmark in ink, Inter 600, -0.02em tracking,
 	 * gap of 0.4x the mark size.
 	 */
 
@@ -54,12 +54,12 @@
 	.mark {
 		display: block;
 		flex: none;
-		stroke: var(--co-brand);
+		stroke: var(--brand, var(--co-brand));
 	}
 
 	.wordmark {
-		color: var(--co-text-5);
-		font-family: 'Inter', var(--fo-body);
+		color: var(--ink, var(--co-text-5));
+		font-family: 'Inter Variable', 'Inter', var(--fo-body);
 		font-size: calc(var(--logo-size) * 0.75);
 		font-weight: 600;
 		letter-spacing: -0.02em;

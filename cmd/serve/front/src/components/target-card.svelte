@@ -4,9 +4,9 @@
 	import Link from '$components/link.svelte';
 	import Stack from '$components/stack.svelte';
 	import CleanupNotice from '$components/cleanup-notice.svelte';
-	import routes from '$lib/path';
-	import l from '$lib/localization';
-	import { type Target, TargetStatus } from '$lib/resources/targets';
+	import routes from '#lib/path.ts';
+	import l from '#lib/localization/index.ts';
+	import { type Target, TargetStatus } from '#lib/resources/targets.ts';
 
 	export let data: Target;
 
