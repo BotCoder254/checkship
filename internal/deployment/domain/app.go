@@ -276,6 +276,15 @@ func (a *App) Delete(cleanedUp bool) error {
 func (a *App) ID() AppID                                   { return a.id }
 func (a *App) VersionControl() monad.Maybe[VersionControl] { return a.versionControl }
 
+// Configuration of the given environment.
+func (a *App) Config(env Environment) EnvironmentConfig {
+	if env.IsProduction() {
+		return a.production
+	}
+
+	return a.staging
+}
+
 func (a *App) tryUpdateEnvironmentConfig(
 	env Environment,
 	existingConfig EnvironmentConfig,

@@ -37,5 +37,10 @@ type (
 		CleanupTarget(context.Context, Target, CleanupStrategy) error
 		// Cleanup an application on the specified target and environment, which means removing every possible stuff related to it
 		Cleanup(context.Context, AppID, Target, Environment, CleanupStrategy) error
+		// Follow the logs of an application environment's containers on a target, until ctx is done.
+		// Returns ErrNoContainers when nothing has ever run there.
+		Logs(context.Context, Target, AppID, Environment, LogsOptions, LogsConsumer) error
+		// State of an application environment's containers on a target.
+		Services(context.Context, Target, AppID, Environment) ([]ServiceState, error)
 	}
 )

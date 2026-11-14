@@ -5,6 +5,7 @@
  *
  * Everything loads on first use, so pages without code never download Shiki.
  */
+import { ERROR_PATTERN } from './runtime-logs.ts';
 import type { HighlighterCore } from 'shiki/core';
 
 export type CodeLang = 'yaml' | 'json' | 'shellscript' | 'dotenv' | 'log' | 'text';
@@ -43,7 +44,7 @@ export function highlightLog(code: string): string {
 		.map((line) => {
 			const match = line.match(/^(\[?[\d:.TZ+-]{8,}\]?)(\s.*)?$/);
 			const rest = match ? (match[2] ?? '') : line;
-			const tone = /\b(error|failed|fatal|panic)\b/i.test(rest) ? 'log-error' : 'log-text';
+			const tone = ERROR_PATTERN.test(rest) ? 'log-error' : 'log-text';
 			return (
 				(match ? `<span class="log-time">${escapeHtml(match[1])}</span>` : '') +
 				`<span class="${tone}">${escapeHtml(rest)}</span>`

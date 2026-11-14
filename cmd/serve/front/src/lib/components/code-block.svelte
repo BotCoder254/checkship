@@ -3,6 +3,7 @@
 	optional Copy button in the corner. Shows plain text until the highlighter has loaded.
 -->
 <script lang="ts">
+	import { copyText } from '#lib/clipboard.ts';
 	import Copy01Icon from '@hugeicons/core-free-icons/Copy01Icon';
 	import { toast } from 'svelte-sonner';
 	import Icon from '#lib/components/icon.svelte';
@@ -45,12 +46,8 @@
 	});
 
 	async function copyCode() {
-		try {
-			await navigator.clipboard.writeText(code);
-			toast.success(l.translate('copied'));
-		} catch {
-			toast.error(l.translate('unexpected_error'));
-		}
+		if (await copyText(code)) toast.success(l.translate('copied'));
+		else toast.error(l.translate('copy_blocked'));
 	}
 </script>
 

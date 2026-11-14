@@ -4,6 +4,7 @@
 	space, no lines). Polls while the deployment runs or its target is being configured.
 -->
 <script lang="ts">
+	import { copyText } from '#lib/clipboard.ts';
 	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
 	import Copy01Icon from '@hugeicons/core-free-icons/Copy01Icon';
 	import RefreshIcon from '@hugeicons/core-free-icons/RefreshIcon';
@@ -90,12 +91,8 @@
 	}
 
 	async function copyLogs() {
-		try {
-			await navigator.clipboard.writeText(logs ?? '');
-			toast.success(l.translate('copied'));
-		} catch {
-			toast.error(l.translate('unexpected_error'));
-		}
+		if (await copyText(logs ?? '')) toast.success(l.translate('copied'));
+		else toast.error(l.translate('copy_blocked'));
 	}
 </script>
 

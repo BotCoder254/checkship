@@ -5,6 +5,7 @@
 	serves is marked Live.
 -->
 <script lang="ts">
+	import { copyText } from '#lib/clipboard.ts';
 	import ArrowLeft01Icon from '@hugeicons/core-free-icons/ArrowLeft01Icon';
 	import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
 	import CancelCircleIcon from '@hugeicons/core-free-icons/CancelCircleIcon';
@@ -123,14 +124,9 @@
 	let redeployOpen = $state(false);
 
 	async function copyLink(d: Deployment) {
-		try {
-			await navigator.clipboard.writeText(
-				new URL(routes.deployment(app.id, d.deployment_number), location.origin).href
-			);
-			toast.success(l.translate('copied'));
-		} catch {
-			toast.error(l.translate('unexpected_error'));
-		}
+		const link = new URL(routes.deployment(app.id, d.deployment_number), location.origin).href;
+		if (await copyText(link)) toast.success(l.translate('copied'));
+		else toast.error(l.translate('copy_blocked'));
 	}
 
 	const columns = 'md:grid-cols-[124px_48px_100px_minmax(0,1fr)_minmax(0,170px)_140px_56px_36px]';
