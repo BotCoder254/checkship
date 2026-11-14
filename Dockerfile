@@ -1,4 +1,4 @@
-FROM node:18-alpine AS front_builder
+FROM node:24-alpine AS front_builder
 WORKDIR /app
 COPY ./cmd/serve/front/package*.json .
 RUN npm ci
