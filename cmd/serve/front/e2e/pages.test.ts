@@ -80,7 +80,7 @@ test.describe('desktop', () => {
 		await page.goto(`/apps/${app}/`);
 		await expect(page.getByRole('heading', { level: 1, name: 'pages-app' })).toBeVisible();
 		// Tabs, the staging → production cards, and nothing deployed yet.
-		await expect(page.getByRole('link', { name: 'Overview' })).toHaveAttribute(
+		await expect(page.locator('main').getByRole('link', { name: 'Overview' })).toHaveAttribute(
 			'aria-current',
 			'page'
 		);
@@ -367,12 +367,77 @@ test.describe('desktop', () => {
 		await shot(page, 'deployments-tab');
 	});
 
+	test('overview: bento tiles, filters, live activity and paging', async ({ page, request }) => {
+		const errors = watchErrors(page);
+		await signIn(page);
+		const { app } = await fixtures(page);
+
+		// The API is session-only: the CI key is refused, and bad values fall back.
+		const key = (await (await page.request.get('/api/v1/profile')).json()).api_key as string;
+		const withKey = await request.get('/api/v1/dashboard/summary', {
+			headers: { Authorization: `Bearer ${key}` }
+		});
+		expect(withKey.status()).toBe(401);
+		const fallback = await page.request.get('/api/v1/dashboard/summary?range=365&tz=99999');
+		expect((await fallback.json()).days).toBe(30);
+		expect(fallback.headers()['cache-control']).toBe('private, no-store');
+		expect((await page.request.get('/api/v1/dashboard/activity?cursor=bad')).status()).toBe(400);
+
+		await page.goto('/');
+		await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible();
+		// The key figures are one strip (a region), not four cards; each figure is a named group.
+		const strip = page.getByRole('region', { name: /Key figures, last 30 days/ });
+		for (const title of ['Deployments', 'Success rate', 'Median duration', 'Time to recover']) {
+			await expect(strip.getByRole('group', { name: title })).toBeVisible();
+		}
+		await expect(page.getByText('Live', { exact: true }).first()).toBeVisible();
+
+		// Changing the period asks the server for it.
+		const summary = page.waitForRequest(
+			(r) => r.url().includes('/dashboard/summary?') && r.url().includes('range=7')
+		);
+		await page.getByRole('combobox', { name: 'Period' }).click();
+		await page.getByRole('option', { name: 'Last 7 days' }).click();
+		await summary;
+
+		// A deployment queued elsewhere shows up without reloading the page.
+		const activity = page.getByRole('region', { name: 'Activity' });
+		const queued = await page.request.post(`/api/v1/apps/${app}/deployments`, {
+			data: { environment: 'production', raw: COMPOSE }
+		});
+		expect(queued.ok()).toBe(true);
+		const { deployment_number: number } = await queued.json();
+		await expect(activity.getByRole('link', { name: `pages-app #${number}` })).toBeVisible({
+			timeout: 10_000
+		});
+
+		// Load more appends older rows without repeating any.
+		const loadMore = activity.getByRole('button', { name: 'Load more' });
+		if (await loadMore.isVisible()) {
+			await loadMore.click();
+			await expect(loadMore).toBeEnabled();
+			const names = await activity.getByRole('link').allTextContents();
+			expect(new Set(names).size).toBe(names.length);
+		}
+
+		// Only the workspace scrolls: nothing (such as the chart's screen-reader table) may stretch
+		// the document past the window, which showed the page ground under the shell.
+		expect(
+			await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight)
+		).toBeLessThanOrEqual(0);
+
+		await shot(page, 'overview');
+		expect(errors).toEqual([]);
+	});
+
 	test('every page renders without errors; unknown ids show not found', async ({ page }) => {
 		const errors = watchErrors(page);
 		await signIn(page);
 		const { app } = await fixtures(page);
 
 		for (const path of [
+			'/',
+			'/apps/',
 			'/jobs/',
 			'/apps/new/',
 			'/registries/new/',

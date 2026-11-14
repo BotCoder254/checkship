@@ -143,6 +143,18 @@
 	--color-sidebar-border: transparent;
 	--color-sidebar-ring: var(--accent);
 
+	/* Charts (shadcn-svelte Chart on LayerChart): palette tokens only, no new hexes. */
+	--chart-1: var(--accent);
+	--chart-2: var(--success);
+	--chart-3: var(--danger);
+	--chart-4: var(--warning);
+	--chart-5: var(--faint);
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+
 	/* Every corner is 6px, inner parts 4px (DESIGN.md §6) */
 	--radius-sm: 4px;
 	--radius-md: 6px;
@@ -159,6 +171,14 @@
  * line. Restore Tailwind's default above it: no width, transparent. Border utilities still win.
  */
 @layer components {
+	/*
+	 * The legacy stylesheet paints <html> a fixed near-black (#010409) in every theme, which showed
+	 * past the shell when the document scrolled in light mode. The page ground is the canvas token.
+	 */
+	html {
+		background-color: var(--canvas);
+	}
+
 	*,
 	::before,
 	::after {

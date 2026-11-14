@@ -59,7 +59,7 @@ export default new Auth(sessions, fetcher, {
 	onLoginSucceeded: () => {
 		const params = new URLSearchParams(window.location.search);
 		// SvelteKit 3 rejects goto() to unknown routes, so a bad redirectTo falls back to the apps page.
-		return goto(params.get('redirectTo') ?? routes.apps).catch(() => goto(routes.apps));
+		return goto(params.get('redirectTo') ?? routes.dashboard).catch(() => goto(routes.dashboard));
 	},
 	onLogoutSucceeded: (redirectTo) => goto(routes.signin(redirectTo))
 });

@@ -292,7 +292,7 @@ test.describe('sign in', () => {
 		expect(requests).toBe(1);
 	});
 
-	test('success: lands on the applications page', async ({ page }) => {
+	test('success: lands on the overview', async ({ page }) => {
 		const errors = watchErrors(page);
 		await page.goto('/signin/');
 		await page.getByLabel('Email').fill(ADMIN.email);
@@ -315,7 +315,7 @@ test.describe('sign in', () => {
 		await expect(page).toHaveURL(/\/targets\/$/);
 	});
 
-	test('an unknown redirectTo falls back to the applications page', async ({ page }) => {
+	test('an unknown redirectTo falls back to the overview', async ({ page }) => {
 		await page.goto('/signin/?redirectTo=%2Fdoes-not-exist%2F');
 		await page.getByLabel('Email').fill(ADMIN.email);
 		await page.getByLabel('Password').fill(ADMIN.password);

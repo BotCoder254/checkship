@@ -545,6 +545,29 @@ Added 2026-11-14, researched (Oban Web, SolidQueueWeb, Bull Board; SaaS UI patte
 - **API key:** the server returns it in full, so the page masks it (first and last four) with Reveal and Copy. A highlighted cURL example shows how CI uses it. Regenerate sits in a danger-tinted block behind a confirmation: the old key stops working at once.
 - **Not added, no API:** sessions and "sign out everywhere", two-factor, account deletion, key last-used date, several keys.
 
+### 11.10 Overview dashboard
+
+Added 2026-11-14. Research: DeployHQ, Kyndryl, ServiceNow, CloudBees, Metabase DORA, Harness, Datadog, Dokploy and Coolify; SaaSFrame and StudioMeyer bento guides; LayerChart 2.x. Checked against the Go backend.
+
+- **Where:** "/" is the Overview; Applications moved to `/apps` with its own sidebar item. Sign-in lands on the Overview.
+- **Bento** (`src/routes/(main)/+page.svelte`, tiles in `src/lib/components/dashboard/`): 4 columns from xl, 2 from md, 1 on phones; 16px gaps; one tile style (sunken, 8px radius, 20px padding).
+  - Row 1: a **stats strip** (`stats-strip.svelte`): one sunken band with four figures (Deployments, Success rate, Median duration, Time to recover), not four cards. Segments are separated by space, never lines. Each has a label with an icon, the figure, its change against the previous period of the same length (green when the change is good news), the previous value in words and a sparkline. It is 2×2 below xl; phones drop the previous-value line. The first period shows no change badge. Research: connected KPI bars, Shopify's metrics bar, the flat KPI band pattern, Stripe's home.
+  - The deployments-per-day chart is the hero (2×2). Next to it: Needs attention (failed production deploys → Open, failed targets → Reconfigure, failing jobs → Jobs) and Infrastructure (targets and job queue by state, as two link rows with no inner cards).
+  - Then Activity and Applications (2×2 each), Duration (2×1), By environment and Failures (1×1).
+- **Charts:** shadcn-svelte Chart on **LayerChart 2.9.2**, pinned exactly; it was the newest release older than two weeks. Colours come from `--chart-1…5`, mapped to palette tokens. Each chart has a text summary; the bar chart also has a hidden data table. Legends always name the series.
+- **API** (`cmd/serve/dashboard.go`, `internal/deployment/app/get_dashboard`). All routes are session-only, refuse the CI API key, are read-only and send `Cache-Control: private, no-store`. Parameters are mapped to allowed values: range 7/30/90, environment, `tz` clamped to ±840 minutes, page, limit.
+  - `GET /api/v1/dashboard/summary`: aggregates computed in Go over the period and the previous one (at most 180 days of rows). Days are bucketed in the viewer's time zone. Recovery is measured from a failure to the next success, per app.
+  - `GET /api/v1/dashboard/apps`: per-app stats, sorted (deploys, failures, recent), at most 25 per page.
+  - `GET /api/v1/dashboard/activity`: deployments across apps with **keyset** pagination: an opaque cursor over `(requested_at, app_id, deployment_number)`. A bad cursor gives 400 `invalid_cursor`.
+  - A new migration indexes `requested_at`.
+- **Live:** `GET /api/v1/events` sends server-sent events with hints only (`{topic, id}`), never data. Hints come from the deployment, target and app domain events, through `pkg/live` and `internal/deployment/infra/live.go`.
+  - Publishing never blocks a write, because those handlers run inside the transaction. A slow client's hints are dropped.
+  - Hints are grouped every 0.5 s, with a heartbeat every 15 s and `retry: 5000`.
+  - At most 5 streams per user and 100 in all (429 beyond). Streams close on server shutdown.
+  - The page also refreshes every 30 s, because bulk failures at startup and app-delete cascades send no event.
+- **States:** first run (a three-step checklist), skeletons while loading, a failing tile says so and offers Try again, and an empty range offers a longer one. Phones get one column with no sideways scroll.
+- **Not added (no data):** lead time for changes (no commit times), CPU, memory and traffic (no agent).
+
 ---
 
 ## 12. UI library: research and choice

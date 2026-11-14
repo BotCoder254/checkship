@@ -5,7 +5,8 @@ const routes = {
 	signin: (redirectTo?: string) =>
 		redirectTo ? `/signin?redirectTo=${encodeURIComponent(redirectTo)}` : '/signin',
 	profile: '/profile',
-	apps: '/',
+	dashboard: '/',
+	apps: '/apps',
 	createApp: '/apps/new',
 	editApp: (id: string) => `/apps/${id}/edit`,
 	app: (id: string) => `/apps/${id}`,

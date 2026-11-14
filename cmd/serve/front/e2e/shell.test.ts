@@ -68,11 +68,11 @@ test.describe('desktop shell', () => {
 		await expect(main).toHaveCSS('border-top-left-radius', '6px');
 		await expectNoLines(page, 'header, aside, main, nav');
 
-		await expect(page.getByRole('link', { name: 'Applications' })).toHaveAttribute(
+		await expect(page.locator('aside').getByRole('link', { name: 'Overview' })).toHaveAttribute(
 			'aria-current',
 			'page'
 		);
-		await shot(page, 'applications-empty');
+		await shot(page, 'overview-shell');
 	});
 
 	test('the sidebar collapses to icons and remembers it', async ({ page }) => {
@@ -178,7 +178,7 @@ test.describe('pages', () => {
 		expect(created.ok()).toBe(true);
 		const app = await created.json();
 
-		await page.goto('/');
+		await page.goto('/apps/');
 		const row = page.getByRole('row').filter({ hasText: 'e2e-app' });
 		await expect(row).toContainText('No deployment yet');
 		await expect(page.getByText('Recent', { exact: true })).toHaveCount(0);
@@ -188,7 +188,7 @@ test.describe('pages', () => {
 		await expect(page.getByText('Not found')).toHaveCount(0);
 		await expect(page.getByText('Recent', { exact: true })).toBeVisible();
 		await expect(page.locator('aside').getByRole('link', { name: 'e2e-app' })).toBeVisible();
-		await page.goto('/');
+		await page.goto('/apps/');
 		await shot(page, 'applications-with-recent');
 	});
 

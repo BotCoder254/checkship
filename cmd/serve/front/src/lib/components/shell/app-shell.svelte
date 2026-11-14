@@ -81,7 +81,7 @@
 					<Icon icon={Menu01Icon} class="size-5.5 md:size-5" />
 				</button>
 				<a
-					href={routes.apps}
+					href={routes.dashboard}
 					class="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					aria-label="checkship"
 				>
@@ -95,8 +95,10 @@
 			<AppNav {collapsed} {version} />
 		</aside>
 
+		<!-- relative: absolutely positioned content (sr-only tables, popovers) stays inside the scroll
+			area instead of stretching the document past the window. -->
 		<main
-			class="min-h-0 min-w-0 overflow-y-auto rounded-t-md bg-surface md:rounded-tl-md md:rounded-tr-none"
+			class="relative min-h-0 min-w-0 overflow-y-auto rounded-t-md bg-surface md:rounded-tl-md md:rounded-tr-none"
 		>
 			<!-- Pages fill the whole workspace: no max width, no centring (owner, 2026-11-14). -->
 			<div class="w-full p-5 md:p-6 lg:p-10">

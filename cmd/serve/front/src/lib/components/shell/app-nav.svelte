@@ -9,6 +9,7 @@
 	import CancelCircleIcon from '@hugeicons/core-free-icons/CancelCircleIcon';
 	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
 	import Clock01Icon from '@hugeicons/core-free-icons/Clock01Icon';
+	import DashboardSpeed01Icon from '@hugeicons/core-free-icons/DashboardSpeed01Icon';
 	import DashboardSquare01Icon from '@hugeicons/core-free-icons/DashboardSquare01Icon';
 	import LinkSquare02Icon from '@hugeicons/core-free-icons/LinkSquare02Icon';
 	import Loading03Icon from '@hugeicons/core-free-icons/Loading03Icon';
@@ -85,10 +86,18 @@
 				</p>
 			{/if}
 			<NavLink
+				href={routes.dashboard}
+				label={l.translate('breadcrumb.overview')}
+				icon={DashboardSpeed01Icon}
+				active={path === '/'}
+				{collapsed}
+				onclick={onnavigate}
+			/>
+			<NavLink
 				href={routes.apps}
 				label={l.translate('breadcrumb.applications')}
 				icon={DashboardSquare01Icon}
-				active={path === '/' || path.startsWith('/apps')}
+				active={path.startsWith('/apps')}
 				{collapsed}
 				onclick={onnavigate}
 			/>
