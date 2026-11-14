@@ -30,8 +30,6 @@ github.com/ProtonMail/go-crypto v1.0.0/go.mod h1:EjAoLdwvbIOoOQr3ihjnSoLZRtE8azu
 github.com/Shopify/logrus-bugsnag v0.0.0-20170309145241-6dbc35f2c30d/go.mod h1:HI8ITrYtUY+O+ZhtlqUnD8+KwNPOyugEhfP9fdUIaEQ=
 github.com/Shopify/logrus-bugsnag v0.0.0-20171204204709-577dee27f20d h1:UrqY+r/OJnIp5u0s1SbQ8dVfLCZJsnvazdBP5hS4iRs=
 github.com/Shopify/logrus-bugsnag v0.0.0-20171204204709-577dee27f20d/go.mod h1:HI8ITrYtUY+O+ZhtlqUnD8+KwNPOyugEhfP9fdUIaEQ=
-github.com/YuukanOO/compose/v2 v2.27.2-0.20240821071151-110203bb5f25 h1:sXyAIIJ42hbXuDgjo001SGp0ykcmwgY/1FaUtxZeLMc=
-github.com/YuukanOO/compose/v2 v2.27.2-0.20240821071151-110203bb5f25/go.mod h1:umytvxgECSU214WiMKqVtf7LXsAeLb0I/UFGYW5SPDU=
 github.com/YuukanOO/ssh_config v0.0.0-20240416065040-22ccaddd8792 h1:INERq367kk1TRX9bsQkcKZdR801QVxS0vzDvTFLPuAE=
 github.com/YuukanOO/ssh_config v0.0.0-20240416065040-22ccaddd8792/go.mod h1:q2RIzfka+BXARoNexmF9gkxEX7DmvbW9P4hIVx2Kg4M=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpHMqeKTCYkitsPqHNxTmd4SNR5r94FGM8=

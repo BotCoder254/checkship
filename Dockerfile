@@ -10,6 +10,7 @@ FROM golang:1.23-alpine AS builder
 RUN apk add --update-cache build-base
 WORKDIR /app
 COPY go.* ./
+COPY third_party ./third_party
 RUN go mod download
 COPY . .
 COPY --from=front_builder /app/build ./cmd/serve/front/build

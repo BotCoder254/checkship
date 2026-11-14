@@ -237,6 +237,6 @@ require (
 )
 
 replace (
-	github.com/docker/compose/v2 => github.com/YuukanOO/compose/v2 v2.27.2-0.20240821071151-110203bb5f25 // Skip network aliases if external network (which is the case for targets proxy networks). It will prevent dns conflicts when resolving
+	github.com/docker/compose/v2 => ./third_party/compose // YuukanOO/compose/v2 v2.27.2-0.20240821071151-110203bb5f25 (skips network aliases if external network, which is the case for targets proxy networks, to prevent dns conflicts when resolving) + build output patch, see third_party/compose/README.md
 	github.com/kevinburke/ssh_config => github.com/YuukanOO/ssh_config v0.0.0-20240416065040-22ccaddd8792 // Expose some additional stuff such as IsImplicit
 )

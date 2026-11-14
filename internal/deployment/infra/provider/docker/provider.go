@@ -22,6 +22,7 @@ import (
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/compose/v2/pkg/api"
+	"github.com/docker/compose/v2/pkg/progress"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/errdefs"
@@ -238,7 +239,10 @@ func (d *docker) Deploy(
 	registries []domain.Registry,
 ) (domain.Services, error) {
 	logger := deploymentCtx.Logger()
-	client, err := d.connect(ctx, logger, target, registries...)
+	composeOutput := newProgressFilter(logger)
+	defer composeOutput.Flush()
+
+	client, err := d.connect(ctx, composeOutput, target, registries...)
 
 	if err != nil {
 		logger.Error(err)
@@ -261,10 +265,16 @@ func (d *docker) Deploy(
 
 	logger.Stepf("launching docker compose project (pulling, building and running)")
 
+	if built := servicesToBuild(project); len(built) > 0 {
+		logger.Infof("image(s) to build for %s", strings.Join(built, ", "))
+	}
+
 	if err = client.compose.Up(ctx, project, api.UpOptions{
 		Create: api.CreateOptions{
+			// Plain BuildKit progress, written to the deployment log by the patched compose
+			// (third_party/compose) like the rest of the compose output.
 			Build: &api.BuildOptions{
-				Quiet: true,
+				Progress: progress.ModePlain,
 			},
 			RemoveOrphans: true,
 		},
@@ -351,14 +361,27 @@ func (d *docker) tryConnect(ctx context.Context, out io.Writer, host monad.Maybe
 }
 
 // Connect to the docker daemon and return a new docker cli and compose service.
-func (d *docker) connect(ctx context.Context, logger domain.DeploymentLogger, target domain.Target, registries ...domain.Registry) (*client, error) {
+func (d *docker) connect(ctx context.Context, out io.Writer, target domain.Target, registries ...domain.Registry) (*client, error) {
 	data, ok := target.Provider().(Data)
 
 	if !ok {
 		return nil, domain.ErrInvalidProviderPayload
 	}
 
-	return d.tryConnect(ctx, logger, data.Host, registries...)
+	return d.tryConnect(ctx, out, data.Host, registries...)
+}
+
+// Names of the services which have an image to build, in alphabetical order.
+func servicesToBuild(project *types.Project) []string {
+	var names []string
+
+	for _, name := range project.ServiceNames() {
+		if project.Services[name].Build != nil {
+			names = append(names, name)
+		}
+	}
+
+	return names
 }
 
 func (d *docker) configureTargetSSH(id domain.TargetID, config Data) error {
