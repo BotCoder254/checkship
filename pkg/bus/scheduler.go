@@ -2,7 +2,11 @@ package bus
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"runtime/debug"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/checkship-deploy/checkship/pkg/log"
@@ -40,11 +44,20 @@ type (
 
 	JobOptions func(*CreateOptions)
 
-	// Represents a scheduler that can be started and stopped.
+	// Represents a scheduler that can be started and stopped. Jobs can be queued before
+	// Start, they are processed once the runners are started.
 	RunnableScheduler interface {
 		Scheduler
-		Start()
+		Start(...RunnerDefinition)
 		Stop()
+	}
+
+	// One runner polls the store for the given message names and runs up to Workers
+	// jobs at once. A runner without Messages handles every message.
+	RunnerDefinition struct {
+		PollInterval time.Duration // Fallback interval, runners are also woken when a job is queued or finishes
+		Workers      int           // Number of jobs processed at the same time, at least 1
+		Messages     []string      // Message names handled by this runner
 	}
 
 	// Represents a request that has been queued for dispatching.
@@ -69,65 +82,46 @@ type (
 		Create(context.Context, Schedulable, CreateOptions) error                            // Create a new scheduled job
 		Delete(context.Context, string) error                                                // Try to delete a job from the store
 		GetAllJobs(context.Context, GetJobsFilters) (storage.Paginated[ScheduledJob], error) // Retrieve all jobs from the store
-		GetNextPendingJobs(context.Context) ([]ScheduledJob, error)                          // Get the next pending jobs to be dispatched
+		GetNextPendingJobs(context.Context, int, ...string) ([]ScheduledJob, error)          // Claim up to n pending jobs among the given message names (all if none)
+		Release(context.Context, ...string) error                                            // Give claimed jobs back without running them
 		Retry(context.Context, ScheduledJob, error) error                                    // Retry the given job with the given reason
 		Done(context.Context, ScheduledJob) error                                            // Mark the given job as done
+		AfterCommit(context.Context, func())                                                 // Run a function once what was written with the context is visible to runners
 	}
 
 	defaultScheduler struct {
-		bus                    Dispatcher
-		pollInterval           time.Duration
-		logger                 log.Logger
-		store                  ScheduledJobsStore
-		started                bool
-		done                   []chan bool
-		exitGroup              sync.WaitGroup
-		groups                 []*workerGroup
-		messageNameToWorkerIdx map[string]int
+		dispatcher Dispatcher
+		logger     log.Logger
+		store      ScheduledJobsStore
+
+		mu       sync.RWMutex
+		started  bool
+		runners  []*runner
+		byName   map[string]*runner
+		catchAll *runner
 	}
 
-	// Represents a worker group configuration used by a scheduler to spawn the appropriate
-	// workers.
-	WorkerGroup struct {
-		Size     int      // Number of workers to start
-		Messages []string // List of message names to handle, mandatory
-	}
-
-	workerGroup struct {
-		jobs chan ScheduledJob
-		size int
+	runner struct {
+		scheduler *defaultScheduler
+		def       RunnerDefinition
+		busy      atomic.Int32  // Jobs handed to workers and not finished yet
+		wakeCh    chan struct{} // Buffered (1), asks the poller to check for jobs now
+		done      chan struct{} // Closed on stop
+		jobs      chan ScheduledJob
+		exitGroup sync.WaitGroup
 	}
 )
 
+var ErrJobPanicked = errors.New("job panicked")
+
 // Builds up a new scheduler used to queue messages for later dispatching using the
-// provided adapter.
-func NewScheduler(adapter ScheduledJobsStore, log log.Logger, bus Dispatcher, pollInterval time.Duration, groups ...WorkerGroup) RunnableScheduler {
-	s := &defaultScheduler{
-		bus:                    bus,
-		pollInterval:           pollInterval,
-		logger:                 log,
-		store:                  adapter,
-		groups:                 make([]*workerGroup, len(groups)),
-		messageNameToWorkerIdx: make(map[string]int),
+// provided adapter. Runners are given to Start.
+func NewScheduler(adapter ScheduledJobsStore, log log.Logger, dispatcher Dispatcher) RunnableScheduler {
+	return &defaultScheduler{
+		dispatcher: dispatcher,
+		logger:     log,
+		store:      adapter,
 	}
-
-	for i, g := range groups {
-		// Should always have at least one worker
-		if g.Size < 1 {
-			g.Size = 1
-		}
-
-		s.groups[i] = &workerGroup{
-			jobs: make(chan ScheduledJob),
-			size: g.Size,
-		}
-
-		for _, msg := range g.Messages {
-			s.messageNameToWorkerIdx[msg] = i
-		}
-	}
-
-	return s
 }
 
 func (s *defaultScheduler) Queue(
@@ -141,84 +135,234 @@ func (s *defaultScheduler) Queue(
 		opt(&opts)
 	}
 
-	return s.store.Create(ctx, msg, opts)
+	if err := s.store.Create(ctx, msg, opts); err != nil {
+		return err
+	}
+
+	if r := s.runnerFor(msg.Name_()); r != nil {
+		s.store.AfterCommit(ctx, r.wake)
+	}
+
+	return nil
 }
 
-func (s *defaultScheduler) Start() {
+func (s *defaultScheduler) Start(definitions ...RunnerDefinition) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if s.started {
 		return
 	}
 
 	s.started = true
+	s.runners = make([]*runner, len(definitions))
+	s.byName = make(map[string]*runner)
+	s.catchAll = nil
 
-	s.startGroupRunners()
-	s.startPolling()
+	for i, def := range definitions {
+		r := newRunner(s, def)
+		s.runners[i] = r
+
+		if len(def.Messages) == 0 {
+			s.catchAll = r
+		}
+
+		for _, name := range def.Messages {
+			s.byName[name] = r
+		}
+	}
+
+	for _, r := range s.runners {
+		r.start()
+	}
 }
 
+// Stops polling and waits for running jobs to finish. Jobs claimed but not started
+// yet are given back to the store.
 func (s *defaultScheduler) Stop() {
+	s.mu.Lock()
+
 	if !s.started {
+		s.mu.Unlock()
 		return
 	}
 
+	// Running jobs may queue other jobs (Queue takes the read lock), so the lock is
+	// released before waiting for them.
+	s.started = false
+	runners := s.runners
+	s.mu.Unlock()
+
 	s.logger.Info("waiting for current jobs to finish")
 
-	for _, done := range s.done {
-		done <- true
+	for _, r := range runners {
+		close(r.done)
 	}
 
-	s.exitGroup.Wait()
+	for _, r := range runners {
+		r.exitGroup.Wait()
+	}
 }
 
-// Tiny helper to run a function in a goroutine and keep track of done channels.
-func (s *defaultScheduler) run(fn func(<-chan bool)) {
-	done := make(chan bool, 1)
-	s.done = append(s.done, done)
+func (s *defaultScheduler) runnerFor(name string) *runner {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
-	s.exitGroup.Add(1)
-	go func(d <-chan bool) {
-		defer s.exitGroup.Done()
-		fn(d)
-	}(done)
+	if !s.started {
+		return nil
+	}
+
+	if r, found := s.byName[name]; found {
+		return r
+	}
+
+	return s.catchAll
 }
 
-func (s *defaultScheduler) startPolling() {
-	s.run(func(done <-chan bool) {
-		var (
-			delay   time.Duration
-			lastRun time.Time = time.Now()
-		)
+func newRunner(s *defaultScheduler, def RunnerDefinition) *runner {
+	if def.Workers < 1 {
+		def.Workers = 1
+	}
 
-		for {
-			delay = s.pollInterval - time.Since(lastRun)
+	if def.PollInterval <= 0 {
+		def.PollInterval = time.Second
+	}
 
-			select {
-			case <-done:
-				return
-			case <-time.After(delay):
-			}
+	return &runner{
+		scheduler: s,
+		def:       def,
+		wakeCh:    make(chan struct{}, 1),
+		done:      make(chan struct{}),
+		jobs:      make(chan ScheduledJob),
+	}
+}
 
-			lastRun = time.Now()
+func (r *runner) start() {
+	r.scheduler.logger.Debugw("starting runner",
+		"poll", r.def.PollInterval,
+		"workers", r.def.Workers,
+		"jobs", r.def.Messages)
 
-			jobs, err := s.store.GetNextPendingJobs(context.Background())
+	for range r.def.Workers {
+		r.exitGroup.Add(1)
+		go r.work()
+	}
 
-			if err != nil {
-				s.logger.Errorw("error while retrieving pending jobs",
-					"error", err)
-				continue
-			}
+	r.exitGroup.Add(1)
+	go r.poll()
+}
 
-			for _, job := range jobs {
-				idx, handled := s.messageNameToWorkerIdx[job.Message().Name_()]
+// Non-blocking: a pending wake-up already covers this one.
+func (r *runner) wake() {
+	select {
+	case r.wakeCh <- struct{}{}:
+	default:
+	}
+}
 
-				if !handled {
-					s.handleJobReturn(context.Background(), job, ErrNoHandlerRegistered)
-					continue
-				}
+// The poller is the only sender on r.jobs and closes it when it returns, so the
+// workers stop once they finish their current job.
+func (r *runner) poll() {
+	defer r.exitGroup.Done()
+	defer close(r.jobs)
 
-				s.groups[idx].jobs <- job
-			}
+	ticker := time.NewTicker(r.def.PollInterval)
+	defer ticker.Stop()
+
+	for {
+		if !r.dispatchPendingJobs() {
+			return
 		}
-	})
+
+		select {
+		case <-r.done:
+			return
+		case <-ticker.C:
+		case <-r.wakeCh:
+		}
+	}
+}
+
+// Claims as many jobs as there are idle workers and hands them over. Returns false
+// if the runner has been stopped meanwhile.
+func (r *runner) dispatchPendingJobs() bool {
+	idle := r.def.Workers - int(r.busy.Load())
+
+	if idle <= 0 {
+		return true
+	}
+
+	ctx := context.Background()
+	jobs, err := r.scheduler.store.GetNextPendingJobs(ctx, idle, r.def.Messages...)
+
+	if err != nil {
+		r.scheduler.logger.Errorw("error while retrieving pending jobs",
+			"error", err)
+		return true
+	}
+
+	for i, job := range jobs {
+		// Counted before the hand-over so the next poll never asks for more than
+		// the idle workers.
+		r.busy.Add(1)
+
+		select {
+		case r.jobs <- job:
+		case <-r.done:
+			r.busy.Add(-1)
+			r.release(ctx, jobs[i:])
+			return false
+		}
+	}
+
+	return true
+}
+
+func (r *runner) release(ctx context.Context, jobs []ScheduledJob) {
+	ids := make([]string, len(jobs))
+
+	for i, job := range jobs {
+		ids[i] = job.ID()
+	}
+
+	if err := r.scheduler.store.Release(ctx, ids...); err != nil {
+		r.scheduler.logger.Errorw("error while releasing jobs not started before stopping",
+			"jobs", ids,
+			"error", err)
+	}
+}
+
+func (r *runner) work() {
+	defer r.exitGroup.Done()
+
+	for job := range r.jobs {
+		ctx := context.Background()
+		err := r.run(ctx, job)
+
+		r.scheduler.handleJobReturn(ctx, job, err)
+		r.busy.Add(-1)
+		r.wake() // A worker is free, check for the next job now
+	}
+}
+
+// Sends the job message on the bus. A panic in the handler is turned into an error
+// so the job is retried and the process keeps running.
+func (r *runner) run(ctx context.Context, job ScheduledJob) (err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("%w: %v", ErrJobPanicked, recovered)
+
+			r.scheduler.logger.Errorw("job panicked",
+				"job", job.ID(),
+				"name", job.Message().Name_(),
+				"panic", recovered,
+				"stack", string(debug.Stack()))
+		}
+	}()
+
+	_, err = r.scheduler.dispatcher.Send(ctx, job.Message())
+
+	return err
 }
 
 func (s *defaultScheduler) handleJobReturn(ctx context.Context, job ScheduledJob, err error) {
@@ -242,27 +386,6 @@ func (s *defaultScheduler) handleJobReturn(ctx context.Context, job ScheduledJob
 			"job", job.ID(),
 			"name", job.Message().Name_(),
 			"error", err)
-	}
-}
-
-func (s *defaultScheduler) startGroupRunners() {
-	for _, g := range s.groups {
-		group := g
-		for i := 0; i < group.size; i++ {
-			s.run(func(done <-chan bool) {
-				for {
-					select {
-					case <-done:
-						return
-					case job := <-group.jobs:
-						ctx := context.Background()
-						_, err := s.bus.Send(ctx, job.Message())
-
-						s.handleJobReturn(ctx, job, err)
-					}
-				}
-			})
-		}
 	}
 }
 

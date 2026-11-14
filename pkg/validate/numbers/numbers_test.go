@@ -18,3 +18,14 @@ func Test_Min(t *testing.T) {
 		assert.Nil(t, numbers.Min(3)(3))
 	})
 }
+
+func Test_Max(t *testing.T) {
+	t.Run("should fail on value greater than the allowed max", func(t *testing.T) {
+		assert.ErrorIs(t, numbers.ErrMax, numbers.Max(3)(4))
+	})
+
+	t.Run("should succeed on value lesser than or equal to the allowed max", func(t *testing.T) {
+		assert.Nil(t, numbers.Max(3)(3))
+		assert.Nil(t, numbers.Max(3)(-1))
+	})
+}

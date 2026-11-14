@@ -1,11 +1,13 @@
 package assert
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"os"
 	"reflect"
 	"regexp"
+	"slices"
 	"testing"
 	"unicode/utf8"
 
@@ -57,6 +59,29 @@ func Equal[T comparable](t testing.TB, expected, actual T, formatAndMessage ...a
 	}
 
 	failed(t, "should have been equal", expected, actual, formatAndMessage)
+}
+
+// Asserts that both slices hold the same elements, in any order.
+func ArrayEqual[T cmp.Ordered](t testing.TB, expected, actual []T, formatAndMessage ...any) {
+	ArrayEqualFunc(t, expected, actual, cmp.Compare, formatAndMessage...)
+}
+
+// Same as ArrayEqual for elements that are not cmp.Ordered. The given slices are
+// not modified.
+func ArrayEqualFunc[T any](t testing.TB, expected, actual []T, compare func(T, T) int, formatAndMessage ...any) {
+	if len(expected) != len(actual) {
+		failed(t, "should have same length", len(expected), len(actual), formatAndMessage)
+		return
+	}
+
+	sortedExpected := slices.SortedFunc(slices.Values(expected), compare)
+	sortedActual := slices.SortedFunc(slices.Values(actual), compare)
+
+	if reflect.DeepEqual(sortedExpected, sortedActual) {
+		return
+	}
+
+	failed(t, "should have been equal", sortedExpected, sortedActual, formatAndMessage)
 }
 
 // Asserts that the given values are not equal

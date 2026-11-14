@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"text/template"
-	"time"
 
 	"github.com/checkship-deploy/checkship/cmd/serve"
 	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/bus"
 	"github.com/checkship-deploy/checkship/pkg/config"
 	"github.com/checkship-deploy/checkship/pkg/crypto"
 	"github.com/checkship-deploy/checkship/pkg/id"
@@ -18,7 +18,6 @@ import (
 	"github.com/checkship-deploy/checkship/pkg/must"
 	"github.com/checkship-deploy/checkship/pkg/ostools"
 	"github.com/checkship-deploy/checkship/pkg/validate"
-	"github.com/checkship-deploy/checkship/pkg/validate/numbers"
 )
 
 var (
@@ -36,7 +35,7 @@ const (
 	defaultHost                   = ""
 	defaultRunnersPollInterval    = "4s"
 	defaultRunnersDeploymentCount = 4
-	defaultCleanupDeploymentCount = 2
+	defaultRunnersOtherCount      = 2
 	defaultBalancerDomain         = "http://docker.localhost"
 	defaultDeploymentDirTemplate  = "{{ .Environment }}"
 )
@@ -56,11 +55,13 @@ type (
 		Log     logConfiguration
 		Data    dataConfiguration
 		Http    httpConfiguration
-		Runners runnersConfiguration
+		Runners runnersConfiguration  `env:"RUNNERS_CONFIGURATION"`
 		Private internalConfiguration `yaml:"-"`
 
+		LegacyRunners legacyRunnersEnvironment `yaml:"-"` // Deprecated RUNNERS_* variables
+
 		appExposedUrl         monad.Maybe[domain.Url]
-		pollInterval          time.Duration
+		warnings              []string // Logged once the logger is configured
 		deploymentDirTemplate *template.Template
 		logLevel              log.Level
 		logFormat             log.OutputFormat
@@ -82,13 +83,6 @@ type (
 	dataConfiguration struct {
 		Path                  string `env:"DATA_PATH"`
 		DeploymentDirTemplate string `env:"DEPLOYMENT_DIR_TEMPLATE" yaml:"deployment_dir_template"`
-	}
-
-	// Configuration related to the async jobs runners.
-	runnersConfiguration struct {
-		PollInterval string `env:"RUNNERS_POLL_INTERVAL" yaml:"poll_interval"`
-		Deployment   int    `env:"RUNNERS_DEPLOYMENT_COUNT" yaml:"deployment"`
-		Cleanup      int    `env:"RUNNERS_CLEANUP_COUNT" yaml:"cleanup"`
 	}
 
 	// internalConfiguration fields not read from the configuration file and use only during specific steps
@@ -116,9 +110,7 @@ func Default(builders ...ConfigurationBuilder) Configuration {
 			Secret: generatedSecretKey,
 		},
 		Runners: runnersConfiguration{
-			PollInterval: defaultRunnersPollInterval,
-			Deployment:   defaultRunnersDeploymentCount,
-			Cleanup:      defaultCleanupDeploymentCount,
+			list: defaultRunners(defaultRunnersPollInterval, defaultRunnersDeploymentCount, defaultRunnersOtherCount),
 		},
 	}
 
@@ -163,6 +155,10 @@ func (c *configuration) Initialize(logger log.ConfigurableLogger, path string) e
 		}
 	}
 
+	for _, warning := range c.warnings {
+		logger.Warn(warning)
+	}
+
 	if c.Http.Secret == generatedSecretKey {
 		logger.Info(noticeSecretKeyGenerated)
 	}
@@ -176,10 +172,13 @@ func (c *configuration) AppExposedUrl() monad.Maybe[domain.Url]    { return c.ap
 func (c *configuration) DefaultEmail() string                      { return c.Private.Email }
 func (c *configuration) DefaultPassword() string                   { return c.Private.Password }
 func (c *configuration) Secret() []byte                            { return []byte(c.Http.Secret) }
-func (c *configuration) RunnersPollInterval() time.Duration        { return c.pollInterval }
-func (c *configuration) RunnersDeploymentCount() int               { return c.Runners.Deployment }
-func (c *configuration) RunnersCleanupCount() int                  { return c.Runners.Cleanup }
 func (c *configuration) IsDebug() bool                             { return c.logLevel == log.DebugLevel }
+
+// Builds the background runners from the configuration, given the names of every job
+// type registered by the application (bus.Marshallable.Keys()).
+func (c *configuration) RunnersDefinitions(jobNames []string, logger log.Logger) ([]bus.RunnerDefinition, error) {
+	return c.Runners.definitions(jobNames, logger)
+}
 
 func (c *configuration) IsSecure() bool {
 	// If secure has been explicitly isSet, returns it
@@ -205,13 +204,19 @@ func (c *configuration) ListenAddress() string {
 }
 
 func (c *configuration) PostLoad() error {
+	warnings, err := c.Runners.applyLegacy(c.LegacyRunners)
+
+	if err != nil {
+		return err
+	}
+
+	c.warnings = warnings
+
 	return validate.Struct(validate.Of{
 		"log.level":                    validate.Value(c.Log.Level, &c.logLevel, log.ParseLevel),
 		"log.format":                   validate.Value(c.Log.Format, &c.logFormat, log.ParseFormat),
 		"data.deployment_dir_template": validate.Value(c.Data.DeploymentDirTemplate, &c.deploymentDirTemplate, template.New("").Parse),
-		"runners.poll_interval":        validate.Value(c.Runners.PollInterval, &c.pollInterval, time.ParseDuration),
-		"runners.deployment":           validate.Field(c.Runners.Deployment, numbers.Min(1)),
-		"runners.cleanup":              validate.Field(c.Runners.Cleanup, numbers.Min(1)),
+		"runners":                      c.Runners.validate(),
 		"exposed_as": validate.If(c.Private.ExposedOn != "", func() error {
 			url, err := domain.UrlFrom(c.Private.ExposedOn)
 

@@ -2,17 +2,10 @@ package startup
 
 import (
 	"context"
-	"time"
 
 	"github.com/checkship-deploy/checkship/internal/auth/app/create_first_account"
 	"github.com/checkship-deploy/checkship/internal/auth/domain"
 	authinfra "github.com/checkship-deploy/checkship/internal/auth/infra"
-	"github.com/checkship-deploy/checkship/internal/deployment/app/cleanup_app"
-	"github.com/checkship-deploy/checkship/internal/deployment/app/cleanup_target"
-	"github.com/checkship-deploy/checkship/internal/deployment/app/configure_target"
-	"github.com/checkship-deploy/checkship/internal/deployment/app/delete_app"
-	"github.com/checkship-deploy/checkship/internal/deployment/app/delete_target"
-	"github.com/checkship-deploy/checkship/internal/deployment/app/deploy"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/expose_checkship_container"
 	deploymentdomain "github.com/checkship-deploy/checkship/internal/deployment/domain"
 	deploymentinfra "github.com/checkship-deploy/checkship/internal/deployment/infra"
@@ -42,9 +35,7 @@ type (
 		AppExposedUrl() monad.Maybe[deploymentdomain.Url]
 		DefaultEmail() string
 		DefaultPassword() string
-		RunnersPollInterval() time.Duration
-		RunnersDeploymentCount() int
-		RunnersCleanupCount() int
+		RunnersDefinitions([]string, log.Logger) ([]bus.RunnerDefinition, error)
 		ConnectionString() string
 	}
 
@@ -66,9 +57,6 @@ func Server(options ServerOptions, logger log.Logger) (ServerRoot, error) {
 		logger: logger,
 	}
 
-	// embedded.NewBus()
-	// embedded.NewScheduler()
-
 	s.bus = memory.NewBus()
 
 	db, err := sqlite.Open(options.ConnectionString(), s.logger, s.bus)
@@ -85,22 +73,8 @@ func Server(options ServerOptions, logger log.Logger) (ServerRoot, error) {
 		return nil, err
 	}
 
-	s.scheduler = bus.NewScheduler(s.schedulerStore, s.logger, s.bus, options.RunnersPollInterval(),
-		bus.WorkerGroup{
-			Size:     options.RunnersDeploymentCount(),
-			Messages: []string{deploy.Command{}.Name_()},
-		},
-		bus.WorkerGroup{
-			Size: options.RunnersCleanupCount(),
-			Messages: []string{
-				cleanup_app.Command{}.Name_(),
-				delete_app.Command{}.Name_(),
-				configure_target.Command{}.Name_(),
-				cleanup_target.Command{}.Name_(),
-				delete_target.Command{}.Name_(),
-			},
-		},
-	)
+	// Runners are started at the end, once every job handler is registered
+	s.scheduler = bus.NewScheduler(s.schedulerStore, s.logger, s.bus)
 
 	// Setup auth infrastructure
 	if s.usersReader, err = authinfra.Setup(s.logger, s.db, s.bus); err != nil {
@@ -148,7 +122,15 @@ func Server(options ServerOptions, logger log.Logger) (ServerRoot, error) {
 		}
 	}
 
-	s.scheduler.Start()
+	// Every job type is known once the handlers are registered (bus.Register fills
+	// bus.Marshallable), so the runners configuration can be checked against them.
+	runners, err := options.RunnersDefinitions(bus.Marshallable.Keys(), s.logger)
+
+	if err != nil {
+		return nil, err
+	}
+
+	s.scheduler.Start(runners...)
 
 	return s, nil
 }
