@@ -124,7 +124,7 @@ func (s *server) getDeploymentLogsHandler() gin.HandlerFunc {
 			return err
 		}
 
-		return http.File(ctx, logpath)
+		return http.TextFile(ctx, logpath)
 	})
 }
 

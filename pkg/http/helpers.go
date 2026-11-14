@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
+	"time"
 
 	"github.com/checkship-deploy/checkship/pkg/apperr"
 	"github.com/checkship-deploy/checkship/pkg/log"
@@ -65,9 +67,34 @@ func NoContent(ctx *gin.Context) error {
 	return nil
 }
 
-// Returns the file at the given path.
-func File(ctx *gin.Context, filepath string) error {
-	ctx.File(filepath)
+// Returns the text file at the given path, for files which are still being written such as
+// deployment logs.
+//
+// The content type is always text/plain: guessing it from the extension depends on the host
+// mime database (".log" is text/x-log on many Linux desktops) and clients only read text/plain
+// as text. The response is never cached and has no Last-Modified header, whose one second
+// precision made conditional requests answer 304 with outdated content while the file grew.
+func TextFile(ctx *gin.Context, filepath string) error {
+	ctx.Header("Content-Type", "text/plain; charset=utf-8")
+	ctx.Header("Cache-Control", "no-store")
+	ctx.Header("X-Content-Type-Options", "nosniff")
+
+	file, err := os.Open(filepath)
+
+	// Not written yet (a queued deployment for example): that's an empty file, not an error.
+	if errors.Is(err, os.ErrNotExist) {
+		ctx.Status(http.StatusOK)
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	http.ServeContent(ctx.Writer, ctx.Request, path.Base(filepath), time.Time{}, file)
+
 	return nil
 }
 
