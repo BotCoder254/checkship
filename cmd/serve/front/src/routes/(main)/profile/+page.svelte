@@ -12,6 +12,7 @@
 	import FieldMessage from '#lib/components/field-message.svelte';
 	import Icon from '#lib/components/icon.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
+	import SettingsSection from '#lib/components/settings-section.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -23,9 +24,7 @@
 		type AppTranslationsString,
 		type LocaleCode
 	} from '#lib/localization/index.ts';
-	import { preferences, type ContentWidth } from '#lib/preferences.svelte.ts';
 	import service from '#lib/resources/users.ts';
-	import { cn } from '#lib/utils.js';
 
 	let { data } = $props();
 
@@ -41,12 +40,6 @@
 	const locales = l.locales().map((item) => ({ value: item.code, label: item.displayName }));
 	const localeLabel = $derived(locales.find((item) => item.value === locale)?.label ?? locale);
 	const initial = $derived((data.user.email.trim()[0] ?? '?').toUpperCase());
-
-	const widths: { value: ContentWidth; label: string }[] = [
-		{ value: 'compact', label: l.translate('profile.content_width.compact') },
-		{ value: 'default', label: l.translate('profile.content_width.default') },
-		{ value: 'wide', label: l.translate('profile.content_width.wide') }
-	];
 
 	const { submit, loading, errors } = submitter(async () => {
 		await service.update({ email, password: password || undefined });
@@ -71,20 +64,9 @@
 			toast.error(l.translate('unexpected_error'));
 		}
 	}
-
-	function widthKeydown(event: KeyboardEvent, index: number) {
-		const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
-		if (!step) return;
-		event.preventDefault();
-		const next = widths[(index + step + widths.length) % widths.length];
-		preferences.setContentWidth(next.value);
-		(event.currentTarget as HTMLElement).parentElement
-			?.querySelector<HTMLButtonElement>(`[data-value="${next.value}"]`)
-			?.focus();
-	}
 </script>
 
-<form class="mx-auto flex max-w-190 flex-col" novalidate {onsubmit}>
+<form class="flex flex-col" novalidate {onsubmit}>
 	<PageHeader title={l.translate('breadcrumb.profile')}>
 		{#snippet actions()}
 			<Button type="submit" loading={$loading}>
@@ -119,8 +101,10 @@
 			</Alert.Root>
 		{/if}
 
-		<section class="flex flex-col gap-4.5">
-			<h2 class="text-base font-semibold">{l.translate('profile.account')}</h2>
+		<SettingsSection
+			title={l.translate('profile.account')}
+			description={l.translate('profile.account.description')}
+		>
 			<div class="grid gap-4.5 md:grid-cols-2">
 				<div class="flex flex-col gap-1.5">
 					<Label for="profile-email">{l.translate('email')}</Label>
@@ -151,11 +135,12 @@
 					</FieldMessage>
 				</div>
 			</div>
-		</section>
+		</SettingsSection>
 
-		<section class="flex flex-col gap-3">
-			<h2 class="mb-1.5 text-base font-semibold">{l.translate('profile.interface')}</h2>
-
+		<SettingsSection
+			title={l.translate('profile.interface')}
+			description={l.translate('profile.interface.description')}
+		>
 			<div class="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-md bg-sunken px-4 py-3.5">
 				<div class="flex min-w-48 flex-1 flex-col gap-0.5">
 					<Label for="profile-locale">{l.translate('profile.locale')}</Label>
@@ -172,43 +157,13 @@
 					</Select.Content>
 				</Select.Root>
 			</div>
+		</SettingsSection>
 
-			<div class="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-md bg-sunken px-4 py-3.5">
-				<div class="flex min-w-48 flex-1 flex-col gap-0.5">
-					<span id="profile-width-label" class="text-sm font-medium">
-						{l.translate('profile.content_width')}
-					</span>
-					<p class="text-sm text-muted-foreground">{l.translate('profile.content_width.help')}</p>
-				</div>
-				<div
-					role="radiogroup"
-					aria-labelledby="profile-width-label"
-					class="flex shrink-0 gap-0.5 rounded-md bg-raised p-0.75"
-				>
-					{#each widths as width, index (width.value)}
-						{@const selected = preferences.contentWidth === width.value}
-						<button
-							type="button"
-							role="radio"
-							aria-checked={selected}
-							data-value={width.value}
-							tabindex={selected ? 0 : -1}
-							class={cn(
-								'h-7.5 rounded-sm px-3 text-sm font-medium text-muted-foreground outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
-								selected && 'bg-accent-soft font-semibold text-primary hover:text-primary'
-							)}
-							onclick={() => preferences.setContentWidth(width.value)}
-							onkeydown={(event) => widthKeydown(event, index)}
-						>
-							{width.label}
-						</button>
-					{/each}
-				</div>
-			</div>
-		</section>
-
-		<section id="integration" class="flex scroll-mt-6 flex-col gap-3">
-			<h2 class="text-base font-semibold">{l.translate('profile.integration')}</h2>
+		<SettingsSection
+			id="integration"
+			title={l.translate('profile.integration')}
+			description={l.translate('profile.integration.short')}
+		>
 			<p class="text-sm text-muted-foreground">
 				<!-- eslint-disable-next-line svelte/no-at-html-tags -- our own translation string -->
 				{@html l.translate('profile.integration.description')}
@@ -229,7 +184,7 @@
 					{l.translate('profile.key.refresh')}
 				</Button>
 			</div>
-		</section>
+		</SettingsSection>
 	</div>
 </form>
 

@@ -11,6 +11,7 @@
 	import FieldMessage from '#lib/components/field-message.svelte';
 	import Icon from '#lib/components/icon.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
+	import SettingsSection from '#lib/components/settings-section.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
@@ -90,7 +91,7 @@
 	}
 </script>
 
-<form class="mx-auto flex max-w-190 flex-col" novalidate {onsubmit}>
+<form class="flex flex-col" novalidate {onsubmit}>
 	<PageHeader title={props.title} crumbs={props.crumbs}>
 		{#snippet actions()}
 			{@render props.actions($loading)}
@@ -134,9 +135,10 @@
 			</Alert.Root>
 		{/if}
 
-		<section class="flex flex-col gap-4.5">
-			<h2 class="text-base font-semibold">{l.translate('target.general')}</h2>
-
+		<SettingsSection
+			title={l.translate('settings.general')}
+			description={l.translate('targets.section.general')}
+		>
 			<div class="flex flex-col gap-1.5">
 				<Label for="target-name">{l.translate('name')}</Label>
 				<Input
@@ -179,11 +181,12 @@
 					</FieldMessage>
 				</div>
 			{/if}
-		</section>
+		</SettingsSection>
 
-		<section class="flex flex-col gap-4.5">
-			<h2 class="text-base font-semibold">{l.translate('target.provider')} · Docker</h2>
-
+		<SettingsSection
+			title="{l.translate('target.provider')} · Docker"
+			description={l.translate('targets.section.provider')}
+		>
 			<div class="flex items-center gap-6 rounded-md bg-sunken px-4 py-3.5">
 				<div class="flex min-w-0 flex-1 flex-col gap-0.5">
 					<Label for="target-remote">{l.translate('target.remote.label')}</Label>
@@ -246,6 +249,6 @@
 					</FieldMessage>
 				</div>
 			{/if}
-		</section>
+		</SettingsSection>
 	</fieldset>
 </form>

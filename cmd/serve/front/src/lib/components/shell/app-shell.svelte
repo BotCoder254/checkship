@@ -22,7 +22,7 @@
 	import * as Tooltip from '#lib/components/ui/tooltip/index.js';
 	import l from '#lib/localization/index.ts';
 	import routes from '#lib/path.ts';
-	import { CONTENT_WIDTHS, preferences } from '#lib/preferences.svelte.ts';
+	import { preferences } from '#lib/preferences.svelte.ts';
 	import type { Profile } from '#lib/resources/users.ts';
 	import { cn } from '#lib/utils.js';
 
@@ -34,13 +34,6 @@
 	let menuOpen = $state(false);
 
 	const collapsed = $derived(!wide.current || preferences.sidebarCollapsed);
-
-	$effect(() => {
-		document.documentElement.style.setProperty(
-			'--content-max',
-			CONTENT_WIDTHS[preferences.contentWidth]
-		);
-	});
 
 	$effect(() => {
 		// The sheet only exists below 1024px: close it if the window grows past that.
@@ -105,7 +98,8 @@
 		<main
 			class="min-h-0 min-w-0 overflow-y-auto rounded-t-md bg-surface md:rounded-tl-md md:rounded-tr-none"
 		>
-			<div class="mx-auto w-full max-w-(--content-max) px-5 pb-12 min-[1100px]:px-10 md:px-6">
+			<!-- Pages fill the whole workspace: no max width, no centring (owner, 2026-11-14). -->
+			<div class="w-full p-5 md:p-6 lg:p-10">
 				{@render children()}
 			</div>
 		</main>

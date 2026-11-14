@@ -1,5 +1,5 @@
 <!--
-	Page header (DESIGN.md §5): 56px, the title is the page's one h1 (20/28), optionally after a
+	Page header (DESIGN.md §5): as tall as its buttons (36px), so the workspace's 40px padding is the gap above them; the title is the page's one h1 (20/28), optionally after a
 	breadcrumb; actions sit on the right and wrap, one primary. A status line follows, then 30px
 	before the body. No line under it.
 -->
@@ -23,7 +23,7 @@
 	<title>checkship - {title}</title>
 </svelte:head>
 
-<header class="flex min-h-14 flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-1.5">
+<header class="flex min-h-9 flex-wrap items-center justify-between gap-x-3 gap-y-2">
 	{#if crumbs.length > 0}
 		<nav aria-label="Breadcrumb" class="flex min-w-0 flex-wrap items-center gap-x-2 text-sm">
 			{#each crumbs as crumb (crumb.href)}

@@ -87,6 +87,10 @@ export type QueueDeployment =
 export type QueryDeploymentsFilters = {
 	page?: number;
 	environment?: Environment;
+	status?: DeploymentStatus;
+	/** A deployment number (with or without #), or part of a Git branch or commit. */
+	search?: string;
+	per_page?: number;
 };
 
 export interface DeploymentsService {

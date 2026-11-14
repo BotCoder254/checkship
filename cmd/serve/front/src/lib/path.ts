@@ -9,6 +9,7 @@ const routes = {
 	createApp: '/apps/new',
 	editApp: (id: string) => `/apps/${id}/edit`,
 	app: (id: string) => `/apps/${id}`,
+	appDeployments: (id: string) => `/apps/${id}/deployments`,
 	createDeployment: (id: string) => `/apps/${id}/deployments/new`,
 	deployment: (id: string, number: number) => `/apps/${id}/deployments/${number}`,
 	targets: '/targets',

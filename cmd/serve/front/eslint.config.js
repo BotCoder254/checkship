@@ -23,6 +23,12 @@ export default defineConfig(
 		}
 	},
 	{
+		// Highlighted code: the HTML comes from Shiki (which escapes the code it colours) or from
+		// escapeHtml in #lib/highlight.ts, never from raw input.
+		files: ['src/lib/components/code-block.svelte', 'src/lib/components/code-editor.svelte'],
+		rules: { 'svelte/no-at-html-tags': 'off' }
+	},
+	{
 		// Generated shadcn-svelte components take an href from the caller, which resolves it.
 		files: ['src/lib/components/ui/**'],
 		rules: { 'svelte/no-navigation-without-resolve': 'off' }

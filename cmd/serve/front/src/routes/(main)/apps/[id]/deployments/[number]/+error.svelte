@@ -1,25 +1,11 @@
 <script lang="ts">
-	import BlankSlate from '$components/blank-slate.svelte';
-	import Breadcrumb from '$components/breadcrumb.svelte';
-	import Link from '$components/link.svelte';
-	import routes from '#lib/path.ts';
-	import type { PageData } from './$types';
+	import { page } from '$app/state';
+	import ErrorState from '#lib/components/error-state.svelte';
 	import l from '#lib/localization/index.ts';
-
-	export let data: PageData; // FIXME: don't know why Svelte does not found them automatically
+	import routes from '#lib/path.ts';
 </script>
 
-<Breadcrumb
-	segments={[
-		{ path: routes.apps, title: l.translate('breadcrumb.applications') },
-		{ path: routes.app(data.app.id), title: data.app.name },
-		l.translate('breadcrumb.not_found')
-	]}
+<ErrorState
+	what="deployment"
+	back={{ href: routes.app(page.params.id ?? ''), label: l.translate('errors.back.app') }}
 />
-
-<BlankSlate>
-	<p>
-		{l.translate('deployment.not_found')}
-		<Link href={routes.app(data.app.id)}>{l.translate('deployment.not_found.cta')}</Link>.
-	</p>
-</BlankSlate>

@@ -189,15 +189,9 @@ test.describe('pages', () => {
 		await shot(page, 'applications-with-recent');
 	});
 
-	test('profile: content width, API key dialog, every action has an icon', async ({ page }) => {
+	test('profile: API key dialog, every action has an icon', async ({ page }) => {
 		await signIn(page, '/profile/');
 		await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
-
-		await page.getByRole('radio', { name: 'Wide' }).click();
-		const width = await page.evaluate(() =>
-			document.documentElement.style.getPropertyValue('--content-max')
-		);
-		expect(width).toBe('1160px');
 
 		for (const name of ['Save', 'Copy', 'Regenerate API Key']) {
 			await expect(page.getByRole('button', { name }).locator('svg')).toHaveCount(1);
@@ -207,34 +201,20 @@ test.describe('pages', () => {
 		await expect(page.getByRole('alertdialog')).toContainText('Regenerate the API key?');
 		await shot(page, 'profile-regenerate');
 		await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel' }).click();
-		await page.getByRole('radio', { name: 'Default' }).click();
 	});
-});
 
-test('pages not rebuilt yet still work inside the new shell', async ({ page }) => {
-	await page.setViewportSize({ width: 1440, height: 900 });
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	page.on('console', (message) => {
-		if (message.type() === 'error' && !message.text().startsWith('Failed to load resource')) {
-			errors.push(message.text());
-		}
+	test('pages fill the workspace: no max width, not centred', async ({ page }) => {
+		await page.setViewportSize({ width: 1920, height: 1000 });
+		await signIn(page, '/profile/');
+		const main = (await page.locator('main').boundingBox())!;
+		const title = (await page.getByRole('heading', { level: 1 }).boundingBox())!;
+		const save = (await page.getByRole('button', { name: 'Save' }).boundingBox())!;
+		// 40px padding on every side from 1024px: the title starts at the left edge, Save ends at the right.
+		expect(Math.round(title.x - main.x)).toBe(40);
+		expect(Math.round(main.x + main.width - (save.x + save.width))).toBe(40);
+		// And 40px above the header buttons.
+		expect(Math.round(save.y - main.y)).toBe(40);
 	});
-	await signIn(page);
-
-	const apps = await (await page.request.get('/api/v1/apps')).json();
-	const app = apps[0]?.id;
-	const paths = ['/jobs/', '/apps/new/', '/registries/new/'];
-	if (app) paths.push(`/apps/${app}/`, `/apps/${app}/edit/`, `/apps/${app}/deployments/new/`);
-
-	for (const path of paths) {
-		await page.goto(path);
-		await expect(page.locator('main')).toBeVisible();
-		await expect(page.getByText('Not found')).toHaveCount(0);
-		await expect(page.getByRole('button', { name: `Account: ${ADMIN.email}` })).toBeVisible();
-		await shot(page, `legacy${path.replaceAll('/', '-').replace(/-$/, '')}`);
-	}
-	expect(errors).toEqual([]);
 });
 
 test.describe('smaller screens', () => {

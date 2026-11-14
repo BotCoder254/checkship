@@ -199,7 +199,7 @@ Hierarchy is **Page → Section → Component**. A page has one title (its bread
 ┌────────────────────────────────────────────────────────────────┐
 │ ▣  ◯✓ checkship                                          ( A ) │ ← title bar, 44px, canvas
 ├──────────────┬─────────────────────────────────────────────────┤
-│ Workspace    │  Applications                 [+ New application]│ ← page header, 56px
+│ Workspace    │  Applications                 [+ New application]│ ← page header, 40px below the panel top
 │ ▦ Applications│  4 applications · 1 failed                      │ ← status line
 │ ▤ Targets  ⚠ │  ┌─────────────────────────────────────────────┐ │
 │ ▢ Registries │  │ row on sunken, 6px apart, no lines           │ │
@@ -224,8 +224,8 @@ Hierarchy is **Page → Section → Component**. A page has one title (its bread
   - 768 to 1023px: sidebar 56px, icons with tooltips; the menu button opens the full sidebar as a sheet.
   - Under 768px: no sidebar; the menu button (44px) opens a 300px sheet with the logo at 28px.
 - **Workspace.** The `surface` panel is flush to the right and bottom edges, with one 6px corner at the top left (top corners on phones). A 2px `accent` bar runs along the top of the window while SvelteKit navigates.
-- **Page header** (`#lib/components/page-header.svelte`). 56px: the title is the page's one `h1` (20/28), optionally after a breadcrumb; actions on the right, one primary, every labelled button with an 18px icon. A status line in `muted` follows, then 30px before the body.
-- **Content width.** Pages are centred up to `--content-max`: 840px (compact), 1020px (default) or 1160px (wide), from Profile › Content width. Forms and Profile use a 760px column. Side padding 20px on phones, 24px, and 40px from 1100px.
+- **Page header** (`#lib/components/page-header.svelte`). As tall as its buttons (36px), 40px below the top of the panel: the title is the page's one `h1` (20/28), optionally after a breadcrumb; actions on the right, one primary, every labelled button with an 18px icon. A status line in `muted` follows, then 30px before the body.
+- **Content width.** Every page fills the whole workspace (the floating `surface` panel next to the sidebar): no max width and no centring, at any screen size, with the same gap on every side (top, right, bottom, left): 20px on phones, 24px from 768px, 40px from 1024px. The page header is as tall as its buttons (36px), so the buttons sit exactly 40px below the top of the panel. Forms use two columns (`#lib/components/settings-section.svelte`, §11.6): the section title and one sentence on the left (260px), the fields on the right. Owner's call (2026-11-14): centred pages felt squeezed in the middle of wide screens, so the Profile › Content width setting was removed.
 - **Lists.** Applications, Targets and Registries are rows, not cards: `sunken` fill, 6px corner, 6px apart, `hover` on hover; column labels above in caption `muted`. Below 768px a row stacks its cells with small labels.
 - **Setting rows.** On `sunken`: the text column flexes, the control (switch, select, segmented control) never shrinks and stays on the right.
 - **Form fields.** A label and its control stack vertically. Help text sits under the control in `muted`; a validation error replaces it in `danger`, with an icon (`#lib/components/field-message.svelte`).
@@ -481,6 +481,41 @@ Everything is in `src/components/` (alias `$components`). Each component maps to
 - **Long values.** URLs, image names and paths that don't fit are truncated in the middle with an ellipsis, keeping the end (the host, the tag). They have a copy button where the value is meant to be reused, such as the API key, the cURL command and service URLs.
 - **Focus.** Focus is drawn **inside** the control, never as an outer ring or with an offset. A bordered control (input, select, checkbox, outline button) turns its border `accent` and adds a 1px inset ring, so it reads as a 2px accent edge (`focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring`). A filled button gets a 2px inset ring in its foreground colour (`on-accent` on the primary button). Plain elements fall back to a 2px `accent` outline at a -2px offset. Focus is never removed without this replacement. The old pages' 3px emerald outline goes as they are migrated.
 
+### 11.6 Drawers, drop zones and highlighted code
+
+Added 2026-11-14 after the owner's review of the "application pages · v2 drawers" canvas.
+
+- **Drawer, dialog or page.**
+  - **Drawer** (`#lib/components/drawer.svelte`, the Bits UI `Sheet` on the right) for short tasks where the page behind still matters: New deployment and the deployment preview on the application page, the environment variables on the settings page, a job's details, New registry and a registry's settings.
+  - **Dialog** (`ConfirmDialog`) for destructive confirmation only: delete, cancel a job. Never a drawer.
+  - **Page** for long forms and anything that needs a link: New application, targets, the full deployment. Old links keep working: `/apps/:id/deployments/new`, `/registries/new` and `/registries/:id/edit` render the same form as a page.
+- **Drawer anatomy.**
+  - 560px for forms, 680px for previews; never wider than half the window. Full screen below `md`, with 44px buttons that share the footer.
+  - From `md` up it floats 8px from the window edges with a 10px corner. `surface` fill, no border, a soft shadow; the scrim is `rgb(5 5 7 / 0.62)`.
+  - Header: title, one line of description, a close button. The body scrolls. Footer: actions on the right, primary last; a destructive action sits on the left. A shadow appears above the footer only while there is more to scroll.
+  - Esc and the scrim close it; focus goes into it and returns to what opened it. Forms inside a drawer have an `id`, and the footer's submit button uses `form="…"`.
+  - The row that opened a drawer keeps the `raised` fill while it is open.
+- **Drop zones** (`#lib/components/drop-zone.svelte`). A `<button>` that also takes a dropped file, so it is focusable and opens the file picker.
+  - Its label names both ways in ("Add a compose.yml: drop it here or choose a file"), and it says what it accepts before anything is dropped.
+  - While a file is dragged over: `accent-soft` fill, a 2px inset accent ring, "Release to add the file".
+  - Compact (a row) for the compose file and `.env` files, which fill an editor; the block form for the archive. A wrong file is refused in its file row, which turns `danger-soft` and says why.
+- **Highlighted code** (`#lib/highlight.ts`, Shiki 4.6). The core, the JavaScript regex engine (no WASM) and four grammars (yaml, json, shellscript, dotenv) load on first use. The theme is Shiki's css-variables theme mapped to palette tokens in `layout.css` (keys `accent`, strings `success`, constants `warning`, comments `faint`, punctuation `muted`), so it follows light and dark with no new colour. Logs get a small rule instead of a grammar: faint timestamps, `danger` for error lines.
+  - Read-only code (`code-block.svelte`) sits on `canvas` with an optional Copy button.
+  - Editable code (`code-editor.svelte`) is a transparent textarea over the highlighted text in the same grid cell, so it grows with its content. It looks like any input: `sunken`, `faint` border, inset focus.
+- **Settings in two columns.** The section title and one sentence on the left (260px), the fields on the right. Each environment is one row: name with a summary, the target select, and a Variables button that opens the drawer. On an existing application the drawer saves that environment's variables at once (only that environment is sent); on a new one it hands them back to the form.
+
+### 11.7 Application details
+
+Added 2026-11-14 after research into Vercel, Render, Railway and Coolify (the "Application details v3" canvas row). Only patterns checkship has the API for were kept.
+
+- **Header** (`routes/(main)/apps/[id]/app-workspace.svelte`): the name, a status line (what each environment serves: live, deploying, failed or not deployed, with its number; the repository; who created it), then Visit (the production URL), Settings and a split **Deploy** button.
+  - Deploy is one click: the latest commit of the branch production last deployed (Coolify: "a one-click button … the adjacent dropdown for secondary actions"; Render's Manual Deploy). With no Git repository, or no branch yet, it opens the New deployment drawer instead.
+  - The arrow opens the other ways: deploy staging, a compose file, an archive, redeploy production. Each queued deployment opens its preview drawer.
+- **Tabs** (`app-tabs.svelte`): Overview, Deployments (with the total), Settings. They are links, so each has its own address; the current one has the `raised` fill. Variables stay in Settings.
+- **Overview.** Staging and production as a pipeline: two cards with **Promote** between them, which names the deployment and says why it is offered (staging runs a newer commit), or why it is not (still running, failed, nothing on staging). Each card leads with the live URL, then a Live / Deploying / Failed marker, the state badge, source with branch and short commit (or the error code), and Logs and Redeploy. A running deployment adds a banner that says production keeps serving its current one. Below: the services of both environments (URL and image per environment) and the five most recent deployments.
+- **Deployments tab** (`deployments/+page.svelte`): environment and status as segmented controls and a search on number, branch or commit, all filtered on the server (`status`, `search` and `per_page` query parameters, 20 per page). The deployment each environment serves is marked Live. Each row opens its preview; its menu (Railway) has View logs, Promote to production (successful staging rows), Redeploy and Copy link. Promote and Redeploy confirm in a dialog.
+- **Not added, on purpose:** restart and stop, runtime logs, metrics, a terminal, rollback without rebuilding. checkship has no endpoint for them yet; they can join the Deploy menu and the tabs when it does.
+
 ---
 
 ## 12. UI library: research and choice
@@ -621,7 +656,6 @@ shadcn components use their own variable names, and three of them collide with o
   --danger: #c4322b; --danger-soft: #fbe6e5;
   --brand: #2f5bea;
   --radius: 6px;
-  --content-max: 1020px;
 }
 
 .dark {
@@ -757,10 +791,9 @@ shadcn components use their own variable names, and three of them collide with o
   - `<ModeWatcher defaultMode="dark">` keeps the dark-only old pages looking as before.
 - **Step 9 has started:** the sign-in page is migrated (2026-11-14), with the auth layout, the `DitherImage` component (`src/lib/components/dither-image.svelte`, maths in `src/lib/dither.ts`) and the button loading state. The generated components were edited for DESIGN.md: inset focus rings, no shadows, sunken inputs with `faint` borders, the soft destructive `Alert`.
 - **Step 8 is done (2026-11-14):** the shell (§5, Shell). The old `topbar`, `account`, `bottom-bar` and `progress-bar` are deleted.
-- **Rebuilt pages:** Sign in, Applications, Deployment, Targets, New target and Target settings, Registries, Profile. Destructive and changing actions confirm in `ConfirmDialog` (`#lib/components/confirm-dialog.svelte`), which replaces `window.confirm`; deleting a target asks for its name.
-- **Still old, working inside the new shell:** Application, New and edit application, New deployment, Jobs, New and edit registry, the error pages. They keep the old look until their turn.
-- **End-to-end tests** (`npm run test:e2e`, `make test-e2e`): Playwright against the real Go server and a fresh database; `e2e/auth.test.ts` and `e2e/shell.test.ts`.
-- **Next:** the remaining old pages, one per commit, then step 10.
+- **Rebuilt pages:** every page. Sign in, Applications, Application, New application and Settings, New deployment, Deployment, Targets, New target and Target settings, Registries (with New and edit), Jobs, Profile and the error pages. Destructive and changing actions confirm in `ConfirmDialog` (`#lib/components/confirm-dialog.svelte`), which replaces `window.confirm`; deleting an application, a target or a registry asks for its name. Drawers, drop zones and highlighted code follow §11.6.
+- **End-to-end tests** (`npm run test:e2e`, `make test-e2e`): Playwright against the real Go server and a fresh database; `e2e/auth.test.ts`, `e2e/shell.test.ts` and `e2e/pages.test.ts`.
+- **Next:** step 10. No route imports `src/components/` any more; delete it with the legacy CSS layer, then check the pages still look the same.
 
 Make each step its own commit, and make sure `npm run check`, `npm test`, `npm run build` and `make build` pass before starting the next. After any frontend build, restore `cmd/serve/front/build/.keep`, because the build deletes it:
 

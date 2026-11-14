@@ -1,26 +1,10 @@
+<!-- Errors outside the shell (no session yet, or the shell itself failed): centred on the canvas. -->
 <script lang="ts">
-	import Stack from '$components/stack.svelte';
+	import ErrorState from '#lib/components/error-state.svelte';
 	import l from '#lib/localization/index.ts';
+	import routes from '#lib/path.ts';
 </script>
 
-<Stack class="container" direction="column" justify="center" align="center">
-	<h1 class="title">{l.translate('unexpected_error')}</h1>
-	<div>
-		{@html l.translate('unexpected_error.description')}
-	</div>
-</Stack>
-
-<style module>
-	.container {
-		margin: auto;
-		padding: var(--sp-4);
-		max-width: var(--mi-container-width);
-		min-height: 100vh;
-		text-align: center;
-	}
-
-	.title {
-		color: var(--co-primary-4);
-		font: var(--ty-heading-1);
-	}
-</style>
+<main class="mx-auto flex min-h-dvh w-full max-w-160 flex-col justify-center px-4">
+	<ErrorState what="page" back={{ href: routes.apps, label: l.translate('errors.back.apps') }} />
+</main>

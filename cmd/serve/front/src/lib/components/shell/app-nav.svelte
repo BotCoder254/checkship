@@ -178,7 +178,11 @@
 			<div class="flex flex-col gap-3 px-3">
 				<ThemeSwitch />
 				<p class="flex flex-wrap gap-x-2 pt-1.5 text-xs text-muted-foreground">
-					<span>{l.translate('nav.version', [version])}</span>
+					<span title={version}
+						>{l.translate('nav.version', [
+							version.replace(/-([0-9a-f]{7})[0-9a-f]+$/, '-$1')
+						])}</span
+					>
 					<a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" class="hover:text-ink">
 						{l.translate('footer.source')}
 					</a>
