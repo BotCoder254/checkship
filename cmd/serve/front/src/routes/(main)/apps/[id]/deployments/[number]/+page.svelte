@@ -43,6 +43,8 @@
 	const logsStore = $derived(logsQuery.data);
 	const deployment = $derived($deploymentStore ?? data.deployment);
 	const logs = $derived($logsStore);
+	const logsErrorStore = $derived(logsQuery.error);
+	const logsFailed = $derived(!!$logsErrorStore);
 
 	// Stop polling once this deployment has finished and its target is no longer configuring.
 	$effect(() => {
@@ -59,10 +61,17 @@
 	let redeployOpen = $state(false);
 	let logsElement = $state<HTMLPreElement>();
 
-	// Keep the newest lines in view while the deployment runs.
+	// Keep the newest lines in view while the deployment runs, unless the reader scrolled up.
+	let followLogs = true;
+
+	function onLogsScroll() {
+		if (!logsElement) return;
+		followLogs = logsElement.scrollHeight - logsElement.scrollTop - logsElement.clientHeight < 24;
+	}
+
 	$effect(() => {
 		void logs;
-		if (poll && logsElement) logsElement.scrollTop = logsElement.scrollHeight;
+		if (poll && followLogs && logsElement) logsElement.scrollTop = logsElement.scrollHeight;
 	});
 
 	const badge = $derived(deploymentBadge(deployment.state));
@@ -201,9 +210,13 @@
 				{l.translate('copy')}
 			</Button>
 		</div>
+		{#if logsFailed}
+			<p class="text-sm text-danger" role="status">{l.translate('deployment.logs.failed')}</p>
+		{/if}
 		<pre
 			bind:this={logsElement}
-			class="max-h-[70vh] min-h-40 overflow-auto rounded-md bg-canvas px-4 py-3.5 font-mono text-xs/5 whitespace-pre-wrap text-ink">{logs ??
+			onscroll={onLogsScroll}
+			class="max-h-[70vh] min-h-40 overflow-auto rounded-md bg-canvas px-4 py-3.5 font-mono text-xs/5 whitespace-pre-wrap text-ink">{logs ||
 				l.translate('deployment.waiting_for_logs')}</pre>
 	</section>
 </div>

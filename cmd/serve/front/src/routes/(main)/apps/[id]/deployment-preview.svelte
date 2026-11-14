@@ -30,6 +30,8 @@
 	const deploymentStore = $derived(deploymentQuery.data);
 	const logsStore = $derived(logsQuery.data);
 	const deployment = $derived($deploymentStore);
+	const logsErrorStore = $derived(logsQuery.error);
+	const logsFailed = $derived(!!$logsErrorStore);
 	const tail = $derived(($logsStore ?? '').trimEnd().split('\n').slice(-TAIL).join('\n'));
 
 	$effect(() => {
@@ -112,6 +114,9 @@
 					<Icon icon={ArrowUpRight01Icon} class="size-3.5" />
 				</a>
 			</div>
+			{#if logsFailed}
+				<p class="text-sm text-danger" role="status">{l.translate('deployment.logs.failed')}</p>
+			{/if}
 			<CodeBlock
 				code={tail || l.translate('deployment.waiting_for_logs')}
 				lang={tail ? 'log' : 'text'}

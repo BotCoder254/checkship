@@ -209,6 +209,7 @@ You may reconsider and try to make the target reachable before deleting it.`,
 		"Looks like the deployment you're looking for does not exist! Head back to",
 	'deployment.not_found.cta': 'the application page',
 	'deployment.waiting_for_logs': 'Waiting for logs...',
+	'deployment.logs.failed': 'Could not load the logs, retrying...',
 	'deployment.target': 'deployed on',
 	'deployment.target.deleted': 'target deleted',
 	// Menu

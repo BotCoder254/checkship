@@ -185,7 +185,8 @@ async function api<TOut = unknown, TIn = unknown>(
 		return undefined as TOut;
 	}
 
-	if (contentType.includes('text/plain')) {
+	// Any text type (text/plain, but also text/x-log and friends some servers pick for .log files)
+	if (contentType.startsWith('text/')) {
 		return (await response.text()) as unknown as TOut;
 	}
 
