@@ -5,18 +5,26 @@ import (
 	"compress/gzip"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/source"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
 	"github.com/checkship-deploy/checkship/pkg/ostools"
 	"github.com/checkship-deploy/checkship/pkg/types"
+	"github.com/checkship-deploy/checkship/pkg/validate"
 )
 
-const tmpPattern string = "checkship-archive-"
+const (
+	tmpPattern        = "checkship-archive-"
+	supportedMimeType = "application/x-gzip"
+)
 
 var (
 	ErrOpenArchiveFailed    = errors.New("open_archive_failed")
@@ -24,12 +32,24 @@ var (
 	ErrReadArchiveFailed    = errors.New("read_archive_failed")
 	ErrWriteFileFailed      = errors.New("write_archive_file_failed")
 	ErrWriteDirectoryFailed = errors.New("write_archive_directory_failed")
+
+	ErrInvalidFileType     = apperr.New("invalid_file_type")
+	ErrMaxFileSizeExceeded = apperr.New("max_file_size_exceeded")
+	ErrInvalidArchiveEntry = apperr.New("invalid_archive_entry") // An entry that would land outside the build directory
 )
 
-type service struct{}
+type (
+	Options interface {
+		MaxDeploymentArchiveFileSize() int64
+	}
 
-func New() source.Source {
-	return &service{}
+	service struct {
+		options Options
+	}
+)
+
+func New(options Options) source.Source {
+	return &service{options: options}
 }
 
 func (*service) CanPrepare(payload any) bool          { return types.Is[*multipart.FileHeader](payload) }
@@ -50,10 +70,12 @@ func (t *service) Prepare(ctx context.Context, app domain.App, payload any) (dom
 
 	defer tmpfile.Close()
 
-	archive, err := file.Open()
+	// Check the size and type before anything is copied
+	archive, err := t.tryOpenFile(file)
 
 	if err != nil {
-		return nil, err
+		os.Remove(tmpfile.Name())
+		return nil, validate.Wrap(err, "archive")
 	}
 
 	defer archive.Close()
@@ -118,10 +140,16 @@ func (t *service) Fetch(ctx context.Context, deploymentCtx domain.DeploymentCont
 			continue
 		}
 
-		// the target location where the dir/file should be created
-		target := filepath.Join(dir, header.Name)
+		// Where the entry goes, refused if that is outside the build directory
+		target, err := safeJoin(dir, header.Name)
 
-		// check the file type
+		if err != nil {
+			logger.Error(fmt.Errorf("archive entry %q: %w", header.Name, err))
+			return err
+		}
+
+		// Directories and regular files only: links and devices are skipped, so
+		// nothing extracted can point outside the build directory either.
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if err := ostools.MkdirAll(target); err != nil {
@@ -129,21 +157,89 @@ func (t *service) Fetch(ctx context.Context, deploymentCtx domain.DeploymentCont
 				return ErrWriteDirectoryFailed
 			}
 		case tar.TypeReg:
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
-
-			if err != nil {
+			if err := writeFile(target, header, tr); err != nil {
 				logger.Error(err)
 				return ErrWriteFileFailed
 			}
-
-			if _, err := io.Copy(f, tr); err != nil {
-				logger.Error(err)
-				return ErrWriteFileFailed
-			}
-
-			// manually close here after each file operation; defering would cause each file close
-			// to wait until all operations have completed.
-			f.Close()
 		}
 	}
+}
+
+// Joins an archive entry name to the build directory, refusing absolute names
+// and any name that climbs out of it.
+func safeJoin(dir, name string) (string, error) {
+	cleaned := filepath.Clean(filepath.FromSlash(name))
+
+	if filepath.IsAbs(cleaned) || filepath.VolumeName(cleaned) != "" ||
+		cleaned == ".." || strings.HasPrefix(cleaned, ".."+string(filepath.Separator)) {
+		return "", ErrInvalidArchiveEntry
+	}
+
+	target := filepath.Join(dir, cleaned)
+	rel, err := filepath.Rel(dir, target)
+
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", ErrInvalidArchiveEntry
+	}
+
+	return target, nil
+}
+
+// Writes a regular file, replacing any previous content. Only permission bits
+// are kept from the archive: no setuid, setgid or sticky bit.
+func writeFile(target string, header *tar.Header, content io.Reader) error {
+	if err := ostools.MkdirAll(filepath.Dir(target)); err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(header.Mode)&os.ModePerm)
+
+	if err != nil {
+		return err
+	}
+
+	if _, err = io.Copy(f, content); err != nil {
+		f.Close()
+		return err
+	}
+
+	return f.Close()
+}
+
+// Check the file MIME type and size and returns the opened file if valid
+func (t *service) tryOpenFile(header *multipart.FileHeader) (file multipart.File, err error) {
+	// The size comes from the bytes received, a client cannot lie about it
+	if header.Size > t.options.MaxDeploymentArchiveFileSize() {
+		return nil, ErrMaxFileSizeExceeded
+	}
+
+	if file, err = header.Open(); err != nil {
+		return
+	}
+
+	defer func() {
+		if err == nil {
+			return
+		}
+
+		// Close the file if an error was thrown
+		file.Close()
+		file = nil
+	}()
+
+	buf := make([]byte, 512)
+	n, err := io.ReadFull(file, buf)
+
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return
+	}
+
+	if http.DetectContentType(buf[:n]) != supportedMimeType {
+		err = ErrInvalidFileType
+		return
+	}
+
+	_, err = file.Seek(0, io.SeekStart)
+
+	return
 }

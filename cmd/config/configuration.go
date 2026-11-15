@@ -10,6 +10,7 @@ import (
 	"github.com/checkship-deploy/checkship/cmd/serve"
 	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/bytesize"
 	"github.com/checkship-deploy/checkship/pkg/config"
 	"github.com/checkship-deploy/checkship/pkg/crypto"
 	"github.com/checkship-deploy/checkship/pkg/id"
@@ -38,6 +39,7 @@ const (
 	defaultRunnersOtherCount      = 2
 	defaultBalancerDomain         = "http://docker.localhost"
 	defaultDeploymentDirTemplate  = "{{ .Environment }}"
+	defaultSourceArchiveMaxSize   = "32mb"
 )
 
 type (
@@ -54,6 +56,7 @@ type (
 	configuration struct {
 		Log     logConfiguration
 		Data    dataConfiguration
+		Source  sourceConfiguration
 		Http    httpConfiguration
 		Runners runnersConfiguration  `env:"RUNNERS_CONFIGURATION"`
 		Private internalConfiguration `yaml:"-"`
@@ -63,6 +66,7 @@ type (
 		appExposedUrl         monad.Maybe[domain.Url]
 		warnings              []string // Logged once the logger is configured
 		deploymentDirTemplate *template.Template
+		sourceArchiveMaxSize  int64
 		logLevel              log.Level
 		logFormat             log.OutputFormat
 	}
@@ -85,6 +89,15 @@ type (
 		DeploymentDirTemplate string `env:"DEPLOYMENT_DIR_TEMPLATE" yaml:"deployment_dir_template"`
 	}
 
+	// Deployment sources
+	sourceConfiguration struct {
+		Archive sourceArchiveConfiguration
+	}
+
+	sourceArchiveConfiguration struct {
+		MaxSize string `env:"SOURCE_ARCHIVE_MAX_SIZE" yaml:"max_size"` // Largest archive accepted for a deployment
+	}
+
 	// internalConfiguration fields not read from the configuration file and use only during specific steps
 	internalConfiguration struct {
 		Email     string `env:"CHECKSHIP_ADMIN_EMAIL,ADMIN_EMAIL"`
@@ -103,6 +116,9 @@ func Default(builders ...ConfigurationBuilder) Configuration {
 		Data: dataConfiguration{
 			Path:                  defaultDataDirectory,
 			DeploymentDirTemplate: defaultDeploymentDirTemplate,
+		},
+		Source: sourceConfiguration{
+			Archive: sourceArchiveConfiguration{MaxSize: defaultSourceArchiveMaxSize},
 		},
 		Http: httpConfiguration{
 			Host:   defaultHost,
@@ -173,6 +189,7 @@ func (c *configuration) DefaultEmail() string                      { return c.Pr
 func (c *configuration) DefaultPassword() string                   { return c.Private.Password }
 func (c *configuration) Secret() []byte                            { return []byte(c.Http.Secret) }
 func (c *configuration) IsDebug() bool                             { return c.logLevel == log.DebugLevel }
+func (c *configuration) MaxDeploymentArchiveFileSize() int64       { return c.sourceArchiveMaxSize }
 
 // Builds the background runners from the configuration, given the names of every job
 // type registered by the application (bus.Marshallable.Keys()).
@@ -215,6 +232,7 @@ func (c *configuration) PostLoad() error {
 	return validate.Struct(validate.Of{
 		"log.level":                    validate.Value(c.Log.Level, &c.logLevel, log.ParseLevel),
 		"log.format":                   validate.Value(c.Log.Format, &c.logFormat, log.ParseFormat),
+		"source.archive.max_size":      validate.Value(c.Source.Archive.MaxSize, &c.sourceArchiveMaxSize, bytesize.Parse),
 		"data.deployment_dir_template": validate.Value(c.Data.DeploymentDirTemplate, &c.deploymentDirTemplate, template.New("").Parse),
 		"runners":                      c.Runners.validate(),
 		"exposed_as": validate.If(c.Private.ExposedOn != "", func() error {
