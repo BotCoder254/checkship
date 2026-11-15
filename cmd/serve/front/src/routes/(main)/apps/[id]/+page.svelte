@@ -7,7 +7,6 @@
 <script lang="ts">
 	import ArrowDown02Icon from '@hugeicons/core-free-icons/ArrowDown02Icon';
 	import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
-	import CancelCircleIcon from '@hugeicons/core-free-icons/CancelCircleIcon';
 	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
 	import Clock01Icon from '@hugeicons/core-free-icons/Clock01Icon';
 	import CommandLineIcon from '@hugeicons/core-free-icons/CommandLineIcon';
@@ -18,8 +17,20 @@
 	import RepeatIcon from '@hugeicons/core-free-icons/RepeatIcon';
 	import Rocket01Icon from '@hugeicons/core-free-icons/Rocket01Icon';
 	import ServerStack01Icon from '@hugeicons/core-free-icons/ServerStack01Icon';
+	import Copy01Icon from '@hugeicons/core-free-icons/Copy01Icon';
+	import GitCommitIcon from '@hugeicons/core-free-icons/GitCommitIcon';
+	import Image01Icon from '@hugeicons/core-free-icons/Image01Icon';
+	import Tag01Icon from '@hugeicons/core-free-icons/Tag01Icon';
+	import TestTube01Icon from '@hugeicons/core-free-icons/TestTube01Icon';
+	import { toast } from 'svelte-sonner';
+	import { copyText } from '#lib/clipboard.ts';
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
-	import type { IconData } from '#lib/components/icon.svelte';
+	import EnvironmentChip from '#lib/components/environment-chip.svelte';
+	import RowMenuGroup from '#lib/components/table/row-menu-group.svelte';
+	import RowMenuItem from '#lib/components/table/row-menu-item.svelte';
+	import RowMenu from '#lib/components/table/row-menu.svelte';
+	import * as Table from '#lib/components/ui/table/index.js';
+	import { ACTIONS_CELL, ACTIONS_HEAD, TableColumns } from '#lib/table-columns.svelte.ts';
 	import Icon from '#lib/components/icon.svelte';
 	import StatusBadge from '#lib/components/status-badge.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
@@ -83,13 +94,6 @@
 		return l.translate('preview.queued', [l.relative(d.requested_at)]);
 	}
 
-	const rowIcon: Record<DeploymentStatus, { icon: IconData; tone: string; spin?: boolean }> = {
-		[DeploymentStatus.Succeeded]: { icon: CheckmarkCircle02Icon, tone: 'text-success' },
-		[DeploymentStatus.Failed]: { icon: CancelCircleIcon, tone: 'text-danger' },
-		[DeploymentStatus.Running]: { icon: Loading03Icon, tone: 'text-warning', spin: true },
-		[DeploymentStatus.Pending]: { icon: Clock01Icon, tone: 'text-muted-foreground' }
-	};
-
 	type EnvService = { url?: string; image: string };
 	type ServiceRow = { name: string; production?: EnvService; staging?: EnvService };
 	const services = $derived.by(() => {
@@ -102,6 +106,62 @@
 		}
 		return Object.values(rows).sort((a, b) => a.name.localeCompare(b.name));
 	});
+
+	const serviceColumns = new TableColumns([
+		{ id: 'service', label: l.translate('column.service'), icon: ContainerIcon, width: 'w-[20%]' },
+		{
+			id: 'production',
+			label: l.translate('column.production'),
+			icon: Rocket01Icon,
+			width: 'w-[30%]'
+		},
+		{
+			id: 'staging',
+			label: l.translate('column.staging'),
+			icon: TestTube01Icon,
+			width: 'w-[30%]',
+			priority: 2
+		},
+		{
+			id: 'image',
+			label: l.translate('column.image'),
+			icon: Image01Icon,
+			width: 'w-[20%]',
+			priority: 3
+		}
+	]);
+	const recentColumns = new TableColumns([
+		{
+			id: 'status',
+			label: l.translate('column.status'),
+			icon: CheckmarkCircle02Icon,
+			width: 'w-[28%]'
+		},
+		{ id: 'number', label: l.translate('column.number'), icon: Tag01Icon, width: 'w-[14%]' },
+		{
+			id: 'environment',
+			label: l.translate('column.environment'),
+			icon: ServerStack01Icon,
+			width: 'w-[22%]',
+			priority: 2
+		},
+		{
+			id: 'commit',
+			label: l.translate('column.commit'),
+			icon: GitCommitIcon,
+			width: 'w-[16%]',
+			priority: 3
+		},
+		{ id: 'started', label: l.translate('column.started'), icon: Clock01Icon, width: 'w-[20%]' }
+	]);
+
+	async function copy(text: string) {
+		if (await copyText(text)) toast.success(l.translate('copied'));
+		else toast.error(l.translate('copy_blocked'));
+	}
+
+	const copyLink = (number: number) =>
+		copy(new URL(routes.deployment(app.id, number), location.origin).href);
 
 	function cardState(latest: DeploymentDetail) {
 		if (!latest.state.finished_at) return 'deploying';
@@ -371,47 +431,73 @@
 						{/if}
 					</div>
 					{#if services.length > 0}
-						<div role="table" aria-labelledby="services-title" class="flex flex-col gap-1.5">
-							<div
-								role="row"
-								class="hidden grid-cols-[120px_minmax(0,1fr)_minmax(0,1fr)] gap-4 px-4 pb-0.5 text-xs font-semibold text-muted-foreground md:grid"
-							>
-								<span role="columnheader">{l.translate('detail.services.service')}</span>
-								<span role="columnheader">{l.translate('deploy.environment.production')}</span>
-								<span role="columnheader">{l.translate('deploy.environment.staging')}</span>
-							</div>
-							{#each services as s (s.name)}
-								<div
-									role="row"
-									class="grid min-h-14 items-center gap-x-4 gap-y-1.5 rounded-md bg-sunken px-4 py-2.5 md:grid-cols-[120px_minmax(0,1fr)_minmax(0,1fr)]"
-								>
-									<span role="cell" class="flex items-center gap-2.5 text-sm font-semibold">
-										<Icon icon={ContainerIcon} class="size-4 text-muted-foreground" />
-										{s.name}
-									</span>
-									{#each [s.production, s.staging] as env, i (i)}
-										<span role="cell" class="flex min-w-0 flex-col">
-											{#if env?.url}
-												<a
-													href={env.url}
-													target="_blank"
-													rel="noopener noreferrer"
-													class="truncate font-mono text-[12.5px] text-primary hover:underline"
-													>{env.url}</a
-												>
-											{:else}
-												<span class="text-[13px] text-muted-foreground">
-													{env ? l.translate('detail.services.internal') : '—'}
-												</span>
-											{/if}
-											{#if env}
-												<span class="truncate font-mono text-[11.5px] text-faint">{env.image}</span>
-											{/if}
-										</span>
+						<Table.Root aria-labelledby="services-title">
+							<Table.Header>
+								<Table.Row>
+									{#each serviceColumns.shown as column (column.id)}
+										<Table.Head class={serviceColumns.head(column.id)}>{column.label}</Table.Head>
 									{/each}
-								</div>
-							{/each}
-						</div>
+									<Table.Head class={ACTIONS_HEAD}>{l.translate('column.actions')}</Table.Head>
+								</Table.Row>
+							</Table.Header>
+							<Table.Body>
+								{#each services as s (s.name)}
+									{@const url = s.production?.url ?? s.staging?.url}
+									<Table.Row>
+										<Table.Cell class={serviceColumns.cell('service', 'text-sm font-semibold')}>
+											{s.name}
+										</Table.Cell>
+										{#each [['production', s.production], ['staging', s.staging]] as const as [id, env] (id)}
+											<Table.Cell class={serviceColumns.cell(id)} title={env?.url}>
+												{#if env?.url}
+													<a
+														href={env.url}
+														target="_blank"
+														rel="noopener noreferrer"
+														class="font-mono text-[12.5px] text-primary hover:underline"
+														>{env.url}</a
+													>
+												{:else}
+													<span class="text-muted-foreground">
+														{env ? l.translate('detail.services.internal') : '—'}
+													</span>
+												{/if}
+											</Table.Cell>
+										{/each}
+										<Table.Cell
+											class={serviceColumns.cell('image', 'font-mono text-[12.5px] text-faint')}
+											title={(s.production ?? s.staging)?.image}
+										>
+											{(s.production ?? s.staging)?.image ?? '—'}
+										</Table.Cell>
+										<Table.Cell class={ACTIONS_CELL}>
+											<RowMenu label={l.translate('table.menu', [s.name])}>
+												<RowMenuGroup>
+													{#if s.production?.url}
+														<RowMenuItem icon={LinkSquare02Icon} href={s.production.url} external>
+															{l.translate('menu.open_production')}
+														</RowMenuItem>
+													{/if}
+													{#if s.staging?.url}
+														<RowMenuItem icon={LinkSquare02Icon} href={s.staging.url} external>
+															{l.translate('menu.open_staging')}
+														</RowMenuItem>
+													{/if}
+													{#if url}
+														<RowMenuItem icon={Copy01Icon} onSelect={() => copy(url)}>
+															{l.translate('menu.copy_url')}
+														</RowMenuItem>
+													{/if}
+													<RowMenuItem icon={CommandLineIcon} href={routes.appLogs(app.id)}>
+														{l.translate('menu.logs')}
+													</RowMenuItem>
+												</RowMenuGroup>
+											</RowMenu>
+										</Table.Cell>
+									</Table.Row>
+								{/each}
+							</Table.Body>
+						</Table.Root>
 					{:else}
 						<p class="rounded-md bg-sunken px-4 py-3.5 text-sm text-muted-foreground">
 							{l.translate('detail.services.none')}
@@ -433,45 +519,88 @@
 						</a>
 					</div>
 					{#if recent.length > 0}
-						<div class="flex flex-col gap-1.5">
-							{#each recent as d (d.deployment_number)}
-								{@const row = rowIcon[d.state.status]}
-								<button
-									type="button"
-									class={cn(
-										'grid min-h-11 grid-cols-[18px_34px_auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-md bg-sunken px-3.5 text-left text-[13px] text-ink transition-colors outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
-										actions.previewNumber() === d.deployment_number && 'bg-raised'
-									)}
-									onclick={() => actions.openPreview(d.deployment_number)}
-								>
-									<Icon
-										icon={row.icon}
-										class={cn('size-4', row.tone, row.spin && 'animate-spin')}
-									/>
-									<span class="font-semibold tabular-nums">#{d.deployment_number}</span>
-									<span
-										class={cn(
-											'rounded-sm px-1.5 text-[11.5px]/5 font-semibold',
-											d.environment === 'production'
-												? 'bg-accent-soft text-primary'
-												: 'bg-raised text-muted-foreground'
-										)}>{d.environment}</span
+						<Table.Root aria-labelledby="recent-title">
+							<Table.Header>
+								<Table.Row>
+									{#each recentColumns.shown as column (column.id)}
+										<Table.Head class={recentColumns.head(column.id)}>{column.label}</Table.Head>
+									{/each}
+									<Table.Head class={ACTIONS_HEAD}>{l.translate('column.actions')}</Table.Head>
+								</Table.Row>
+							</Table.Header>
+							<Table.Body>
+								{#each recent as d (d.deployment_number)}
+									{@const badge = deploymentBadge(d.state)}
+									<Table.Row
+										class="relative"
+										data-state={actions.previewNumber() === d.deployment_number
+											? 'selected'
+											: undefined}
 									>
-									<span class="truncate">
-										{deploymentBadge(d.state).label} · {sourceLabel(d)}
-										{#if d.state.error_code}
-											· <span class="font-mono text-muted-foreground">{d.state.error_code}</span>
-										{:else if hashOf(d)}
-											· <span class="font-mono text-muted-foreground">{hashOf(d)?.slice(0, 7)}</span
+										<Table.Cell class={recentColumns.cell('status')}>
+											<StatusBadge state={badge.state} label={badge.label} />
+										</Table.Cell>
+										<Table.Cell class={recentColumns.cell('number', 'font-semibold tabular-nums')}>
+											<!-- The whole row opens the preview; the button stretches over it. -->
+											<button
+												type="button"
+												class="outline-none after:absolute after:inset-0 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
+												onclick={() => actions.openPreview(d.deployment_number)}
+												>#{d.deployment_number}</button
 											>
-										{/if}
-									</span>
-									<span class="text-muted-foreground tabular-nums"
-										>{l.relative(deploymentMoment(d))}</span
-									>
-								</button>
-							{/each}
-						</div>
+										</Table.Cell>
+										<Table.Cell class={recentColumns.cell('environment')}>
+											<EnvironmentChip environment={d.environment} />
+										</Table.Cell>
+										<Table.Cell
+											class={recentColumns.cell(
+												'commit',
+												d.state.error_code
+													? 'font-mono text-[12.5px] text-danger'
+													: 'font-mono text-[12.5px] text-muted-foreground'
+											)}
+											title={d.state.error_code ?? hashOf(d)}
+										>
+											{d.state.error_code ?? hashOf(d)?.slice(0, 7) ?? '—'}
+										</Table.Cell>
+										<Table.Cell
+											class={recentColumns.cell('started', 'text-muted-foreground tabular-nums')}
+										>
+											{l.relative(deploymentMoment(d))}
+										</Table.Cell>
+										<Table.Cell class={ACTIONS_CELL}>
+											<RowMenu label={l.translate('detail.row.menu', [d.deployment_number])}>
+												<RowMenuGroup>
+													<RowMenuItem
+														icon={CommandLineIcon}
+														onSelect={() => actions.openPreview(d.deployment_number)}
+													>
+														{l.translate('detail.row.logs')}
+													</RowMenuItem>
+													{#if !deleting && d.state.finished_at}
+														<RowMenuItem
+															icon={RepeatIcon}
+															onSelect={() => {
+																redeployNumber = d.deployment_number;
+																redeployOpen = true;
+															}}
+														>
+															{l.translate('deployment.redeploy')}
+														</RowMenuItem>
+													{/if}
+													<RowMenuItem
+														icon={Copy01Icon}
+														onSelect={() => copyLink(d.deployment_number)}
+													>
+														{l.translate('detail.row.copy')}
+													</RowMenuItem>
+												</RowMenuGroup>
+											</RowMenu>
+										</Table.Cell>
+									</Table.Row>
+								{/each}
+							</Table.Body>
+						</Table.Root>
 					{:else}
 						<div class="flex flex-col items-start gap-3 rounded-md bg-sunken px-4 py-4">
 							<p class="text-sm text-muted-foreground">{l.translate('app.empty.description')}</p>

@@ -184,6 +184,9 @@ func (s *store) GetAllJobs(ctx context.Context, filters bus.GetJobsFilters) (sto
 // The due check uses julianday: the driver stores times as
 // "2006-01-02 15:04:05.999999999-07:00", which compares as greater than DATETIME('now')
 // for the rest of the second, so a job queued a moment ago would not be found.
+// julianday rounds fractional seconds to the nearest millisecond, so a job queued in the
+// second half of the current millisecond would look 1 ms ahead of 'now': the due check
+// allows that millisecond.
 // Ordering stays on the raw strings, julianday only keeps milliseconds and two jobs
 // queued in the same millisecond would tie.
 func (s *store) GetNextPendingJobs(ctx context.Context, limit int, messageNames ...string) ([]bus.ScheduledJob, error) {
@@ -201,7 +204,7 @@ func (s *store) GetNextPendingJobs(ctx context.Context, limit int, messageNames 
 					SELECT id, message_name, MIN(not_before) AS not_before FROM scheduled_jobs sj
 					WHERE
 						sj.retrieved = false
-						AND julianday(sj.not_before) <= julianday('now')
+						AND julianday(sj.not_before) <= julianday('now', '+0.001 seconds')
 						AND sj.[group] NOT IN (SELECT DISTINCT [group] FROM scheduled_jobs WHERE retrieved = true)
 						AND (sj.policy & ? = 0 OR (SELECT COUNT(resource_id) FROM scheduled_jobs WHERE resource_id = sj.resource_id) <= 1)
 					GROUP BY sj.[group]

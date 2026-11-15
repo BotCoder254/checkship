@@ -45,6 +45,21 @@ func init() {
 func Test_Store(t *testing.T) {
 	ctx := context.Background()
 
+	t.Run("should claim a job due in the current millisecond", func(t *testing.T) {
+		store, db := openStoreAndDatabase(t)
+
+		assert.Nil(t, store.Create(ctx, firstCommand{Resource: "a"}, bus.CreateOptions{}))
+
+		// SQLite's current millisecond plus 0.6 ms: julianday rounds it up to the next millisecond.
+		_, err := db.ExecContext(ctx, `UPDATE scheduled_jobs SET not_before = STRFTIME('%Y-%m-%d %H:%M:%f', 'now') || '6+00:00'`)
+		assert.Nil(t, err)
+
+		jobs, err := store.GetNextPendingJobs(ctx, 10)
+
+		assert.Nil(t, err)
+		assert.HasLength(t, 1, jobs)
+	})
+
 	t.Run("should claim a job queued a moment ago", func(t *testing.T) {
 		store := openStore(t)
 
@@ -151,6 +166,11 @@ func groupOptions(name string) bus.CreateOptions {
 }
 
 func openStore(t *testing.T) bus.ScheduledJobsStore {
+	store, _ := openStoreAndDatabase(t)
+	return store
+}
+
+func openStoreAndDatabase(t *testing.T) (bus.ScheduledJobsStore, *sqlite.Database) {
 	db, err := sqlite.Open("file:"+filepath.Join(t.TempDir(), "test.db")+"?_journal=WAL&_txlock=immediate",
 		must.Panic(log.NewLogger()), spy.NewDispatcher())
 
@@ -160,5 +180,5 @@ func openStore(t *testing.T) bus.ScheduledJobsStore {
 	store := bussqlite.NewScheduledJobsStore(db)
 	assert.Nil(t, store.Setup())
 
-	return store
+	return store, db
 }

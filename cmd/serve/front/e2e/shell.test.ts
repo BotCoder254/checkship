@@ -141,7 +141,7 @@ test.describe('pages', () => {
 		const row = page.getByRole('row').filter({ hasText: 'e2e-local' });
 		await expect(row).toBeVisible();
 		await expect(row).toContainText('This machine · Docker engine');
-		await expectNoLines(page, '[role="row"]');
+		await expectNoLines(page, 'tbody tr, tbody td');
 		await shot(page, 'targets');
 
 		// Delete is disabled while a target is configuring; wait until configuration has finished

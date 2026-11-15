@@ -305,11 +305,15 @@ test.describe('desktop', () => {
 			}
 		}
 
-		await page.getByLabel('State').click();
-		await page.getByRole('option', { name: 'Failed, retrying' }).click();
-		await expect(page.getByLabel('State')).toHaveText('Failed, retrying');
-		await page.getByLabel('State').click();
-		await page.getByRole('option', { name: 'Any state' }).click();
+		// The State filter is a menu whose options each carry an icon.
+		const state = page.getByRole('button', { name: /^State:/ });
+		await state.click();
+		const failed = page.getByRole('menuitemradio', { name: 'Failed, retrying' });
+		await expect(failed.locator('svg').first()).toBeVisible();
+		await failed.click();
+		await expect(state).toContainText('Failed, retrying');
+		await state.click();
+		await page.getByRole('menuitemradio', { name: 'Any state' }).click();
 
 		const rows = page.getByRole('row').filter({ has: page.getByRole('button') });
 		if ((await rows.count()) === 0) {
@@ -357,6 +361,10 @@ test.describe('desktop', () => {
 		await row.getByRole('button', { name: 'Actions for deployment #1' }).click();
 		await expect(page.getByRole('menuitem', { name: 'View logs' })).toBeVisible();
 		await expect(page.getByRole('menuitem', { name: 'Copy link' })).toBeVisible();
+		// Every menu item has its icon.
+		for (const item of await page.getByRole('menuitem').all()) {
+			await expect(item.locator('svg')).toHaveCount(1);
+		}
 		await shot(page, 'deployments-menu');
 		await page.keyboard.press('Escape');
 
