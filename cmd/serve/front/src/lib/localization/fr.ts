@@ -272,6 +272,8 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 		'unexpected_error.description':
 			"<p>Quelque chose s'est mal passé. Tentez de rafraichir la page.</p><p>Si le problème persiste, veuillez contacter l'administrateur.</p>",
 		app_name_already_taken: "Nom d'application déjà utilisé sur cette cible",
+		invalid_file_type: 'Ce fichier n’est pas une archive .tar.gz.',
+		max_file_size_exceeded: 'Cette archive dépasse la taille acceptée par le serveur (SOURCE_ARCHIVE_MAX_SIZE).',
 		git_branch_not_found: 'Branche non trouvée',
 		git_remote_not_reachable: 'Origine injoignable',
 		invalid_email_or_password: 'Email ou mot de passe invalide',
