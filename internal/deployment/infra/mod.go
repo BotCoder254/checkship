@@ -63,6 +63,7 @@ type Options interface {
 	upload_backup.Options
 	cleanup_app.Options
 	configure_storage.Options
+	archive.Options
 }
 
 // Setup the deployment module and register everything needed in the given
@@ -87,7 +88,7 @@ func Setup(
 
 	sourceFacade := source.NewFacade(
 		raw.New(),
-		archive.New(),
+		archive.New(opts),
 		git.New(appsStore),
 	)
 

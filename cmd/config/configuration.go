@@ -47,6 +47,7 @@ const (
 	defaultBackupHelperImage      = "busybox:1.37"
 	defaultBackupMaxUploadSize    = "5gb"
 	defaultBackupStorageImage     = "versity/versitygw:v1.11.0"
+	defaultSourceArchiveMaxSize   = "32mb"
 )
 
 type (
@@ -63,6 +64,7 @@ type (
 	configuration struct {
 		Log     logConfiguration
 		Data    dataConfiguration
+		Source  sourceConfiguration
 		Http    httpConfiguration
 		Runners runnersConfiguration `env:"RUNNERS_CONFIGURATION"`
 		Backups backupsConfiguration
@@ -74,6 +76,7 @@ type (
 		warnings              []string // Logged once the logger is configured
 		deploymentDirTemplate *template.Template
 		backupMaxUploadSize   int64
+		sourceArchiveMaxSize  int64
 		logLevel              log.Level
 		logFormat             log.OutputFormat
 	}
@@ -105,6 +108,15 @@ type (
 		StorageImage  string `env:"BACKUPS_STORAGE_IMAGE" yaml:"storage_image"`     // Image of the built-in S3 storage
 	}
 
+	// Deployment sources
+	sourceConfiguration struct {
+		Archive sourceArchiveConfiguration
+	}
+
+	sourceArchiveConfiguration struct {
+		MaxSize string `env:"SOURCE_ARCHIVE_MAX_SIZE" yaml:"max_size"` // Largest archive accepted for a deployment
+	}
+
 	// internalConfiguration fields not read from the configuration file and use only during specific steps
 	internalConfiguration struct {
 		Email     string `env:"CHECKSHIP_ADMIN_EMAIL,ADMIN_EMAIL"`
@@ -123,6 +135,9 @@ func Default(builders ...ConfigurationBuilder) Configuration {
 		Data: dataConfiguration{
 			Path:                  defaultDataDirectory,
 			DeploymentDirTemplate: defaultDeploymentDirTemplate,
+		},
+		Source: sourceConfiguration{
+			Archive: sourceArchiveConfiguration{MaxSize: defaultSourceArchiveMaxSize},
 		},
 		Http: httpConfiguration{
 			Host:   defaultHost,
@@ -204,6 +219,7 @@ func (c *configuration) BackupsMaxUploadSize() int64               { return c.ba
 func (c *configuration) BuiltinStorageImage() string               { return c.Backups.StorageImage }
 func (c *configuration) BackupBeforeCleanup() bool                 { return c.Backups.BeforeCleanup }
 func (c *configuration) CheckshipVersion() string                  { return version.Current() }
+func (c *configuration) MaxDeploymentArchiveFileSize() int64       { return c.sourceArchiveMaxSize }
 
 // Builds the background runners from the configuration, given the names of every job
 // type registered by the application (bus.Marshallable.Keys()).
@@ -246,6 +262,7 @@ func (c *configuration) PostLoad() error {
 	return validate.Struct(validate.Of{
 		"log.level":                    validate.Value(c.Log.Level, &c.logLevel, log.ParseLevel),
 		"log.format":                   validate.Value(c.Log.Format, &c.logFormat, log.ParseFormat),
+		"source.archive.max_size":      validate.Value(c.Source.Archive.MaxSize, &c.sourceArchiveMaxSize, bytesize.Parse),
 		"data.deployment_dir_template": validate.Value(c.Data.DeploymentDirTemplate, &c.deploymentDirTemplate, template.New("").Parse),
 		"runners":                      c.Runners.validate(),
 		"backups.helper_image":         validate.If(strings.TrimSpace(c.Backups.HelperImage) == "", func() error { return errBackupHelperImageRequired }),
