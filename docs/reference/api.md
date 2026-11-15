@@ -27,7 +27,22 @@ GET /apps/:id/deployments/:number/logs
 GET /apps/:id/logs?environment=production&tail=200
 # State of an application's containers
 GET /apps/:id/services?environment=production
+# Named volumes of an environment, and the mounts a backup leaves out
+GET /apps/:id/volumes?environment=production
+# Back up, list, upload, download, restore and delete backups
+GET /apps/:id/backups
+POST /apps/:id/backups
+POST /apps/:id/backups/upload
+GET /backups
+GET /backups/:id
+GET /backups/:id/download
+POST /backups/:id/restore
+POST /backups/:id/store
+POST /backups/:id/retry
+DELETE /backups/:id
 ```
+
+The [Backups](/reference/backups#api) page describes their bodies.
 
 ## Runtime logs {#runtime-logs}
 

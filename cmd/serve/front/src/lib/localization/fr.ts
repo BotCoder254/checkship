@@ -1140,6 +1140,14 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 		'backups.copying': 'Copie…',
 		'backups.files': (count: number) => (count > 1 ? `${count} fichiers` : `${count} fichier`),
 		'backups.filter.any': 'Tous',
+		'storage.images.title': 'Images',
+		'storage.images.description':
+			'Ce que checkship télécharge sur vos cibles pour les sauvegardes. Réglables avec BACKUPS_STORAGE_IMAGE et BACKUPS_HELPER_IMAGE.',
+		'storage.images.storage': 'Stockage intégré',
+		'storage.images.storage.help': 'Téléchargée sur la cible choisie au démarrage du stockage.',
+		'storage.images.helper': 'Assistant de sauvegarde',
+		'storage.images.helper.help':
+			'Téléchargée sur une cible à sa première sauvegarde ou restauration. Elle monte chaque volume pendant la copie de ses fichiers et n’exécute jamais votre code.',
 		'backups.never': 'Jamais',
 		'backups.all_volumes': 'Tous les volumes',
 		'backups.back_up': 'Sauvegarder',

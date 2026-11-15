@@ -48,6 +48,8 @@ Deleting a target will (if it has been configured at least once correctly) remov
 - Networks
 - Volumes
 
+A target that runs the [built-in backup storage](/reference/backups#builtin) cannot be deleted: move the storage to another target on **Backups › Storage** first.
+
 ::: info
 If you want to delete a target and the cleanup could not be done correctly because of a particular situation, you can [cancel the cleanup job](/reference/jobs#cancellation) from the **jobs** page.
 :::

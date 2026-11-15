@@ -492,5 +492,31 @@
 				</div>
 			</SettingsSection>
 		{/if}
+
+		{#if $storage}
+			<SettingsSection
+				title={l.translate('storage.images.title')}
+				description={l.translate('storage.images.description')}
+			>
+				<dl class="flex flex-col gap-2">
+					{#if mode === 'builtin'}
+						<div class="flex flex-col gap-1 rounded-md bg-sunken px-3.5 py-3">
+							<dt class="text-sm font-medium">{l.translate('storage.images.storage')}</dt>
+							<dd class="font-mono text-[12.5px]">{$storage.image}</dd>
+							<dd class="text-xs/[18px] text-muted-foreground">
+								{l.translate('storage.images.storage.help')}
+							</dd>
+						</div>
+					{/if}
+					<div class="flex flex-col gap-1 rounded-md bg-sunken px-3.5 py-3">
+						<dt class="text-sm font-medium">{l.translate('storage.images.helper')}</dt>
+						<dd class="font-mono text-[12.5px]">{$storage.helper_image}</dd>
+						<dd class="text-xs/[18px] text-muted-foreground">
+							{l.translate('storage.images.helper.help')}
+						</dd>
+					</div>
+				</dl>
+			</SettingsSection>
+		{/if}
 	</div>
 </form>

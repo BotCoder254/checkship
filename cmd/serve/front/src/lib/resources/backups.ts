@@ -85,6 +85,10 @@ export type BackupStorage = {
 	status: 'ready' | 'configuring' | 'failed';
 	error_code?: string | null;
 	updated_at?: string | null;
+	/** Image of the built-in storage, pulled on its target. */
+	image: string;
+	/** Image that mounts each volume during a copy, pulled on each target. */
+	helper_image: string;
 };
 
 export type ExternalStorage = {

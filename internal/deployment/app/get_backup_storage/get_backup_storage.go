@@ -31,12 +31,20 @@ type (
 		Status    string                 `json:"status"`
 		ErrorCode monad.Maybe[string]    `json:"error_code"`
 		UpdatedAt monad.Maybe[time.Time] `json:"updated_at"`
+		// Images pulled on targets: the built-in storage, and the helper that mounts volumes
+		Image       string `json:"image"`
+		HelperImage string `json:"helper_image"`
+	}
+
+	Options interface {
+		BuiltinStorageImage() string
+		BackupHelperImage() string
 	}
 )
 
 func (Query) Name_() string { return "deployment.query.get_backup_storage" }
 
-func Handler(reader domain.BackupStorageReader) bus.RequestHandler[Storage, Query] {
+func Handler(reader domain.BackupStorageReader, options Options) bus.RequestHandler[Storage, Query] {
 	return func(ctx context.Context, _ Query) (Storage, error) {
 		s, err := reader.Get(ctx)
 
@@ -46,18 +54,20 @@ func Handler(reader domain.BackupStorageReader) bus.RequestHandler[Storage, Quer
 
 		access := s.Access()
 		result := Storage{
-			Mode:      string(s.Mode()),
-			Endpoint:  access.Endpoint,
-			UseSSL:    access.UseSSL,
-			PathStyle: access.PathStyle,
-			Region:    access.Region,
-			Bucket:    access.Bucket,
-			Prefix:    access.Prefix,
-			AccessKey: access.AccessKey,
-			SecretKey: access.SecretKey,
-			KeepLocal: s.KeepLocal(),
-			Status:    string(s.Status()),
-			ErrorCode: s.ErrorCode(),
+			Mode:        string(s.Mode()),
+			Endpoint:    access.Endpoint,
+			UseSSL:      access.UseSSL,
+			PathStyle:   access.PathStyle,
+			Region:      access.Region,
+			Bucket:      access.Bucket,
+			Prefix:      access.Prefix,
+			AccessKey:   access.AccessKey,
+			SecretKey:   access.SecretKey,
+			KeepLocal:   s.KeepLocal(),
+			Status:      string(s.Status()),
+			ErrorCode:   s.ErrorCode(),
+			Image:       options.BuiltinStorageImage(),
+			HelperImage: options.BackupHelperImage(),
 		}
 
 		if id, isSet := s.Target().TryGet(); isSet {
