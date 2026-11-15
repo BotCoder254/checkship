@@ -15,6 +15,7 @@ const routes = {
 		environment && environment !== 'production'
 			? `/apps/${id}/logs?environment=${environment}`
 			: `/apps/${id}/logs`,
+	appBackups: (id: string) => `/apps/${id}/backups`,
 	createDeployment: (id: string) => `/apps/${id}/deployments/new`,
 	deployment: (id: string, number: number) => `/apps/${id}/deployments/${number}`,
 	targets: '/targets',
@@ -22,6 +23,8 @@ const routes = {
 	target: (id: string) => `/targets/${id}`,
 	editTarget: (id: string) => `/targets/${id}/edit`,
 	jobs: '/jobs',
+	backups: '/backups',
+	backupStorage: '/backups/storage',
 	registries: '/registries',
 	createRegistry: '/registries/new',
 	editRegistry: (id: string) => `/registries/${id}/edit`

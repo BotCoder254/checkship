@@ -103,6 +103,8 @@
 		return l.translate('vars.summary', [services, variables]);
 	}
 
+	let moveVolumes = $state(true);
+
 	const changed = (environment: Environment) =>
 		!!initialData && initialData[environment].target.id !== env[environment].target;
 
@@ -151,6 +153,7 @@
 		}
 
 		return props.handler({
+			move_volumes: moveVolumes,
 			version_control: useVersionControl
 				? {
 						url,
@@ -379,6 +382,19 @@
 								>{l.translate('settings.target_changed.description')}</Alert.Description
 							>
 						</Alert.Root>
+						<div class="flex items-start gap-4 rounded-md bg-sunken px-3.5 py-3">
+							<span class="flex min-w-0 flex-1 flex-col gap-1">
+								<label for="move-volumes-{environment}" class="text-sm font-medium"
+									>{l.translate('settings.move_volumes')}</label
+								>
+								<span class="text-xs/[18px] text-muted-foreground">
+									{moveVolumes
+										? l.translate('settings.move_volumes.on')
+										: l.translate('settings.move_volumes.off')}
+								</span>
+							</span>
+							<Switch id="move-volumes-{environment}" bind:checked={moveVolumes} />
+						</div>
 					{/if}
 				{/each}
 			</div>

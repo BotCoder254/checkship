@@ -5,6 +5,7 @@
 	until that exact text is typed.
 -->
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import type { IconData } from '#lib/components/icon.svelte';
 	import Icon from '#lib/components/icon.svelte';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
@@ -23,6 +24,8 @@
 		destructive?: boolean;
 		typeToConfirm?: string;
 		typeLabel?: string;
+		/** More controls between the description and the confirmation, such as an option. */
+		extra?: Snippet;
 		onconfirm: () => Promise<unknown>;
 	};
 
@@ -35,6 +38,7 @@
 		destructive = false,
 		typeToConfirm,
 		typeLabel,
+		extra,
 		onconfirm
 	}: Props = $props();
 
@@ -78,6 +82,8 @@
 			<AlertDialog.Title>{title}</AlertDialog.Title>
 			<AlertDialog.Description>{description}</AlertDialog.Description>
 		</AlertDialog.Header>
+
+		{@render extra?.()}
 
 		{#if typeToConfirm !== undefined}
 			<div class="flex flex-col gap-1.5">

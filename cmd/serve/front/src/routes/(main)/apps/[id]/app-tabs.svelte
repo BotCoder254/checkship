@@ -1,8 +1,9 @@
 <!--
-	Application tabs (DESIGN.md §11.7): Overview, Deployments (with the total), Logs, Settings. Links, so
+	Application tabs (DESIGN.md §11.7): Overview, Deployments (with the total), Logs, Backups, Settings. Links, so
 	each tab has its own address; the current one has the raised fill. They scroll sideways on phones.
 -->
 <script lang="ts">
+	import Archive02Icon from '@hugeicons/core-free-icons/Archive02Icon';
 	import ComputerTerminal01Icon from '@hugeicons/core-free-icons/ComputerTerminal01Icon';
 	import DashboardSquare01Icon from '@hugeicons/core-free-icons/DashboardSquare01Icon';
 	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
@@ -13,7 +14,10 @@
 	import service from '#lib/resources/deployments.ts';
 	import { cn } from '#lib/utils.js';
 
-	type Props = { appId: string; active: 'overview' | 'deployments' | 'logs' | 'settings' };
+	type Props = {
+		appId: string;
+		active: 'overview' | 'deployments' | 'logs' | 'backups' | 'settings';
+	};
 
 	let { appId, active }: Props = $props();
 
@@ -41,6 +45,12 @@
 			href: routes.appLogs(appId),
 			icon: ComputerTerminal01Icon,
 			label: l.translate('detail.tab.logs')
+		},
+		{
+			id: 'backups',
+			href: routes.appBackups(appId),
+			icon: Archive02Icon,
+			label: l.translate('detail.tab.backups')
 		},
 		{
 			id: 'settings',

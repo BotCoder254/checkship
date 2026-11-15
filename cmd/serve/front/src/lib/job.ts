@@ -92,6 +92,11 @@ export function jobSubject(
 				href: name ? routes.target(targetId) : undefined
 			};
 		}
+		case 'deployment.command.backup_volumes':
+		case 'deployment.command.store_backup':
+		case 'deployment.command.restore_volumes':
+			// The payload only has the backup or restore id: point at the Backups page.
+			return { kind: 'unknown', label: job.resource_id.slice(0, 8), href: routes.backups };
 	}
 
 	return { kind: 'unknown', label: job.resource_id };
