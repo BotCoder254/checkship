@@ -2,6 +2,7 @@ package startup
 
 import (
 	"context"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/update_backup_storage"
 
 	"github.com/checkship-deploy/checkship/internal/auth/app/create_first_account"
 	"github.com/checkship-deploy/checkship/internal/auth/domain"
@@ -120,6 +121,11 @@ func Server(options ServerOptions, logger log.Logger) (ServerRoot, error) {
 		}); err != nil {
 			return nil, err
 		}
+	}
+
+	// Install the built-in backup storage on the local target the first time, if there is one
+	if _, err := bus.Send(s.bus, domain.WithUserID(context.Background(), domain.UserID(uid)), update_backup_storage.EnsureCommand{}); err != nil {
+		s.logger.Warnw("could not set up the built-in backup storage, backups stay in the data folder", "error", err)
 	}
 
 	// Every job type is known once the handlers are registered (bus.Register fills

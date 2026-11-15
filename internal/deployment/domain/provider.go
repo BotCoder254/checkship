@@ -2,9 +2,11 @@ package domain
 
 import (
 	"context"
+	"io"
 
 	"github.com/checkship-deploy/checkship/pkg/apperr"
 	"github.com/checkship-deploy/checkship/pkg/storage"
+	"github.com/checkship-deploy/checkship/pkg/volumearchive"
 )
 
 var (
@@ -42,5 +44,16 @@ type (
 		Logs(context.Context, Target, AppID, Environment, LogsOptions, LogsConsumer) error
 		// State of an application environment's containers on a target.
 		Services(context.Context, Target, AppID, Environment) ([]ServiceState, error)
+		// Named volumes of an application environment on a target, and the mounts that cannot be backed up.
+		Volumes(context.Context, Target, AppID, Environment) ([]VolumeInfo, []volumearchive.SkippedMount, error)
+		// Write an archive of an application environment's volumes to the given writer.
+		BackupVolumes(context.Context, Target, AppID, Environment, BackupVolumesOptions, io.Writer) (BackupVolumesResult, error)
+		// Replace volumes of an application environment with the content of an archive.
+		// Returns the keys of the volumes restored.
+		RestoreVolumes(context.Context, Target, AppID, Environment, RestoreVolumesOptions, io.Reader) ([]string, error)
+		// Runs the built-in backup storage on a target and returns the ways to reach it, best first.
+		SetupStorage(context.Context, Target, BuiltinStorageSpec) ([]StorageEndpoint, error)
+		// Stops the built-in backup storage on a target and removes its data.
+		RemoveStorage(context.Context, Target) error
 	}
 )

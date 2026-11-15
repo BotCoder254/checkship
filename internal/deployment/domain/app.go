@@ -78,7 +78,15 @@ type (
 		ID          AppID
 		Environment Environment
 		Config      EnvironmentConfig
-		OldConfig   EnvironmentConfig // Old configuration, used to ease the cleanup handling
+		OldConfig   EnvironmentConfig          // Old configuration, used to ease the cleanup handling
+		MoveVolumes bool                       // When the target changed: copy the volumes to the new one
+		ChangedBy   monad.Maybe[domain.UserID] // Who changed it, when known
+	}
+
+	// How an environment change is carried out.
+	EnvironmentChange struct {
+		MoveVolumes bool          // Copy the volumes to the new target, if the target changes
+		By          domain.UserID // Who asks for the change
 	}
 
 	AppVersionControlConfigured struct {
@@ -101,6 +109,7 @@ type (
 		ProductionConfig EnvironmentConfig
 		StagingConfig    EnvironmentConfig
 		Requested        shared.Action[domain.UserID]
+		BackupVolumes    bool // Back up each environment's volumes before they are removed
 	}
 
 	AppDeleted struct {
@@ -238,16 +247,33 @@ func (a *App) RemoveVersionControl() error {
 
 // Updates the production configuration for this application.
 func (a *App) HasProductionConfig(configRequirement EnvironmentConfigRequirement) error {
-	return a.tryUpdateEnvironmentConfig(Production, a.production, configRequirement)
+	return a.tryUpdateEnvironmentConfig(Production, a.production, configRequirement, monad.None[EnvironmentChange]())
 }
 
 // Updates the staging configuration for this application.
 func (a *App) HasStagingConfig(configRequirement EnvironmentConfigRequirement) error {
-	return a.tryUpdateEnvironmentConfig(Staging, a.staging, configRequirement)
+	return a.tryUpdateEnvironmentConfig(Staging, a.staging, configRequirement, monad.None[EnvironmentChange]())
+}
+
+// Same as HasProductionConfig, saying who changes it and whether volume data
+// follows a change of target.
+func (a *App) ChangeProductionConfig(configRequirement EnvironmentConfigRequirement, change EnvironmentChange) error {
+	return a.tryUpdateEnvironmentConfig(Production, a.production, configRequirement, monad.Value(change))
+}
+
+// Same as HasStagingConfig, saying who changes it and whether volume data
+// follows a change of target.
+func (a *App) ChangeStagingConfig(configRequirement EnvironmentConfigRequirement, change EnvironmentChange) error {
+	return a.tryUpdateEnvironmentConfig(Staging, a.staging, configRequirement, monad.Value(change))
 }
 
 // Request cleaning for this application. This marks the application for deletion.
 func (a *App) RequestCleanup(requestedBy domain.UserID) {
+	a.RequestCleanupWithBackup(requestedBy, false)
+}
+
+// Same as RequestCleanup, backing up the volumes before they are removed when asked.
+func (a *App) RequestCleanupWithBackup(requestedBy domain.UserID, backupVolumes bool) {
 	if a.cleanupRequested.HasValue() {
 		return
 	}
@@ -257,6 +283,7 @@ func (a *App) RequestCleanup(requestedBy domain.UserID) {
 		ProductionConfig: a.production,
 		StagingConfig:    a.staging,
 		Requested:        shared.NewAction(requestedBy),
+		BackupVolumes:    backupVolumes,
 	})
 }
 
@@ -289,6 +316,7 @@ func (a *App) tryUpdateEnvironmentConfig(
 	env Environment,
 	existingConfig EnvironmentConfig,
 	updatedConfigRequirement EnvironmentConfigRequirement,
+	change monad.Maybe[EnvironmentChange],
 ) error {
 	if a.cleanupRequested.HasValue() {
 		return ErrAppCleanupRequested
@@ -307,12 +335,19 @@ func (a *App) tryUpdateEnvironmentConfig(
 
 	updatedConfig.consolidate(existingConfig)
 
-	a.apply(AppEnvChanged{
+	evt := AppEnvChanged{
 		ID:          a.id,
 		Environment: env,
 		Config:      updatedConfig,
 		OldConfig:   existingConfig,
-	})
+	}
+
+	if c, isSet := change.TryGet(); isSet {
+		evt.MoveVolumes = c.MoveVolumes
+		evt.ChangedBy.Set(c.By)
+	}
+
+	a.apply(evt)
 
 	return nil
 }
@@ -342,3 +377,19 @@ func (a *App) apply(e event.Event) {
 
 	event.Store(a, e)
 }
+
+func (a *App) Name() AppName { return a.name }
+
+// Compose project name of an environment. Volumes created by a restore are named after it.
+func (a *App) ProjectName(env Environment) (string, error) {
+	snapshot, err := a.configSnapshotFor(env)
+
+	if err != nil {
+		return "", err
+	}
+
+	return snapshot.ProjectName(), nil
+}
+
+// Who created the application. Automatic backups with no other author are recorded under this user.
+func (a *App) CreatedBy() domain.UserID { return a.created.By() }

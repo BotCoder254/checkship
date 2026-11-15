@@ -2,8 +2,10 @@ package provider
 
 import (
 	"context"
+	"io"
 
 	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/volumearchive"
 )
 
 type (
@@ -101,6 +103,56 @@ func (f *facade) Services(ctx context.Context, target domain.Target, app domain.
 	}
 
 	return provider.Services(ctx, target, app, env)
+}
+
+func (f *facade) Volumes(ctx context.Context, target domain.Target, app domain.AppID, env domain.Environment) ([]domain.VolumeInfo, []volumearchive.SkippedMount, error) {
+	provider, err := f.providerForTarget(target)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return provider.Volumes(ctx, target, app, env)
+}
+
+func (f *facade) BackupVolumes(ctx context.Context, target domain.Target, app domain.AppID, env domain.Environment, options domain.BackupVolumesOptions, w io.Writer) (domain.BackupVolumesResult, error) {
+	provider, err := f.providerForTarget(target)
+
+	if err != nil {
+		return domain.BackupVolumesResult{}, err
+	}
+
+	return provider.BackupVolumes(ctx, target, app, env, options, w)
+}
+
+func (f *facade) RestoreVolumes(ctx context.Context, target domain.Target, app domain.AppID, env domain.Environment, options domain.RestoreVolumesOptions, r io.Reader) ([]string, error) {
+	provider, err := f.providerForTarget(target)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return provider.RestoreVolumes(ctx, target, app, env, options, r)
+}
+
+func (f *facade) SetupStorage(ctx context.Context, target domain.Target, spec domain.BuiltinStorageSpec) ([]domain.StorageEndpoint, error) {
+	provider, err := f.providerForTarget(target)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return provider.SetupStorage(ctx, target, spec)
+}
+
+func (f *facade) RemoveStorage(ctx context.Context, target domain.Target) error {
+	provider, err := f.providerForTarget(target)
+
+	if err != nil {
+		return err
+	}
+
+	return provider.RemoveStorage(ctx, target)
 }
 
 func (f *facade) providerForTarget(target domain.Target) (Provider, error) {

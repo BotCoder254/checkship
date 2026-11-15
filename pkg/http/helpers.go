@@ -3,9 +3,12 @@ package http
 import (
 	"errors"
 	"fmt"
+	"io"
+	"mime"
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/checkship-deploy/checkship/pkg/apperr"
@@ -96,6 +99,25 @@ func TextFile(ctx *gin.Context, filepath string) error {
 	http.ServeContent(ctx.Writer, ctx.Request, path.Base(filepath), time.Time{}, file)
 
 	return nil
+}
+
+// Streams a file to download. Nothing is buffered, so archives of any size go
+// straight from their source to the client.
+func Attachment(ctx *gin.Context, filename, contentType string, size int64, content io.Reader) error {
+	ctx.Header("Content-Type", contentType)
+	ctx.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": filename}))
+	ctx.Header("Cache-Control", "no-store")
+	ctx.Header("X-Content-Type-Options", "nosniff")
+
+	if size >= 0 {
+		ctx.Header("Content-Length", strconv.FormatInt(size, 10))
+	}
+
+	ctx.Status(http.StatusOK)
+
+	_, err := io.Copy(ctx.Writer, content)
+
+	return err
 }
 
 // Mark the request has succeeded with the given data.

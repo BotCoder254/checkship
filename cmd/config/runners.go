@@ -3,6 +3,9 @@ package config
 import (
 	"errors"
 	"fmt"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/backup_volumes"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/restore_volumes"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/store_backup"
 	"slices"
 	"strconv"
 	"strings"
@@ -71,13 +74,23 @@ type (
 	}
 )
 
-// Two runners: one for deployments, one for every other job.
+// Three runners: one for deployments, one for volume copies, which can take
+// minutes and must not hold back cleanups, and one for every other job.
 func defaultRunners(pollInterval string, deploymentCount, otherCount int) []runnerConfiguration {
 	return []runnerConfiguration{
 		{
 			PollInterval: pollInterval,
 			Count:        deploymentCount,
 			Jobs:         []string{deploy.Command{}.Name_()},
+		},
+		{
+			PollInterval: pollInterval,
+			Count:        defaultRunnersBackupCount,
+			Jobs: []string{
+				backup_volumes.Command{}.Name_(),
+				restore_volumes.Command{}.Name_(),
+				store_backup.Command{}.Name_(),
+			},
 		},
 		{
 			PollInterval: pollInterval,

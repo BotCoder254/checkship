@@ -3,6 +3,8 @@ package update_app
 import (
 	"context"
 
+	auth "github.com/checkship-deploy/checkship/internal/auth/domain"
+
 	"github.com/checkship-deploy/checkship/internal/deployment/app/create_app"
 	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 	"github.com/checkship-deploy/checkship/pkg/bus"
@@ -20,6 +22,7 @@ type (
 		VersionControl monad.Patch[VersionControl]    `json:"version_control"`
 		Production     monad.Maybe[EnvironmentConfig] `json:"production"`
 		Staging        monad.Maybe[EnvironmentConfig] `json:"staging"`
+		MoveVolumes    monad.Maybe[bool]              `json:"move_volumes"` // When a target changes, copy volume data to the new one (true if not set)
 	}
 
 	EnvironmentConfig create_app.EnvironmentConfig
@@ -114,14 +117,19 @@ func Handler(
 			}
 		}
 
+		change := domain.EnvironmentChange{
+			MoveVolumes: cmd.MoveVolumes.Get(true),
+			By:          auth.CurrentUser(ctx).MustGet(),
+		}
+
 		if productionConfig.HasValue() {
-			if err = app.HasProductionConfig(productionRequirement); err != nil {
+			if err = app.ChangeProductionConfig(productionRequirement, change); err != nil {
 				return "", err
 			}
 		}
 
 		if stagingConfig.HasValue() {
-			if err = app.HasStagingConfig(stagingRequirement); err != nil {
+			if err = app.ChangeStagingConfig(stagingRequirement, change); err != nil {
 				return "", err
 			}
 		}

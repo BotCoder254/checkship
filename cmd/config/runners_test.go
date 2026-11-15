@@ -26,15 +26,23 @@ const (
 	configureTargetJob = "deployment.command.configure_target"
 	cleanupTargetJob   = "deployment.command.cleanup_target"
 	deleteTargetJob    = "deployment.command.delete_target"
+	backupJob          = "deployment.command.backup_volumes"
+	restoreJob         = "deployment.command.restore_volumes"
+	storeBackupJob     = "deployment.command.store_backup"
 )
 
 // Sorted, as bus.Marshallable.Keys() returns them.
-var knownJobs = []string{cleanupAppJob, cleanupTargetJob, configureTargetJob, deleteAppJob, deleteTargetJob, deployJob}
+var knownJobs = []string{backupJob, cleanupAppJob, cleanupTargetJob, configureTargetJob, deleteAppJob, deleteTargetJob, deployJob, restoreJob, storeBackupJob}
+
+var backupJobs = []string{backupJob, restoreJob, storeBackupJob}
+
+// Every job but deployments, sorted.
+var nonDeployJobs = []string{backupJob, cleanupAppJob, cleanupTargetJob, configureTargetJob, deleteAppJob, deleteTargetJob, restoreJob, storeBackupJob}
 
 var otherJobs = []string{cleanupAppJob, cleanupTargetJob, configureTargetJob, deleteAppJob, deleteTargetJob}
 
 func Test_Runners(t *testing.T) {
-	t.Run("should default to a deployment runner and a runner for every other job", func(t *testing.T) {
+	t.Run("should default to a deployment runner, a volume copy runner and a runner for every other job", func(t *testing.T) {
 		conf, logger, err := load(t, "", nil)
 
 		assert.Nil(t, err)
@@ -44,6 +52,7 @@ func Test_Runners(t *testing.T) {
 
 		assert.DeepEqual(t, []bus.RunnerDefinition{
 			{PollInterval: 4 * time.Second, Workers: 4, Messages: []string{deployJob}},
+			{PollInterval: 4 * time.Second, Workers: 1, Messages: backupJobs},
 			{PollInterval: 4 * time.Second, Workers: 2, Messages: otherJobs},
 		}, runners)
 	})
@@ -56,13 +65,13 @@ func Test_Runners(t *testing.T) {
 		assert.Nil(t, err)
 
 		content := string(must.Panic(os.ReadFile(path)))
-		assert.Match(t, `runners:\n    - poll_interval: 4s\n      count: 4\n      jobs:\n        - deployment.command.deploy\n    - poll_interval: 4s\n      count: 2\n`, content)
+		assert.Match(t, `runners:\n    - poll_interval: 4s\n      count: 4\n      jobs:\n        - deployment.command.deploy\n    - poll_interval: 4s\n      count: 1\n      jobs:\n        - deployment.command.backup_volumes\n        - deployment.command.restore_volumes\n        - deployment.command.store_backup\n    - poll_interval: 4s\n      count: 2\n`, content)
 
 		// And read it back
 		conf, logger, err := loadFile(t, path, map[string]string{"DATA_PATH": dir})
 		assert.Nil(t, err)
 		assert.HasLength(t, 0, logger.warnings())
-		assert.HasLength(t, 2, definitions(t, conf))
+		assert.HasLength(t, 3, definitions(t, conf))
 	})
 
 	t.Run("should read runners from the configuration file", func(t *testing.T) {
@@ -85,7 +94,7 @@ runners:
 		assert.DeepEqual(t, []bus.RunnerDefinition{
 			{PollInterval: time.Second, Workers: 8, Messages: []string{deployJob}},
 			{PollInterval: 2 * time.Second, Workers: 1, Messages: []string{configureTargetJob}},
-			{PollInterval: 10 * time.Second, Workers: 3, Messages: []string{cleanupAppJob, cleanupTargetJob, deleteAppJob, deleteTargetJob}},
+			{PollInterval: 10 * time.Second, Workers: 3, Messages: []string{backupJob, cleanupAppJob, cleanupTargetJob, deleteAppJob, deleteTargetJob, restoreJob, storeBackupJob}},
 		}, definitions(t, conf))
 	})
 
@@ -102,6 +111,7 @@ runners:
 		assert.Match(t, "old format", logger.warnings()[0])
 		assert.DeepEqual(t, []bus.RunnerDefinition{
 			{PollInterval: 10 * time.Second, Workers: 5, Messages: []string{deployJob}},
+			{PollInterval: 10 * time.Second, Workers: 1, Messages: backupJobs},
 			{PollInterval: 10 * time.Second, Workers: 3, Messages: otherJobs},
 		}, definitions(t, conf))
 	})
@@ -126,7 +136,7 @@ runners:
 		assert.Nil(t, err)
 		assert.DeepEqual(t, []bus.RunnerDefinition{
 			{PollInterval: 4 * time.Second, Workers: 2, Messages: []string{deployJob, cleanupAppJob}},
-			{PollInterval: 5 * time.Second, Workers: 3, Messages: []string{cleanupTargetJob, configureTargetJob, deleteAppJob, deleteTargetJob}},
+			{PollInterval: 5 * time.Second, Workers: 3, Messages: []string{backupJob, cleanupTargetJob, configureTargetJob, deleteAppJob, deleteTargetJob, restoreJob, storeBackupJob}},
 		}, definitions(t, conf))
 	})
 
@@ -134,7 +144,7 @@ runners:
 		conf, _, err := load(t, "", map[string]string{"RUNNERS_CONFIGURATION": "  "})
 
 		assert.Nil(t, err)
-		assert.HasLength(t, 2, definitions(t, conf))
+		assert.HasLength(t, 3, definitions(t, conf))
 	})
 
 	t.Run("should say which runner of RUNNERS_CONFIGURATION could not be parsed", func(t *testing.T) {
@@ -159,6 +169,7 @@ runners:
 		assert.Match(t, "deprecated, use RUNNERS_CONFIGURATION", logger.warnings()[0])
 		assert.DeepEqual(t, []bus.RunnerDefinition{
 			{PollInterval: 4 * time.Second, Workers: 8, Messages: []string{deployJob}},
+			{PollInterval: 4 * time.Second, Workers: 1, Messages: backupJobs},
 			{PollInterval: 4 * time.Second, Workers: 2, Messages: otherJobs},
 		}, definitions(t, conf))
 	})
@@ -178,6 +189,7 @@ runners:
 		assert.HasLength(t, 2, logger.warnings())
 		assert.DeepEqual(t, []bus.RunnerDefinition{
 			{PollInterval: 2 * time.Second, Workers: 5, Messages: []string{deployJob}},
+			{PollInterval: 2 * time.Second, Workers: 1, Messages: backupJobs},
 			{PollInterval: 2 * time.Second, Workers: 6, Messages: otherJobs},
 		}, definitions(t, conf))
 	})
@@ -235,7 +247,7 @@ runners:
 		_, err = conf.RunnersDefinitions(knownJobs, must.Panic(log.NewLogger()))
 
 		assert.NotNil(t, err)
-		assert.Match(t, "unknown job names in the runners configuration: deployment.command.nope, known jobs are deployment.command.cleanup_app, ", err.Error())
+		assert.Match(t, "unknown job names in the runners configuration: deployment.command.nope, known jobs are deployment.command.backup_volumes, deployment.command.cleanup_app, ", err.Error())
 	})
 
 	t.Run("should fail when a job is handled by no runner", func(t *testing.T) {
@@ -247,12 +259,12 @@ runners:
 		_, err = conf.RunnersDefinitions(knownJobs, must.Panic(log.NewLogger()))
 
 		assert.NotNil(t, err)
-		assert.Equal(t, "no runner handles these jobs: "+strings.Join(otherJobs, ", ")+", list them in a runner or leave the jobs of the last runner empty", err.Error())
+		assert.Equal(t, "no runner handles these jobs: "+strings.Join(nonDeployJobs, ", ")+", list them in a runner or leave the jobs of the last runner empty", err.Error())
 	})
 
 	t.Run("should drop a last runner left without jobs", func(t *testing.T) {
 		conf, _, err := load(t, "", map[string]string{
-			"RUNNERS_CONFIGURATION": fmt.Sprintf("4s;2;%s|4s;1;%s|4s;1;", deployJob, strings.Join(otherJobs, ",")),
+			"RUNNERS_CONFIGURATION": fmt.Sprintf("4s;2;%s|4s;1;%s|4s;1;", deployJob, strings.Join(nonDeployJobs, ",")),
 		})
 		assert.Nil(t, err)
 
@@ -262,7 +274,7 @@ runners:
 		assert.Nil(t, err)
 		assert.HasLength(t, 2, runners)
 		assert.HasLength(t, 1, logger.warnings())
-		assert.True(t, slices.Equal(otherJobs, runners[1].Messages))
+		assert.True(t, slices.Equal(nonDeployJobs, runners[1].Messages))
 	})
 }
 

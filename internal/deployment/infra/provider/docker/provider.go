@@ -44,6 +44,7 @@ const (
 	ExposedLabel           = "app.checkship.exposed"            // Force the exposure of a service (used when exposing checkship itself for example)
 	SubdomainLabel         = "app.checkship.subdomain"          // Subdomain to use for the service, only for http entrypoints
 	CustomEntrypointsLabel = "app.checkship.custom_entrypoints" // Boolean representing wether or not a service use custom entrypoints
+	StorageLabel           = "app.checkship.storage"            // Volume of the built-in backup storage, never removed by a target cleanup
 )
 
 type (
