@@ -12,6 +12,12 @@ Deployments of the same application environment run one at a time, in the order 
 By default, **jobs in error** state are retried every **15 seconds**. This is because some errors (such as the `target_configuration_in_progress`) are expected and will delay the job.
 :::
 
+## Backups
+
+Backups, restores and uploads to the backup storage run on their own [runner](/guide/configuration#runners), and wait for any deployment of the same application environment. They differ from other jobs in one way: **a failed backup or restore is not retried on its own**. Its outcome is recorded on the backup, and you run it again from the [Backups](/reference/backups) page once the cause is fixed, since every attempt stops the application's containers.
+
+A backup taken before a cleanup is the exception: it runs inside the cleanup job, which is retried until the backup succeeds, so nothing is deleted without a copy.
+
 ## Cancellation
 
 Since a target on which you have, in the past, successfully deployed something can be destroyed from your side, **checkship** provides the ability to **cancel some tasks**.

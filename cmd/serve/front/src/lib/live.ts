@@ -6,7 +6,7 @@
  */
 import { readonly, writable } from 'svelte/store';
 
-export type LiveTopic = 'deployments' | 'targets' | 'apps';
+export type LiveTopic = 'deployments' | 'targets' | 'apps' | 'backups';
 export type LiveHint = { topic: LiveTopic; id?: string };
 export type LiveStatus = 'connecting' | 'live' | 'offline';
 
@@ -44,7 +44,7 @@ function open() {
 	source.addEventListener('hint', (event) => {
 		try {
 			const hint = JSON.parse((event as MessageEvent<string>).data) as LiveHint;
-			if (hint.topic !== 'deployments' && hint.topic !== 'targets' && hint.topic !== 'apps') return;
+			if (!['deployments', 'targets', 'apps', 'backups'].includes(hint.topic)) return;
 			pending.add(hint.topic);
 			timer ??= setTimeout(flush, DEBOUNCE_MS);
 		} catch {

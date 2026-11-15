@@ -68,12 +68,15 @@ export type UpdateApp = {
 	}>;
 	production: Maybe<CreateAppDataEnvironmentConfig>;
 	staging: Maybe<CreateAppDataEnvironmentConfig>;
+	/** When a target changes, copy the volume data to the new one (the server defaults to true). */
+	move_volumes?: boolean;
 };
 
 export interface AppsService {
 	create(payload: CreateApp): Promise<AppDetail>;
 	update(id: string, payload: UpdateApp): Promise<AppDetail>;
-	delete(id: string): Promise<void>;
+	/** Unless `backupVolumes` is false, each environment's volumes are backed up before removal. */
+	delete(id: string, backupVolumes?: boolean): Promise<void>;
 	fetchAll(options?: FetchOptions): Promise<App[]>;
 	fetchById(id: string, options?: FetchOptions): Promise<AppDetail>;
 	queryAll(): QueryResult<App[]>;
@@ -98,8 +101,9 @@ export class RemoteAppsService implements AppsService {
 		return this._fetcher.patch(`/api/v1/apps/${id}`, payload);
 	}
 
-	delete(id: string): Promise<void> {
-		return this._fetcher.delete(`/api/v1/apps/${id}`, {
+	delete(id: string, backupVolumes = true): Promise<void> {
+		const query = backupVolumes ? '' : '?backup_volumes=false';
+		return this._fetcher.delete(`/api/v1/apps/${id}${query}`, {
 			invalidate: ['/api/v1/apps']
 		});
 	}

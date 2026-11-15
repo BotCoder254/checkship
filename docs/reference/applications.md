@@ -66,6 +66,10 @@ Deleting an application will (if at least one deployment has been successful on 
 - Networks
 - Volumes
 
+Unless you turn off **Back up volumes first** in the deletion dialog, each environment's volumes are [backed up](/reference/backups#before-delete) before they are removed, and nothing is deleted if a backup fails. The backups stay under **Backups** after the application is gone.
+
+Changing the target of an environment cleans up the old target the same way, after [moving its volume data](/reference/backups#move) to the new one if you keep that option on.
+
 ::: info
 If you want to delete an application and the cleanup could not be done correctly because of a particular situation, you can [cancel the cleanup job](/reference/jobs#cancellation) from the **jobs** page.
 :::

@@ -5,6 +5,7 @@
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
 	import Icon from '#lib/components/icon.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { Switch } from '#lib/components/ui/switch/index.js';
 	import l from '#lib/localization/index.ts';
 	import routes from '#lib/path.ts';
 	import service, { type UpdateApp } from '#lib/resources/apps.ts';
@@ -15,6 +16,7 @@
 
 	let deleteOpen = $state(false);
 	let deleting = $state(false);
+	let backupFirst = $state(true);
 
 	const submit = (form: UpdateApp) =>
 		service.update(data.app.id, form).then(() => goto(routes.app(data.app.id)));
@@ -22,7 +24,7 @@
 	async function remove() {
 		deleting = true;
 		try {
-			await service.delete(data.app.id);
+			await service.delete(data.app.id, backupFirst);
 			await goto(routes.apps);
 		} finally {
 			deleting = false;
@@ -68,4 +70,18 @@
 	typeToConfirm={data.app.name}
 	typeLabel={l.translate('app.delete.type_name', [data.app.name])}
 	onconfirm={remove}
-/>
+>
+	{#snippet extra()}
+		<div class="flex items-start gap-4 rounded-md bg-sunken px-3.5 py-3">
+			<span class="flex min-w-0 flex-1 flex-col gap-1">
+				<label for="delete-backup" class="text-sm font-medium"
+					>{l.translate('app.delete.backup')}</label
+				>
+				<span class="text-xs/[18px] {backupFirst ? 'text-muted-foreground' : 'text-danger'}">
+					{backupFirst ? l.translate('app.delete.backup.on') : l.translate('app.delete.backup.off')}
+				</span>
+			</span>
+			<Switch id="delete-backup" bind:checked={backupFirst} />
+		</div>
+	{/snippet}
+</ConfirmDialog>

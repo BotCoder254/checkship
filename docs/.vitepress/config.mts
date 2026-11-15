@@ -72,6 +72,10 @@ export default defineConfig({
             link: "/reference/deployments#sources",
           },
           {
+            text: "Backups",
+            link: "/reference/backups",
+          },
+          {
             text: "Jobs",
             link: "/reference/jobs",
           },

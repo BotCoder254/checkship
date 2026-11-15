@@ -50,7 +50,7 @@
 	type Props = {
 		app: AppDetail;
 		apiKey: string;
-		tab: 'overview' | 'deployments' | 'logs';
+		tab: 'overview' | 'deployments' | 'logs' | 'backups';
 		children: Snippet<[AppActions]>;
 	};
 

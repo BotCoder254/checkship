@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
 	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
+	import Archive02Icon from '@hugeicons/core-free-icons/Archive02Icon';
 	import Book02Icon from '@hugeicons/core-free-icons/Book02Icon';
 	import CancelCircleIcon from '@hugeicons/core-free-icons/CancelCircleIcon';
 	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
@@ -123,6 +124,14 @@
 				label={l.translate('breadcrumb.registries')}
 				icon={PackageIcon}
 				active={path.startsWith(routes.registries)}
+				{collapsed}
+				onclick={onnavigate}
+			/>
+			<NavLink
+				href={routes.backups}
+				label={l.translate('breadcrumb.backups')}
+				icon={Archive02Icon}
+				active={path.startsWith(routes.backups)}
 				{collapsed}
 				onclick={onnavigate}
 			/>

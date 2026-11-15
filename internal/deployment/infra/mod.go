@@ -142,7 +142,7 @@ func Setup(
 	bus.Register(b, update_backup_storage.TestHandler(storageChecker))
 	bus.Register(b, update_backup_storage.EnsureHandler(backupStorageStore, backupStorageStore, targetsStore))
 	bus.Register(b, configure_storage.Handler(backupStorageStore, backupStorageStore, targetsStore, providerFacade, storageChecker, backupstore.NewMover(), opts, logger))
-	bus.Register(b, get_backup_storage.Handler(backupStorageStore))
+	bus.Register(b, get_backup_storage.Handler(backupStorageStore, opts))
 	bus.Register(b, get_app_volumes.Handler(appsStore, targetsStore, providerFacade))
 	bus.Register(b, get_backup_archive.Handler(backupsStore, backupFiles))
 	bus.Register(b, deploymentQueryHandler.GetBackups)

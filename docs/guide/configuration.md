@@ -19,6 +19,10 @@ Environment variables can also be defined in a `.env` or `.env.local` file in th
 | data.path<br>DATA_PATH                                  | Where data produced by checkship will be saved (deployment artifacts, logs, local db, …)                                                                                                                                                                        | ~/.config/checkship                       |
 | data.deployment_dir_template<br>DEPLOYMENT_DIR_TEMPLATE | [Go template](https://pkg.go.dev/text/template) determining the directory where the build will occur (use <code v-pre>{{ .Number }}-{{ .Environment }}</code> if you want to keep all application deployment sources for example)                           | <code v-pre>{{ .Environment }}</code> |
 | source.archive.max_size<br>SOURCE_ARCHIVE_MAX_SIZE      | Largest archive accepted when deploying from an uploaded file, with a unit: b, kb, mb, gb or tb (powers of 1024), such as `64mb`                                                                                                                    | 32mb                                  |
+| backups.helper_image<br>BACKUPS_HELPER_IMAGE | Image that mounts each volume during a [backup](/reference/backups#how) or a restore | busybox:1.37 |
+| backups.storage_image<br>BACKUPS_STORAGE_IMAGE | Image of the [built-in backup storage](/reference/backups#builtin) | versity/versitygw:v1.11.0 |
+| backups.max_upload_size<br>BACKUPS_MAX_UPLOAD_SIZE | Largest backup archive accepted by **Upload backup**, with a unit: b, kb, mb, gb or tb (powers of 1024) | 5gb |
+| backups.before_cleanup<br>BACKUPS_BEFORE_CLEANUP | Back up volumes before checkship removes them: application deleted, environment moved to another target ([see](/reference/backups#safety-nets)) | true |
 | http.host<br>HTTP_HOST                                  | Host to listen to                                                                                                                                                                                                                                           | 0.0.0.0                               |
 | http.port<br>HTTP_PORT,PORT                             | Port to listen to                                                                                                                                                                                                                                           | 8080                                  |
 | http.secure<br>HTTP_SECURE                              | Wether or not the web server is served over https. If omitted, determine this information from the `EXPOSED_ON` variable. It controls wether or not cookie are set with the `Secure` flag and the scheme used on the `Location` header of created resources | false                                 |
@@ -34,7 +38,7 @@ Environment variables can also be defined in a `.env` or `.env.local` file in th
 
 A job also starts as soon as it is queued, or as soon as a worker of its runner becomes free. The poll interval is a fallback.
 
-The default configuration has one runner for deployments and one for every other job:
+The default configuration has one runner for deployments, one for volume copies (backups, restores, uploads to the backup storage), which can take minutes and must not hold back cleanups, and one for every other job:
 
 ```yml
 runners:
@@ -42,6 +46,12 @@ runners:
     count: 4
     jobs:
       - deployment.command.deploy
+  - poll_interval: 4s
+    count: 1
+    jobs:
+      - deployment.command.backup_volumes
+      - deployment.command.restore_volumes
+      - deployment.command.store_backup
   - poll_interval: 4s
     count: 2
 ```
@@ -60,6 +70,10 @@ Job names:
 - `deployment.command.configure_target`
 - `deployment.command.cleanup_target`
 - `deployment.command.delete_target`
+- `deployment.command.backup_volumes`
+- `deployment.command.restore_volumes`
+- `deployment.command.store_backup`
+- `deployment.command.configure_storage`
 
 Every job must be handled by exactly one runner. **checkship** refuses to start if a job is listed twice, if a name is unknown, or if a job is handled by no runner. If every job is already listed and the last runner has no `jobs`, that runner is not started and a warning is logged.
 
