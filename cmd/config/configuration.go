@@ -1,15 +1,19 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/checkship-deploy/checkship/cmd/serve"
+	"github.com/checkship-deploy/checkship/cmd/version"
 	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/bytesize"
 	"github.com/checkship-deploy/checkship/pkg/config"
 	"github.com/checkship-deploy/checkship/pkg/crypto"
 	"github.com/checkship-deploy/checkship/pkg/id"
@@ -21,11 +25,12 @@ import (
 )
 
 var (
-	userConfigDir            = must.Panic(os.UserConfigDir())
-	generatedSecretKey       = must.Panic(crypto.RandomKey[string](64))
-	defaultDataDirectory     = filepath.Join(userConfigDir, "checkship")
-	DefaultConfigPath        = filepath.Join(defaultDataDirectory, defaultConfigFilename) // Default configuration path
-	noticeSecretKeyGenerated = `a default secret key has been generated. If you want to override it, you can set the HTTP_SECRET environment variable.`
+	userConfigDir                = must.Panic(os.UserConfigDir())
+	generatedSecretKey           = must.Panic(crypto.RandomKey[string](64))
+	defaultDataDirectory         = filepath.Join(userConfigDir, "checkship")
+	DefaultConfigPath            = filepath.Join(defaultDataDirectory, defaultConfigFilename) // Default configuration path
+	errBackupHelperImageRequired = errors.New("required")
+	noticeSecretKeyGenerated     = `a default secret key has been generated. If you want to override it, you can set the HTTP_SECRET environment variable.`
 )
 
 const (
@@ -36,8 +41,12 @@ const (
 	defaultRunnersPollInterval    = "4s"
 	defaultRunnersDeploymentCount = 4
 	defaultRunnersOtherCount      = 2
+	defaultRunnersBackupCount     = 1
 	defaultBalancerDomain         = "http://docker.localhost"
 	defaultDeploymentDirTemplate  = "{{ .Environment }}"
+	defaultBackupHelperImage      = "busybox:1.37"
+	defaultBackupMaxUploadSize    = "5gb"
+	defaultBackupStorageImage     = "versity/versitygw:v1.11.0"
 )
 
 type (
@@ -55,7 +64,8 @@ type (
 		Log     logConfiguration
 		Data    dataConfiguration
 		Http    httpConfiguration
-		Runners runnersConfiguration  `env:"RUNNERS_CONFIGURATION"`
+		Runners runnersConfiguration `env:"RUNNERS_CONFIGURATION"`
+		Backups backupsConfiguration
 		Private internalConfiguration `yaml:"-"`
 
 		LegacyRunners legacyRunnersEnvironment `yaml:"-"` // Deprecated RUNNERS_* variables
@@ -63,6 +73,7 @@ type (
 		appExposedUrl         monad.Maybe[domain.Url]
 		warnings              []string // Logged once the logger is configured
 		deploymentDirTemplate *template.Template
+		backupMaxUploadSize   int64
 		logLevel              log.Level
 		logFormat             log.OutputFormat
 	}
@@ -83,6 +94,15 @@ type (
 	dataConfiguration struct {
 		Path                  string `env:"DATA_PATH"`
 		DeploymentDirTemplate string `env:"DEPLOYMENT_DIR_TEMPLATE" yaml:"deployment_dir_template"`
+	}
+
+	// Volume backups. Where archives are copied besides the data folder is set from
+	// the dashboard (Backups › Storage).
+	backupsConfiguration struct {
+		HelperImage   string `env:"BACKUPS_HELPER_IMAGE" yaml:"helper_image"`       // Image that mounts each volume while it is copied
+		MaxUploadSize string `env:"BACKUPS_MAX_UPLOAD_SIZE" yaml:"max_upload_size"` // Largest archive accepted by Upload backup
+		BeforeCleanup bool   `env:"BACKUPS_BEFORE_CLEANUP" yaml:"before_cleanup"`   // Back up volumes before checkship removes them
+		StorageImage  string `env:"BACKUPS_STORAGE_IMAGE" yaml:"storage_image"`     // Image of the built-in S3 storage
 	}
 
 	// internalConfiguration fields not read from the configuration file and use only during specific steps
@@ -111,6 +131,12 @@ func Default(builders ...ConfigurationBuilder) Configuration {
 		},
 		Runners: runnersConfiguration{
 			list: defaultRunners(defaultRunnersPollInterval, defaultRunnersDeploymentCount, defaultRunnersOtherCount),
+		},
+		Backups: backupsConfiguration{
+			HelperImage:   defaultBackupHelperImage,
+			MaxUploadSize: defaultBackupMaxUploadSize,
+			BeforeCleanup: true,
+			StorageImage:  defaultBackupStorageImage,
 		},
 	}
 
@@ -173,6 +199,11 @@ func (c *configuration) DefaultEmail() string                      { return c.Pr
 func (c *configuration) DefaultPassword() string                   { return c.Private.Password }
 func (c *configuration) Secret() []byte                            { return []byte(c.Http.Secret) }
 func (c *configuration) IsDebug() bool                             { return c.logLevel == log.DebugLevel }
+func (c *configuration) BackupHelperImage() string                 { return c.Backups.HelperImage }
+func (c *configuration) BackupsMaxUploadSize() int64               { return c.backupMaxUploadSize }
+func (c *configuration) BuiltinStorageImage() string               { return c.Backups.StorageImage }
+func (c *configuration) BackupBeforeCleanup() bool                 { return c.Backups.BeforeCleanup }
+func (c *configuration) CheckshipVersion() string                  { return version.Current() }
 
 // Builds the background runners from the configuration, given the names of every job
 // type registered by the application (bus.Marshallable.Keys()).
@@ -217,6 +248,8 @@ func (c *configuration) PostLoad() error {
 		"log.format":                   validate.Value(c.Log.Format, &c.logFormat, log.ParseFormat),
 		"data.deployment_dir_template": validate.Value(c.Data.DeploymentDirTemplate, &c.deploymentDirTemplate, template.New("").Parse),
 		"runners":                      c.Runners.validate(),
+		"backups.helper_image":         validate.If(strings.TrimSpace(c.Backups.HelperImage) == "", func() error { return errBackupHelperImageRequired }),
+		"backups.max_upload_size":      validate.Value(c.Backups.MaxUploadSize, &c.backupMaxUploadSize, bytesize.Parse),
 		"exposed_as": validate.If(c.Private.ExposedOn != "", func() error {
 			url, err := domain.UrlFrom(c.Private.ExposedOn)
 

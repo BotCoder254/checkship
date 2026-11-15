@@ -27,6 +27,7 @@ type (
 		apps        []*domain.App
 		deployments []*domain.Deployment
 		registries  []*domain.Registry
+		backups     []*domain.Backup
 	}
 
 	Context struct {
@@ -37,6 +38,8 @@ type (
 		AppsStore        deployment.AppsStore
 		DeploymentsStore deployment.DeploymentsStore
 		RegistriesStore  deployment.RegistriesStore
+		BackupsStore     deployment.BackupsStore
+		RestoresStore    deployment.RestoresStore
 		DB               *sqlite.Database // For tests that read through the query gateway
 	}
 
@@ -76,6 +79,8 @@ func PrepareDatabase(t testing.TB, options ...SeedBuilder) *Context {
 	result.TargetsStore = deployment.NewTargetsStore(db)
 	result.DeploymentsStore = deployment.NewDeploymentsStore(db)
 	result.RegistriesStore = deployment.NewRegistriesStore(db)
+	result.BackupsStore = deployment.NewBackupsStore(db)
+	result.RestoresStore = deployment.NewRestoresStore(db)
 
 	// Seed the database
 	var s seed
@@ -104,6 +109,10 @@ func PrepareDatabase(t testing.TB, options ...SeedBuilder) *Context {
 	}
 
 	if err := result.DeploymentsStore.Write(result.Context, s.deployments...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := result.BackupsStore.Write(result.Context, s.backups...); err != nil {
 		t.Fatal(err)
 	}
 
@@ -140,5 +149,11 @@ func WithDeployments(deployments ...*domain.Deployment) SeedBuilder {
 func WithRegistries(registries ...*domain.Registry) SeedBuilder {
 	return func(s *seed) {
 		s.registries = registries
+	}
+}
+
+func WithBackups(backups ...*domain.Backup) SeedBuilder {
+	return func(s *seed) {
+		s.backups = backups
 	}
 }

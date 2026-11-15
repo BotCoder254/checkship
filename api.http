@@ -233,6 +233,73 @@ GET {{url}}/apps/{{queueDeployment.response.body.$.app_id}}/services?environment
 
 ###
 
+# Named volumes of an environment, and the mounts a backup leaves out
+GET {{url}}/apps/{{createApp.response.body.$.id}}/volumes?environment=production
+
+###
+
+# Back up every volume of production, containers stopped during the copy
+# @name requestBackup
+POST {{url}}/apps/{{createApp.response.body.$.id}}/backups
+Content-Type: application/json
+
+{
+  "environment": "production",
+  "volumes": [],
+  "stop_containers": true
+}
+
+###
+
+GET {{url}}/apps/{{createApp.response.body.$.id}}/backups
+
+###
+
+# Every backup, including those of deleted applications
+GET {{url}}/backups
+
+###
+
+GET {{url}}/backups/{{requestBackup.response.body.$.id}}
+
+###
+
+GET {{url}}/backups/{{requestBackup.response.body.$.id}}/download
+
+###
+
+# Restore into staging, backing up staging's current data first
+POST {{url}}/backups/{{requestBackup.response.body.$.id}}/restore
+Content-Type: application/json
+
+{
+  "environment": "staging",
+  "snapshot_first": true
+}
+
+###
+
+# Copy a backup kept in the data folder only to the storage again
+POST {{url}}/backups/{{requestBackup.response.body.$.id}}/store
+
+###
+
+POST {{url}}/apps/{{createApp.response.body.$.id}}/backups/upload
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="archive"; filename="blog-production.tar.gz"
+Content-Type: application/gzip
+
+< ./blog-production.tar.gz
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+DELETE {{url}}/backups/{{requestBackup.response.body.$.id}}
+
+###
+
 DELETE {{url}}/apps/{{createApp.response.body.$.id}}
 
 ###

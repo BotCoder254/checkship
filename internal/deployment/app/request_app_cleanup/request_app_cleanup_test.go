@@ -13,6 +13,7 @@ import (
 	"github.com/checkship-deploy/checkship/pkg/bus"
 	"github.com/checkship-deploy/checkship/pkg/bus/spy"
 	shared "github.com/checkship-deploy/checkship/pkg/domain"
+	"github.com/checkship-deploy/checkship/pkg/monad"
 )
 
 func Test_RequestAppCleanup(t *testing.T) {
@@ -67,6 +68,34 @@ func Test_RequestAppCleanup(t *testing.T) {
 			ProductionConfig: requested.ProductionConfig,
 			StagingConfig:    requested.StagingConfig,
 			Requested:        shared.ActionFrom(user.ID(), assert.NotZero(t, requested.Requested.At())),
+			BackupVolumes:    true, // Volumes are backed up before removal unless asked otherwise
 		}, requested)
+	})
+
+	t.Run("should skip the volume backup when asked", func(t *testing.T) {
+		user := authfixture.User()
+		target := fixture.Target(fixture.WithTargetCreatedBy(user.ID()))
+		app := fixture.App(
+			fixture.WithAppCreatedBy(user.ID()),
+			fixture.WithEnvironmentConfig(
+				domain.NewEnvironmentConfig(target.ID()),
+				domain.NewEnvironmentConfig(target.ID()),
+			),
+		)
+
+		handler, ctx, dispatcher := arrange(t,
+			fixture.WithUsers(&user),
+			fixture.WithTargets(&target),
+			fixture.WithApps(&app),
+		)
+
+		_, err := handler(ctx, request_app_cleanup.Command{
+			ID:            string(app.ID()),
+			BackupVolumes: monad.Value(false),
+		})
+
+		assert.Nil(t, err)
+		requested := assert.Is[domain.AppCleanupRequested](t, dispatcher.Signals()[0])
+		assert.False(t, requested.BackupVolumes)
 	})
 }

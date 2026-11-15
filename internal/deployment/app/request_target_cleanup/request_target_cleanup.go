@@ -5,8 +5,11 @@ import (
 
 	auth "github.com/checkship-deploy/checkship/internal/auth/domain"
 	"github.com/checkship-deploy/checkship/internal/deployment/domain"
+	"github.com/checkship-deploy/checkship/pkg/apperr"
 	"github.com/checkship-deploy/checkship/pkg/bus"
 )
+
+var ErrTargetHostsBackupStorage = apperr.New("target_hosts_backup_storage")
 
 type Command struct {
 	bus.Command[bus.UnitType]
@@ -20,12 +23,26 @@ func Handler(
 	reader domain.TargetsReader,
 	writer domain.TargetsWriter,
 	appsReader domain.AppsReader,
+	storage ...domain.BackupStorageReader,
 ) bus.RequestHandler[bus.UnitType, Command] {
 	return func(ctx context.Context, cmd Command) (bus.UnitType, error) {
 		target, err := reader.GetByID(ctx, domain.TargetID(cmd.ID))
 
 		if err != nil {
 			return bus.Unit, err
+		}
+
+		// Its archives would go with it
+		if len(storage) > 0 {
+			settings, err := storage[0].Get(ctx)
+
+			if err != nil {
+				return bus.Unit, err
+			}
+
+			if id, isSet := settings.Target().TryGet(); isSet && settings.Mode() == domain.BackupStorageBuiltin && id == target.ID() {
+				return bus.Unit, ErrTargetHostsBackupStorage
+			}
 		}
 
 		apps, err := appsReader.HasAppsOnTarget(ctx, target.ID())

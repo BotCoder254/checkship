@@ -37,6 +37,7 @@ type (
 		IsSecure() bool
 		IsDebug() bool
 		ListenAddress() string
+		BackupsMaxUploadSize() int64
 	}
 
 	server struct {
@@ -119,6 +120,9 @@ func newHttpServer(options ServerOptions, root startup.ServerRoot) *server {
 	v1secured.POST("/apps", s.createAppHandler())
 	v1secured.PATCH("/apps/:id", s.updateAppHandler())
 	v1secured.DELETE("/apps/:id", s.requestAppCleanupHandler())
+	v1secured.GET("/backup-storage", s.getBackupStorageHandler())
+	v1secured.PUT("/backup-storage", s.updateBackupStorageHandler())
+	v1secured.POST("/backup-storage/test", s.testBackupStorageHandler())
 
 	// Allow API Key authentication for those routes
 	// FIXME: in the future, maybe all the API should be accessible, but not before https://github.com/checkship-deploy/checkship/issues/45
@@ -132,6 +136,17 @@ func newHttpServer(options ServerOptions, root startup.ServerRoot) *server {
 	v1securedAllowApi.GET("/apps/:id/deployments/:number/logs", s.getDeploymentLogsHandler())
 	v1securedAllowApi.GET("/apps/:id/logs", s.appLogsHandler())
 	v1securedAllowApi.GET("/apps/:id/services", s.appServicesHandler())
+	v1securedAllowApi.GET("/apps/:id/volumes", s.appVolumesHandler())
+	v1securedAllowApi.GET("/apps/:id/backups", s.listAppBackupsHandler())
+	v1securedAllowApi.POST("/apps/:id/backups", s.requestBackupHandler())
+	v1securedAllowApi.POST("/apps/:id/backups/upload", s.uploadBackupHandler())
+	v1securedAllowApi.GET("/backups", s.listBackupsHandler())
+	v1securedAllowApi.GET("/backups/:id", s.getBackupHandler())
+	v1securedAllowApi.GET("/backups/:id/download", s.downloadBackupHandler())
+	v1securedAllowApi.POST("/backups/:id/restore", s.restoreBackupHandler())
+	v1securedAllowApi.POST("/backups/:id/store", s.storeBackupHandler())
+	v1securedAllowApi.POST("/backups/:id/retry", s.retryBackupHandler())
+	v1securedAllowApi.DELETE("/backups/:id", s.deleteBackupHandler())
 
 	s.useSPA()
 

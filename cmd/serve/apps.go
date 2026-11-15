@@ -81,9 +81,14 @@ func (s *server) getAppByIDHandler() gin.HandlerFunc {
 
 func (s *server) requestAppCleanupHandler() gin.HandlerFunc {
 	return http.Send(s, func(ctx *gin.Context) error {
-		if _, err := bus.Send(s.bus, ctx.Request.Context(), request_app_cleanup.Command{
-			ID: ctx.Param("id"),
-		}); err != nil {
+		cmd := request_app_cleanup.Command{ID: ctx.Param("id")}
+
+		// DELETE /apps/:id?backup_volumes=false removes the volumes without a backup
+		if value, isSet := ctx.GetQuery("backup_volumes"); isSet {
+			cmd.BackupVolumes.Set(value != "false" && value != "0")
+		}
+
+		if _, err := bus.Send(s.bus, ctx.Request.Context(), cmd); err != nil {
 			return err
 		}
 

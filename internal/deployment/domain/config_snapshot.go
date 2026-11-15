@@ -71,7 +71,13 @@ func (c ConfigSnapshot) EnvironmentVariablesFor(service string) (m monad.Maybe[E
 // Retrieve the name of the project which is the combination of the appname, environment and appid
 // targeted by this configuration.
 func (c ConfigSnapshot) ProjectName() string {
-	return string(c.appname) + "-" + string(c.environment) + "-" + strings.ToLower(string(c.appid))
+	return ProjectName(c.appname, c.environment, c.appid)
+}
+
+// Compose project name of an application environment. Its containers, networks
+// and volumes are named after it.
+func ProjectName(name AppName, env Environment, id AppID) string {
+	return string(name) + "-" + string(env) + "-" + strings.ToLower(string(id))
 }
 
 // Returns the subdomain that will be used to expose a specific service.

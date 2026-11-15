@@ -28,6 +28,21 @@ func RegisterLiveHints(b bus.Bus, publish func(live.Hint)) {
 		return nil
 	}
 
+	// Backups and restores, keyed by the application so its Backups tab refetches
+	backups := func(app domain.AppID) error {
+		publish(live.Hint{Topic: "backups", ID: string(app)})
+		return nil
+	}
+
+	bus.On(b, func(_ context.Context, e domain.BackupRequested) error { return backups(e.App) })
+	bus.On(b, func(_ context.Context, e domain.BackupSucceeded) error { return backups(e.App) })
+	bus.On(b, func(_ context.Context, e domain.BackupFailed) error { return backups(e.App) })
+	bus.On(b, func(_ context.Context, e domain.BackupLocationsChanged) error { return backups(e.App) })
+	bus.On(b, func(_ context.Context, e domain.BackupRetried) error { return backups(e.App) })
+	bus.On(b, func(_ context.Context, e domain.BackupDeleted) error { return backups(e.App) })
+	bus.On(b, func(_ context.Context, e domain.RestoreRequested) error { return backups(e.App) })
+	bus.On(b, func(_ context.Context, e domain.RestoreSucceeded) error { return backups(e.App) })
+	bus.On(b, func(_ context.Context, e domain.RestoreFailed) error { return backups(e.App) })
 	bus.On(b, func(_ context.Context, e domain.DeploymentCreated) error { return deployments(e.ID.AppID()) })
 	bus.On(b, func(_ context.Context, e domain.DeploymentStateChanged) error { return deployments(e.ID.AppID()) })
 	bus.On(b, func(_ context.Context, e domain.TargetCreated) error { return targets(e.ID) })

@@ -3,6 +3,20 @@ package infra
 import (
 	"context"
 	"errors"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/backup_volumes"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/configure_storage"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/delete_backup"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_app_volumes"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_backup_archive"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/get_backup_storage"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/request_backup"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/request_restore"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/restore_volumes"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/retry_backup"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/store_backup"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/update_backup_storage"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/upload_backup"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/backupstore"
 
 	"github.com/checkship-deploy/checkship/internal/deployment/app/cleanup_app"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/cleanup_target"
@@ -45,6 +59,10 @@ import (
 
 type Options interface {
 	artifact.LocalOptions
+	backup_volumes.Options
+	upload_backup.Options
+	cleanup_app.Options
+	configure_storage.Options
 }
 
 // Setup the deployment module and register everything needed in the given
@@ -60,6 +78,9 @@ func Setup(
 	deploymentsStore := deploymentsqlite.NewDeploymentsStore(db)
 	targetsStore := deploymentsqlite.NewTargetsStore(db)
 	registriesStore := deploymentsqlite.NewRegistriesStore(db)
+	backupsStore := deploymentsqlite.NewBackupsStore(db)
+	restoresStore := deploymentsqlite.NewRestoresStore(db)
+	backupStorageStore := deploymentsqlite.NewBackupStorageStore(db)
 	deploymentQueryHandler := deploymentsqlite.NewGateway(db)
 
 	artifactManager := artifact.NewLocal(opts, logger)
@@ -75,6 +96,10 @@ func Setup(
 		dock,
 	)
 
+	backupFiles := backupstore.New(opts, backupstore.Resolver(backupStorageStore))
+	storageChecker := backupstore.NewChecker()
+	backupRunner := backup_volumes.NewRunner(targetsStore, backupsStore, backupsStore, providerFacade, backupFiles, opts, logger)
+
 	bus.Register(b, expose_checkship_container.Handler(targetsStore, targetsStore, dock))
 	bus.Register(b, create_app.Handler(appsStore, appsStore))
 	bus.Register(b, update_app.Handler(appsStore, appsStore))
@@ -82,7 +107,12 @@ func Setup(
 	bus.Register(b, deploy.Handler(deploymentsStore, deploymentsStore, artifactManager, sourceFacade, providerFacade, targetsStore, registriesStore))
 	bus.Register(b, request_app_cleanup.Handler(appsStore, appsStore))
 	bus.Register(b, delete_app.Handler(appsStore, appsStore, artifactManager))
-	bus.Register(b, cleanup_app.Handler(targetsStore, deploymentsStore, providerFacade))
+	bus.Register(b, cleanup_app.Handler(targetsStore, deploymentsStore, providerFacade, cleanup_app.Backups{
+		Apps:     appsStore,
+		Reader:   backupsStore,
+		Restores: restoresStore,
+		Runner:   backupRunner,
+	}))
 	bus.Register(b, get_deployment_log.Handler(deploymentsStore, artifactManager))
 	bus.Register(b, get_app_logs.Handler(appsStore, targetsStore, providerFacade))
 	bus.Register(b, get_app_services.Handler(appsStore, targetsStore, providerFacade))
@@ -92,12 +122,30 @@ func Setup(
 	bus.Register(b, configure_target.Handler(targetsStore, targetsStore, providerFacade))
 	bus.Register(b, reconfigure_target.Handler(targetsStore, targetsStore))
 	bus.Register(b, update_target.Handler(targetsStore, targetsStore, providerFacade))
-	bus.Register(b, request_target_cleanup.Handler(targetsStore, targetsStore, appsStore))
+	bus.Register(b, request_target_cleanup.Handler(targetsStore, targetsStore, appsStore, backupStorageStore))
 	bus.Register(b, cleanup_target.Handler(targetsStore, deploymentsStore, providerFacade))
 	bus.Register(b, delete_target.Handler(targetsStore, targetsStore, providerFacade))
 	bus.Register(b, create_registry.Handler(registriesStore, registriesStore))
 	bus.Register(b, update_registry.Handler(registriesStore, registriesStore))
 	bus.Register(b, delete_registry.Handler(registriesStore, registriesStore))
+	bus.Register(b, request_backup.Handler(appsStore, backupsStore))
+	bus.Register(b, backup_volumes.Handler(backupsStore, backupRunner))
+	bus.Register(b, upload_backup.Handler(appsStore, backupsStore, backupFiles, opts))
+	bus.Register(b, retry_backup.Handler(backupsStore, backupsStore))
+	bus.Register(b, delete_backup.Handler(backupsStore, backupsStore, backupFiles))
+	bus.Register(b, store_backup.RequestHandler(backupsStore, scheduler))
+	bus.Register(b, store_backup.Handler(backupsStore, backupsStore, backupFiles, logger))
+	bus.Register(b, request_restore.Handler(backupsStore, appsStore, restoresStore))
+	bus.Register(b, restore_volumes.Handler(restoresStore, restoresStore, backupsStore, appsStore, targetsStore, backupFiles, providerFacade, backupRunner, opts, logger))
+	bus.Register(b, update_backup_storage.Handler(backupStorageStore, backupStorageStore, targetsStore, storageChecker))
+	bus.Register(b, update_backup_storage.TestHandler(storageChecker))
+	bus.Register(b, update_backup_storage.EnsureHandler(backupStorageStore, backupStorageStore, targetsStore))
+	bus.Register(b, configure_storage.Handler(backupStorageStore, backupStorageStore, targetsStore, providerFacade, storageChecker, backupstore.NewMover(), opts, logger))
+	bus.Register(b, get_backup_storage.Handler(backupStorageStore))
+	bus.Register(b, get_app_volumes.Handler(appsStore, targetsStore, providerFacade))
+	bus.Register(b, get_backup_archive.Handler(backupsStore, backupFiles))
+	bus.Register(b, deploymentQueryHandler.GetBackups)
+	bus.Register(b, deploymentQueryHandler.GetBackupByID)
 	bus.Register(b, deploymentQueryHandler.GetAllApps)
 	bus.Register(b, deploymentQueryHandler.GetAppByID)
 	bus.Register(b, deploymentQueryHandler.GetAllDeploymentsByApp)
@@ -111,10 +159,14 @@ func Setup(
 	bus.Register(b, deploymentQueryHandler.GetDashboardActivity)
 
 	bus.On(b, deploy.OnDeploymentCreatedHandler(scheduler))
+	bus.On(b, backup_volumes.OnBackupRequestedHandler(scheduler))
+	bus.On(b, backup_volumes.OnBackupRetriedHandler(scheduler))
+	bus.On(b, configure_storage.OnBackupStorageChangedHandler(scheduler))
+	bus.On(b, request_restore.OnRestoreRequestedHandler(scheduler))
 	bus.On(b, redeploy.OnAppEnvChangedHandler(appsStore, deploymentsStore, deploymentsStore))
 	bus.On(b, delete_app.OnAppCleanupRequestedHandler(scheduler))
-	bus.On(b, cleanup_app.OnAppEnvChangedHandler(scheduler))
-	bus.On(b, cleanup_app.OnAppCleanupRequestedHandler(scheduler))
+	bus.On(b, cleanup_app.OnAppEnvChangedHandler(scheduler, opts))
+	bus.On(b, cleanup_app.OnAppCleanupRequestedHandler(scheduler, opts))
 	bus.On(b, fail_pending_deployments.OnTargetDeleteRequestedHandler(deploymentsStore))
 	bus.On(b, fail_pending_deployments.OnAppCleanupRequestedHandler(deploymentsStore))
 	bus.On(b, fail_pending_deployments.OnAppEnvChangedHandler(deploymentsStore))
