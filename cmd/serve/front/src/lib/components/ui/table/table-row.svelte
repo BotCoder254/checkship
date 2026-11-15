@@ -14,7 +14,8 @@
 	bind:this={ref}
 	data-slot="table-row"
 	class={cn(
-		'border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted',
+		// No lines between rows (DESIGN.md §5). Body rows fill on hover (see table-body).
+		'transition-colors data-[state=selected]:*:bg-raised',
 		className
 	)}
 	{...restProps}

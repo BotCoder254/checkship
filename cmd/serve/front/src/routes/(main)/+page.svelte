@@ -7,6 +7,10 @@
 	page shows. The page also refreshes every 30 s, since some server changes send no hint.
 -->
 <script lang="ts">
+	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
+	import TestTube01Icon from '@hugeicons/core-free-icons/TestTube01Icon';
+	import Rocket01Icon from '@hugeicons/core-free-icons/Rocket01Icon';
+	import Calendar03Icon from '@hugeicons/core-free-icons/Calendar03Icon';
 	import Add01Icon from '@hugeicons/core-free-icons/Add01Icon';
 	import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
 	import CancelCircleIcon from '@hugeicons/core-free-icons/CancelCircleIcon';
@@ -143,7 +147,10 @@
 			</Select.Trigger>
 			<Select.Content>
 				{#each ranges as r (r.value)}
-					<Select.Item value={String(r.value)} label={r.label}>{r.label}</Select.Item>
+					<Select.Item value={String(r.value)} label={r.label}>
+						<Icon icon={Calendar03Icon} class="text-muted-foreground" />
+						{r.label}
+					</Select.Item>
 				{/each}
 			</Select.Content>
 		</Select.Root>
@@ -157,7 +164,17 @@
 			</Select.Trigger>
 			<Select.Content>
 				{#each environments as e (e.value)}
-					<Select.Item value={e.value} label={e.label}>{e.label}</Select.Item>
+					<Select.Item value={e.value} label={e.label}>
+						<Icon
+							icon={e.value === 'production'
+								? Rocket01Icon
+								: e.value === 'staging'
+									? TestTube01Icon
+									: Layers01Icon}
+							class="text-muted-foreground"
+						/>
+						{e.label}
+					</Select.Item>
 				{/each}
 			</Select.Content>
 		</Select.Root>

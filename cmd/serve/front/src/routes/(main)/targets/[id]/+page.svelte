@@ -5,7 +5,6 @@
 -->
 <script lang="ts">
 	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
-	import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
 	import Globe02Icon from '@hugeicons/core-free-icons/Globe02Icon';
 	import InformationCircleIcon from '@hugeicons/core-free-icons/InformationCircleIcon';
 	import Key01Icon from '@hugeicons/core-free-icons/Key01Icon';
@@ -13,7 +12,19 @@
 	import RefreshIcon from '@hugeicons/core-free-icons/RefreshIcon';
 	import Settings02Icon from '@hugeicons/core-free-icons/Settings02Icon';
 	import { toast } from 'svelte-sonner';
+	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
+	import Clock01Icon from '@hugeicons/core-free-icons/Clock01Icon';
+	import CommandLineIcon from '@hugeicons/core-free-icons/CommandLineIcon';
+	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
+	import TextIcon from '@hugeicons/core-free-icons/TextIcon';
+	import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
+	import EnvironmentChip from '#lib/components/environment-chip.svelte';
 	import Icon from '#lib/components/icon.svelte';
+	import RowMenuGroup from '#lib/components/table/row-menu-group.svelte';
+	import RowMenuItem from '#lib/components/table/row-menu-item.svelte';
+	import RowMenu from '#lib/components/table/row-menu.svelte';
+	import * as Table from '#lib/components/ui/table/index.js';
+	import { ACTIONS_CELL, ACTIONS_HEAD, TableColumns } from '#lib/table-columns.svelte.ts';
 	import PageHeader from '#lib/components/page-header.svelte';
 	import StatusBadge from '#lib/components/status-badge.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
@@ -46,6 +57,30 @@
 	const usedApps = $derived(
 		uses ? [...new Map(uses.map((u) => [u.app.id, u.app])).values()] : undefined
 	);
+
+	const appColumns = new TableColumns([
+		{ id: 'name', label: l.translate('column.name'), icon: TextIcon, width: 'w-[26%]' },
+		{
+			id: 'environment',
+			label: l.translate('column.environment'),
+			icon: Layers01Icon,
+			width: 'w-[26%]',
+			priority: 2
+		},
+		{
+			id: 'latest',
+			label: l.translate('column.latest'),
+			icon: CheckmarkCircle02Icon,
+			width: 'w-[28%]'
+		},
+		{
+			id: 'started',
+			label: l.translate('column.started'),
+			icon: Clock01Icon,
+			width: 'w-[20%]',
+			priority: 3
+		}
+	]);
 
 	let reconfiguring = $state(false);
 
@@ -272,53 +307,74 @@
 			{/if}
 		</div>
 		{#if usedApps && usedApps.length > 0}
-			<div class="flex flex-col gap-1.5">
-				{#each usedApps as app (app.id)}
-					{@const environments = (['production', 'staging'] as const).filter(
-						(e) => app[`${e}_target`]?.id === target.id
-					)}
-					{@const latest = environments
-						.map((e) => app.latest_deployments[e])
-						.filter((d) => !!d)
-						.sort((a, b) => b.requested_at.localeCompare(a.requested_at))[0]}
-					<a
-						href={routes.app(app.id)}
-						class="grid min-h-13 grid-cols-[minmax(0,1fr)_auto_16px] items-center gap-3.5 rounded-md bg-sunken py-2.5 pr-3.5 pl-4 text-[13px] text-ink transition-colors outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset md:grid-cols-[minmax(0,1fr)_auto_auto_110px_16px]"
-					>
-						<span class="truncate text-sm font-semibold">{app.name}</span>
-						<span class="flex gap-1.5">
-							{#each environments as e (e)}
-								<span
-									class={cn(
-										'rounded-sm px-1.5 text-[11.5px]/5 font-semibold',
-										e === 'production'
-											? 'bg-accent-soft text-primary'
-											: 'bg-raised text-muted-foreground'
-									)}>{e}</span
+			<Table.Root aria-labelledby="apps-title">
+				<Table.Header>
+					<Table.Row>
+						{#each appColumns.shown as column (column.id)}
+							<Table.Head class={appColumns.head(column.id)}>{column.label}</Table.Head>
+						{/each}
+						<Table.Head class={ACTIONS_HEAD}>{l.translate('column.actions')}</Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each usedApps as app (app.id)}
+						{@const environments = (['production', 'staging'] as const).filter(
+							(e) => app[`${e}_target`]?.id === target.id
+						)}
+						{@const latest = environments
+							.map((e) => app.latest_deployments[e])
+							.filter((d) => !!d)
+							.sort((a, b) => b.requested_at.localeCompare(a.requested_at))[0]}
+						<Table.Row class="relative">
+							<Table.Cell class={appColumns.cell('name')}>
+								<!-- The whole row opens the application; the link stretches over it. -->
+								<a
+									href={routes.app(app.id)}
+									title={app.name}
+									class="text-sm font-semibold outline-none after:absolute after:inset-0 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
+									>{app.name}</a
 								>
-							{/each}
-						</span>
-						{#if latest}
-							{@const badge = deploymentBadge(latest.state)}
-							<span class="max-md:hidden">
-								<StatusBadge
-									state={badge.state}
-									label="{badge.label} · #{latest.deployment_number}"
-								/>
-							</span>
-							<span class="text-right text-muted-foreground max-md:hidden"
-								>{l.relative(deploymentMoment(latest))}</span
-							>
-						{:else}
-							<span class="text-muted-foreground max-md:hidden"
-								>{l.translate('apps.no_deployment')}</span
-							>
-							<span class="max-md:hidden"></span>
-						{/if}
-						<Icon icon={ArrowRight01Icon} class="size-4 text-faint" />
-					</a>
-				{/each}
-			</div>
+							</Table.Cell>
+							<Table.Cell class={appColumns.cell('environment')}>
+								<span class="flex gap-1.5">
+									{#each environments as e (e)}
+										<EnvironmentChip environment={e} />
+									{/each}
+								</span>
+							</Table.Cell>
+							<Table.Cell class={appColumns.cell('latest')}>
+								{#if latest}
+									{@const badge = deploymentBadge(latest.state)}
+									<StatusBadge
+										state={badge.state}
+										label="{badge.label} · #{latest.deployment_number}"
+									/>
+								{:else}
+									<span class="text-muted-foreground">{l.translate('apps.no_deployment')}</span>
+								{/if}
+							</Table.Cell>
+							<Table.Cell class={appColumns.cell('started', 'text-muted-foreground')}>
+								{latest ? l.relative(deploymentMoment(latest)) : '—'}
+							</Table.Cell>
+							<Table.Cell class={ACTIONS_CELL}>
+								<RowMenu label={l.translate('table.menu', [app.name])}>
+									<RowMenuGroup>
+										<RowMenuItem icon={ViewIcon} href={routes.app(app.id)}>
+											{l.translate('menu.open')}
+										</RowMenuItem>
+										<RowMenuItem icon={CommandLineIcon} href={routes.appLogs(app.id)}>
+											{l.translate('menu.logs')}
+										</RowMenuItem>
+										<RowMenuItem icon={Settings02Icon} href={routes.editApp(app.id)}>
+											{l.translate('menu.settings')}
+										</RowMenuItem>
+									</RowMenuGroup>
+								</RowMenu>
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
 		{:else if usedApps}
 			<div
 				class="flex items-center gap-3 rounded-md bg-sunken p-4 text-[13px] text-muted-foreground"

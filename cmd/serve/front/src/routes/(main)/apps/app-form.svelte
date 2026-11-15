@@ -4,6 +4,7 @@
 	open in a drawer. The page header is inside the form so its submit button submits.
 -->
 <script lang="ts">
+	import ServerStack01Icon from '@hugeicons/core-free-icons/ServerStack01Icon';
 	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
 	import ArrowDown01Icon from '@hugeicons/core-free-icons/ArrowDown01Icon';
 	import Globe02Icon from '@hugeicons/core-free-icons/Globe02Icon';
@@ -347,6 +348,7 @@
 							<Select.Content>
 								{#each targets as target (target.id)}
 									<Select.Item value={target.id} label={target.name}>
+										<Icon icon={ServerStack01Icon} class="text-muted-foreground" />
 										{targetLabel(target.id)}
 									</Select.Item>
 								{/each}

@@ -4,11 +4,18 @@
 	otherwise it asks for the name.
 -->
 <script lang="ts">
-	import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
+	import Settings02Icon from '@hugeicons/core-free-icons/Settings02Icon';
+	import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
 	import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
 	import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
 	import { goto } from '$app/navigation';
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
+	import EnvironmentChip from '#lib/components/environment-chip.svelte';
+	import RowMenuGroup from '#lib/components/table/row-menu-group.svelte';
+	import RowMenuItem from '#lib/components/table/row-menu-item.svelte';
+	import RowMenu from '#lib/components/table/row-menu.svelte';
+	import * as Table from '#lib/components/ui/table/index.js';
+	import { ACTIONS_CELL, ACTIONS_HEAD } from '#lib/table-columns.svelte.ts';
 	import Icon from '#lib/components/icon.svelte';
 	import StatusBadge from '#lib/components/status-badge.svelte';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
@@ -18,7 +25,6 @@
 	import appsService from '#lib/resources/apps.ts';
 	import service, { TargetStatus, type UpdateTarget } from '#lib/resources/targets.ts';
 	import { usesOf } from '#lib/target.ts';
-	import { cn } from '#lib/utils.js';
 	import TargetForm from '../../target-form.svelte';
 	import TargetTabs from '../../target-tabs.svelte';
 
@@ -107,32 +113,39 @@
 				</AlertDialog.Description>
 			</AlertDialog.Header>
 		</div>
-		<ul class="flex flex-col gap-1.5">
-			{#each uses as use (`${use.app.id}-${use.environment}`)}
-				<li>
-					<a
-						href={routes.editApp(use.app.id)}
-						class="flex h-10 items-center justify-between rounded-md bg-sunken px-3 text-[13.5px] outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-					>
-						<span class="flex items-center gap-2.5">
-							<strong class="font-semibold">{use.app.name}</strong>
-							<span
-								class={cn(
-									'rounded-sm px-1.5 text-[11.5px]/5 font-semibold',
-									use.environment === 'production'
-										? 'bg-accent-soft text-primary'
-										: 'bg-raised text-muted-foreground'
-								)}>{use.environment}</span
+		<Table.Root aria-label={l.translate('targets.apps')}>
+			<Table.Header>
+				<Table.Row>
+					<Table.Head class="w-[55%]">{l.translate('column.name')}</Table.Head>
+					<Table.Head class="w-[45%]">{l.translate('column.environment')}</Table.Head>
+					<Table.Head class={ACTIONS_HEAD}>{l.translate('column.actions')}</Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
+				{#each uses as use (`${use.app.id}-${use.environment}`)}
+					<Table.Row>
+						<Table.Cell class="text-sm font-semibold">
+							<a href={routes.editApp(use.app.id)} title={use.app.name} class="hover:underline"
+								>{use.app.name}</a
 							>
-						</span>
-						<span class="flex items-center gap-1 text-[13px] font-semibold text-primary">
-							{l.translate('app.settings')}
-							<Icon icon={ArrowRight01Icon} class="size-3.5" />
-						</span>
-					</a>
-				</li>
-			{/each}
-		</ul>
+						</Table.Cell>
+						<Table.Cell><EnvironmentChip environment={use.environment} /></Table.Cell>
+						<Table.Cell class={ACTIONS_CELL}>
+							<RowMenu label={l.translate('table.menu', [use.app.name])}>
+								<RowMenuGroup>
+									<RowMenuItem icon={Settings02Icon} href={routes.editApp(use.app.id)}>
+										{l.translate('app.settings')}
+									</RowMenuItem>
+									<RowMenuItem icon={ViewIcon} href={routes.app(use.app.id)}>
+										{l.translate('menu.open')}
+									</RowMenuItem>
+								</RowMenuGroup>
+							</RowMenu>
+						</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>{l.translate('close')}</AlertDialog.Cancel>
 			<Button variant="destructive" disabled>

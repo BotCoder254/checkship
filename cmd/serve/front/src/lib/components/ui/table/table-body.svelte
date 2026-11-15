@@ -13,7 +13,11 @@
 <tbody
 	bind:this={ref}
 	data-slot="table-body"
-	class={cn('[&_tr:last-child]:border-0', className)}
+	class={cn(
+		// The hovered row and the row whose ⋯ menu is open get a rounded fill on their cells.
+		'[&>tr:has([aria-expanded=true])>*]:bg-raised [&>tr:hover>*]:bg-hover',
+		className
+	)}
 	{...restProps}
 >
 	{@render children?.()}

@@ -14,6 +14,11 @@
 	import Clock01Icon from '@hugeicons/core-free-icons/Clock01Icon';
 	import RefreshIcon from '@hugeicons/core-free-icons/RefreshIcon';
 	import Task01Icon from '@hugeicons/core-free-icons/Task01Icon';
+	import CancelCircleIcon from '@hugeicons/core-free-icons/CancelCircleIcon';
+	import InformationCircleIcon from '@hugeicons/core-free-icons/InformationCircleIcon';
+	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
+	import Loading03Icon from '@hugeicons/core-free-icons/Loading03Icon';
+	import TextIcon from '@hugeicons/core-free-icons/TextIcon';
 	import { onMount } from 'svelte';
 	import CodeBlock from '#lib/components/code-block.svelte';
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
@@ -23,8 +28,13 @@
 	import PageHeader from '#lib/components/page-header.svelte';
 	import StatusBadge, { type BadgeState } from '#lib/components/status-badge.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import { Label } from '#lib/components/ui/label/index.js';
-	import * as Select from '#lib/components/ui/select/index.js';
+	import EnvironmentChip from '#lib/components/environment-chip.svelte';
+	import ColumnsMenu from '#lib/components/table/columns-menu.svelte';
+	import FilterMenu, { type FilterOption } from '#lib/components/table/filter-menu.svelte';
+	import RowMenuGroup from '#lib/components/table/row-menu-group.svelte';
+	import RowMenuItem from '#lib/components/table/row-menu-item.svelte';
+	import RowMenu from '#lib/components/table/row-menu.svelte';
+	import * as Table from '#lib/components/ui/table/index.js';
 	import {
 		isCancellable,
 		jobState,
@@ -38,7 +48,7 @@
 	import appsService from '#lib/resources/apps.ts';
 	import service, { JobPolicy, type Job, type JobStatusFilter } from '#lib/resources/jobs.ts';
 	import targetsService from '#lib/resources/targets.ts';
-	import { cn } from '#lib/utils.js';
+	import { ACTIONS_CELL, ACTIONS_HEAD, TableColumns } from '#lib/table-columns.svelte.ts';
 
 	let page = $state(1);
 	let stateFilter = $state<'' | JobStatusFilter>('');
@@ -81,13 +91,65 @@
 		if (fresh) selected = fresh;
 	});
 
-	const stateOptions: { value: '' | JobStatusFilter; label: string }[] = [
-		{ value: '', label: l.translate('jobs.filter.any') },
-		{ value: 'running', label: l.translate('status.running') },
-		{ value: 'failed', label: l.translate('jobs.failed_retrying') },
-		{ value: 'pending', label: l.translate('status.pending') }
+	const stateOptions: FilterOption<'any' | JobStatusFilter>[] = [
+		{ value: 'any', label: l.translate('jobs.filter.any'), icon: Layers01Icon },
+		{
+			value: 'running',
+			label: l.translate('status.running'),
+			icon: Loading03Icon,
+			tone: 'text-warning'
+		},
+		{
+			value: 'failed',
+			label: l.translate('jobs.failed_retrying'),
+			icon: CancelCircleIcon,
+			tone: 'text-danger'
+		},
+		{ value: 'pending', label: l.translate('status.pending'), icon: Clock01Icon }
 	];
-	const stateLabel = $derived(stateOptions.find((o) => o.value === stateFilter)?.label);
+
+	const columns = new TableColumns(
+		[
+			{
+				id: 'state',
+				label: l.translate('column.state'),
+				icon: CheckmarkCircle02Icon,
+				width: 'w-[14%]',
+				locked: true
+			},
+			{
+				id: 'job',
+				label: l.translate('column.job'),
+				icon: Task01Icon,
+				width: 'w-[16%]',
+				locked: true
+			},
+			{ id: 'subject', label: l.translate('column.subject'), icon: TextIcon, width: 'w-[15%]' },
+			{
+				id: 'environment',
+				label: l.translate('column.environment'),
+				icon: Layers01Icon,
+				width: 'w-[13%]',
+				priority: 2
+			},
+			{
+				id: 'detail',
+				label: l.translate('column.detail'),
+				icon: InformationCircleIcon,
+				width: 'w-[18%]',
+				priority: 3
+			},
+			{
+				id: 'retry',
+				label: l.translate('column.retry'),
+				icon: RefreshIcon,
+				width: 'w-[10%]',
+				priority: 3
+			},
+			{ id: 'queued', label: l.translate('column.queued'), icon: Clock01Icon, width: 'w-[9%]' }
+		],
+		'jobs'
+	);
 
 	const badges: Record<JobState, { state: BadgeState; label: string }> = {
 		running: { state: 'running', label: l.translate('status.running') },
@@ -176,114 +238,134 @@
 </PageHeader>
 
 <div class="flex flex-col gap-3.5">
-	<div class="flex flex-wrap items-end justify-between gap-3">
-		<div class="flex w-full flex-col gap-1 sm:w-55">
-			<Label for="jobs-state" class="text-xs font-semibold text-muted-foreground">
-				{l.translate('jobs.filter.state')}
-			</Label>
-			<Select.Root type="single" value={stateFilter} onValueChange={setStatus}>
-				<Select.Trigger id="jobs-state" class="w-full">{stateLabel}</Select.Trigger>
-				<Select.Content>
-					{#each stateOptions as option (option.value)}
-						<Select.Item value={option.value} label={option.label}>{option.label}</Select.Item>
-					{/each}
-				</Select.Content>
-			</Select.Root>
+	<div class="flex flex-wrap items-center justify-between gap-2">
+		<div class="flex flex-wrap items-center gap-3">
+			<FilterMenu
+				label={l.translate('column.state')}
+				icon={Layers01Icon}
+				value={stateFilter || 'any'}
+				options={stateOptions}
+				onValueChange={(v) => setStatus(v === 'any' ? '' : v)}
+			/>
+			<span class="text-[12.5px] text-faint">{l.translate('jobs.order')}</span>
 		</div>
-		<span class="text-[12.5px] text-faint">{l.translate('jobs.order')}</span>
+		<ColumnsMenu {columns} />
 	</div>
 
 	{#if jobs && jobs.data.length > 0}
-		{@const columns = 'md:grid-cols-[150px_minmax(0,1.2fr)_minmax(0,1fr)_130px_120px_32px]'}
-		<div role="table" aria-label={l.translate('breadcrumb.jobs')} class="flex flex-col gap-1.5">
-			<div
-				role="row"
-				class={cn(
-					'hidden gap-4 pr-2 pb-0.5 pl-4 text-xs font-semibold text-muted-foreground md:grid',
-					columns
-				)}
-			>
-				<span role="columnheader">{l.translate('jobs.filter.state')}</span>
-				<span role="columnheader">{l.translate('jobs.column.job')}</span>
-				<span role="columnheader">{l.translate('jobs.column.detail')}</span>
-				<span role="columnheader">{l.translate('jobs.queued')}</span>
-				<span role="columnheader"><span class="sr-only">{l.translate('jobs.cancel')}</span></span>
-				<span role="columnheader"><span class="sr-only">{l.translate('jobs.details')}</span></span>
-			</div>
-
-			{#each jobs.data as job (job.id)}
-				{@const current = jobState(job, jobs.data)}
-				{@const badge = badges[current.state]}
-				{@const subject = jobSubject(job, names)}
-				<div
-					role="row"
-					class={cn(
-						'relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 rounded-md bg-sunken py-3 pr-2 pl-4 transition-colors hover:bg-hover md:min-h-15 md:py-2.5',
-						columns,
-						drawerOpen && selectedId === job.id && 'bg-raised'
-					)}
-				>
-					<span role="cell" class="flex min-w-0 flex-col items-start gap-1 max-md:col-span-2">
-						<StatusBadge state={badge.state} label={badge.label} />
-						{#if current.state === 'failed'}
-							<span class="text-[11.5px] text-muted-foreground tabular-nums">
-								{l.translate('jobs.next_in', [secondsUntil(job.not_before, now)])}
-							</span>
-						{:else if current.after}
-							<span class="max-w-full truncate text-[11.5px] text-muted-foreground">
-								{l.translate('jobs.after', [jobSubject(current.after, names).label])}
-							</span>
-						{/if}
-					</span>
-					<span role="cell" class="flex min-w-0 flex-col">
-						<!-- The whole row opens the drawer; the button stretches over it. -->
-						<button
-							type="button"
-							class="truncate text-left text-sm font-medium outline-none after:absolute after:inset-0 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
-							onclick={() => open(job)}
+		<div class="flex flex-col gap-2">
+			<Table.Root aria-label={l.translate('breadcrumb.jobs')}>
+				<Table.Header>
+					<Table.Row>
+						{#each columns.shown as column (column.id)}
+							<Table.Head class={columns.head(column.id)}>{column.label}</Table.Head>
+						{/each}
+						<Table.Head class={ACTIONS_HEAD}>{l.translate('column.actions')}</Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each jobs.data as job (job.id)}
+						{@const current = jobState(job, jobs.data)}
+						{@const badge = badges[current.state]}
+						{@const subject = jobSubject(job, names)}
+						{@const openText = openLabel[subject.kind]}
+						<Table.Row
+							class="relative"
+							data-state={drawerOpen && selectedId === job.id ? 'selected' : undefined}
 						>
-							{l.translate(job.message_name as AppTranslationsString)}
-						</button>
-						<span class="flex min-w-0 items-center gap-1.5">
-							<span class="truncate text-[12.5px] text-muted-foreground">{subject.label}</span>
-							{#if subject.environment}
-								<span
-									class={cn(
-										'shrink-0 rounded-sm px-1.5 text-[11.5px]/5 font-semibold',
-										subject.environment === 'production'
-											? 'bg-accent-soft text-primary'
-											: 'bg-raised text-muted-foreground'
-									)}>{subject.environment}</span
-								>
+							{#if columns.visible('state')}
+								<Table.Cell class={columns.cell('state')}>
+									<StatusBadge state={badge.state} label={badge.label} />
+								</Table.Cell>
 							{/if}
-						</span>
-					</span>
-					<span
-						role="cell"
-						title={job.error_code ?? job.resource_id}
-						class={cn(
-							'truncate font-mono text-[12.5px] max-md:col-span-2',
-							job.error_code ? 'text-danger' : 'text-faint'
-						)}
-					>
-						{job.error_code ?? job.resource_id}
-					</span>
-					<span role="cell" class="truncate text-[13px] text-muted-foreground tabular-nums">
-						{l.translate('jobs.queued_time', [l.time(job.queued_at)])}
-					</span>
-					<span role="cell" class="relative z-10 flex justify-end">
-						{#if isCancellable(job)}
-							<Button variant="outline" size="sm" onclick={() => askCancel(job)}>
-								<Icon icon={Cancel01Icon} />
-								{l.translate('jobs.cancel')}
-							</Button>
-						{/if}
-					</span>
-					<span role="cell" class="hidden md:flex md:justify-center">
-						<Icon icon={ArrowRight01Icon} class="size-4 text-faint" />
-					</span>
-				</div>
-			{/each}
+							{#if columns.visible('job')}
+								<Table.Cell class={columns.cell('job')}>
+									<!-- The whole row opens the drawer; the button stretches over it. -->
+									<button
+										type="button"
+										class="font-medium outline-none after:absolute after:inset-0 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
+										onclick={() => open(job)}
+									>
+										{l.translate(job.message_name as AppTranslationsString)}
+									</button>
+								</Table.Cell>
+							{/if}
+							{#if columns.visible('subject')}
+								<Table.Cell class={columns.cell('subject', 'font-semibold')} title={subject.label}>
+									{subject.label}
+								</Table.Cell>
+							{/if}
+							{#if columns.visible('environment')}
+								<Table.Cell class={columns.cell('environment')}>
+									{#if subject.environment}
+										<EnvironmentChip environment={subject.environment} />
+									{:else}
+										<span class="text-faint">—</span>
+									{/if}
+								</Table.Cell>
+							{/if}
+							{#if columns.visible('detail')}
+								<Table.Cell
+									class={columns.cell(
+										'detail',
+										job.error_code
+											? 'font-mono text-[12.5px] text-danger'
+											: current.after
+												? 'text-muted-foreground'
+												: 'font-mono text-[12.5px] text-faint'
+									)}
+									title={job.error_code ?? job.resource_id}
+								>
+									{#if job.error_code}
+										{job.error_code}
+									{:else if current.after}
+										{l.translate('jobs.after', [jobSubject(current.after, names).label])}
+									{:else}
+										{job.resource_id}
+									{/if}
+								</Table.Cell>
+							{/if}
+							{#if columns.visible('retry')}
+								<Table.Cell class={columns.cell('retry', 'text-muted-foreground tabular-nums')}>
+									{current.state === 'failed'
+										? l.translate('jobs.next_in', [secondsUntil(job.not_before, now)])
+										: '—'}
+								</Table.Cell>
+							{/if}
+							{#if columns.visible('queued')}
+								<Table.Cell class={columns.cell('queued', 'text-muted-foreground tabular-nums')}>
+									{l.time(job.queued_at)}
+								</Table.Cell>
+							{/if}
+							<Table.Cell class={ACTIONS_CELL}>
+								<RowMenu label={l.translate('table.menu', [subject.label])}>
+									<RowMenuGroup>
+										<RowMenuItem icon={InformationCircleIcon} onSelect={() => open(job)}>
+											{l.translate('jobs.details')}
+										</RowMenuItem>
+										{#if subject.href && openText}
+											<RowMenuItem icon={ArrowUpRight01Icon} href={subject.href}>
+												{l.translate(openText)}
+											</RowMenuItem>
+										{/if}
+									</RowMenuGroup>
+									{#if isCancellable(job)}
+										<RowMenuGroup>
+											<RowMenuItem
+												icon={Cancel01Icon}
+												variant="destructive"
+												onSelect={() => askCancel(job)}
+											>
+												{l.translate('jobs.cancel')}
+											</RowMenuItem>
+										</RowMenuGroup>
+									{/if}
+								</RowMenu>
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
 
 			<div class="flex items-center justify-between pt-2 text-[13px] text-muted-foreground">
 				<span>{l.translate('jobs.pager', [jobs.page, pages])}</span>

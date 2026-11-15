@@ -6,6 +6,7 @@
 	a danger-tinted block behind a confirmation, because the old key stops working at once.
 -->
 <script lang="ts">
+	import TranslateIcon from '@hugeicons/core-free-icons/TranslateIcon';
 	import { copyText } from '#lib/clipboard.ts';
 	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
 	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
@@ -273,7 +274,10 @@
 					<Select.Trigger id="profile-locale" class="w-full">{localeLabel}</Select.Trigger>
 					<Select.Content>
 						{#each locales as item (item.value)}
-							<Select.Item value={item.value} label={item.label}>{item.label}</Select.Item>
+							<Select.Item value={item.value} label={item.label}>
+								<Icon icon={TranslateIcon} class="text-muted-foreground" />
+								{item.label}
+							</Select.Item>
 						{/each}
 					</Select.Content>
 				</Select.Root>

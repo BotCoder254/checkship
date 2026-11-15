@@ -1,13 +1,15 @@
 <!--
-	Registries: one row per private registry on a sunken fill. New registry and a registry's
+	Registries (DESIGN.md §5 Tables): one table row per private registry, its ⋯ menu has Edit and Delete. New registry and a registry's
 	settings open in a drawer, so the list stays in view; deleting asks for its name in a dialog.
 -->
 <script lang="ts">
 	import Add01Icon from '@hugeicons/core-free-icons/Add01Icon';
-	import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
 	import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
 	import InformationCircleIcon from '@hugeicons/core-free-icons/InformationCircleIcon';
+	import Globe02Icon from '@hugeicons/core-free-icons/Globe02Icon';
 	import Key01Icon from '@hugeicons/core-free-icons/Key01Icon';
+	import PencilEdit02Icon from '@hugeicons/core-free-icons/PencilEdit02Icon';
+	import TextIcon from '@hugeicons/core-free-icons/TextIcon';
 	import PackageIcon from '@hugeicons/core-free-icons/PackageIcon';
 	import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
 	import { toast } from 'svelte-sonner';
@@ -19,12 +21,33 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import l from '#lib/localization/index.ts';
 	import service, { type Registry } from '#lib/resources/registries.ts';
-	import { cn } from '#lib/utils.js';
+	import RowMenuGroup from '#lib/components/table/row-menu-group.svelte';
+	import RowMenuItem from '#lib/components/table/row-menu-item.svelte';
+	import RowMenu from '#lib/components/table/row-menu.svelte';
+	import * as Table from '#lib/components/ui/table/index.js';
+	import { ACTIONS_CELL, ACTIONS_HEAD, TableColumns } from '#lib/table-columns.svelte.ts';
 	import RegistryForm from './registry-form.svelte';
 	import RegistryLogo from '#lib/components/registry-logo.svelte';
 	import { presetForUrl } from '#lib/registry-presets.ts';
 
 	const { data: registries } = service.queryAll();
+
+	const columns = new TableColumns([
+		{ id: 'name', label: l.translate('column.name'), icon: TextIcon, width: 'w-[30%]' },
+		{
+			id: 'url',
+			label: l.translate('column.url'),
+			icon: Globe02Icon,
+			width: 'w-[40%]',
+			priority: 2
+		},
+		{
+			id: 'credentials',
+			label: l.translate('column.credentials'),
+			icon: Key01Icon,
+			width: 'w-[30%]'
+		}
+	]);
 
 	let drawerOpen = $state(false);
 	let editing = $state<Registry>();
@@ -75,53 +98,78 @@
 </PageHeader>
 
 {#if $registries && $registries.length > 0}
-	<div role="table" aria-label={l.translate('breadcrumb.registries')} class="flex flex-col gap-1.5">
-		<div
-			role="row"
-			class="hidden grid-cols-[36px_minmax(0,1.6fr)_minmax(0,1fr)_16px] gap-4 px-4 pb-1.5 text-xs font-semibold text-muted-foreground md:grid"
-		>
-			<span role="columnheader"></span>
-			<span role="columnheader">{l.translate('registries.column.registry')}</span>
-			<span role="columnheader">{l.translate('registries.column.auth')}</span>
-			<span role="columnheader"></span>
-		</div>
-
-		{#each $registries as registry (registry.id)}
-			{@const preset = presetForUrl(registry.url)}
-			<button
-				type="button"
-				role="row"
-				class={cn(
-					'grid grid-cols-[36px_minmax(0,1fr)] items-center gap-x-4 gap-y-1 rounded-md bg-sunken px-4 py-3 text-left text-ink transition-colors outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset md:grid-cols-[36px_minmax(0,1.6fr)_minmax(0,1fr)_16px]',
-					drawerOpen && editing?.id === registry.id && 'bg-raised'
-				)}
-				onclick={() => openEdit(registry)}
-			>
-				<span
-					role="cell"
-					class="flex size-9 items-center justify-center rounded-md bg-raised text-muted-foreground max-md:row-span-2"
-				>
-					{#if preset}<RegistryLogo name={preset.id} class="size-5" />{:else}<Icon
-							icon={PackageIcon}
-							class="size-4.5"
-						/>{/if}
-				</span>
-				<span role="cell" class="flex min-w-0 flex-col gap-0.5">
-					<span class="truncate text-[15px]/[22px] font-semibold">{registry.name}</span>
-					<span class="truncate font-mono text-xs text-muted-foreground">{registry.url}</span>
-				</span>
-				<span role="cell" class="flex items-center gap-1.5 text-sm text-muted-foreground">
-					{#if registry.credentials}
-						<Icon icon={Key01Icon} class="size-3.5" />
-						{l.translate('registries.auth.user', [registry.credentials.username])}
-					{:else}
-						{l.translate('registries.auth.none')}
-					{/if}
-				</span>
-				<Icon icon={ArrowRight01Icon} class="hidden size-4 text-faint md:block" />
-			</button>
-		{/each}
-		<div class="mt-2.5 grid grid-cols-[20px_minmax(0,1fr)] gap-3 rounded-lg bg-sunken px-4 py-3.5">
+	<div class="flex flex-col gap-3">
+		<Table.Root aria-label={l.translate('breadcrumb.registries')}>
+			<Table.Header>
+				<Table.Row>
+					{#each columns.shown as column (column.id)}
+						<Table.Head class={columns.head(column.id)}>{column.label}</Table.Head>
+					{/each}
+					<Table.Head class={ACTIONS_HEAD}>{l.translate('column.actions')}</Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
+				{#each $registries as registry (registry.id)}
+					{@const preset = presetForUrl(registry.url)}
+					<Table.Row
+						class="relative"
+						data-state={drawerOpen && editing?.id === registry.id ? 'selected' : undefined}
+					>
+						<Table.Cell class={columns.cell('name')}>
+							<span class="flex min-w-0 items-center gap-2.5">
+								{#if preset}<RegistryLogo name={preset.id} class="size-4.5 shrink-0" />{:else}<Icon
+										icon={PackageIcon}
+										class="size-4.5 shrink-0 text-muted-foreground"
+									/>{/if}
+								<!-- The whole row opens the drawer; the button stretches over it. -->
+								<button
+									type="button"
+									title={registry.name}
+									class="truncate text-left text-sm font-semibold outline-none after:absolute after:inset-0 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
+									onclick={() => openEdit(registry)}>{registry.name}</button
+								>
+							</span>
+						</Table.Cell>
+						<Table.Cell
+							class={columns.cell('url', 'font-mono text-[12.5px] text-muted-foreground')}
+							title={registry.url}
+						>
+							{registry.url}
+						</Table.Cell>
+						<Table.Cell
+							class={columns.cell(
+								'credentials',
+								registry.credentials ? 'text-muted-foreground' : 'text-faint'
+							)}
+						>
+							{registry.credentials?.username ?? l.translate('registries.auth.none')}
+						</Table.Cell>
+						<Table.Cell class={ACTIONS_CELL}>
+							<RowMenu label={l.translate('table.menu', [registry.name])}>
+								<RowMenuGroup>
+									<RowMenuItem icon={PencilEdit02Icon} onSelect={() => openEdit(registry)}>
+										{l.translate('menu.edit')}
+									</RowMenuItem>
+								</RowMenuGroup>
+								<RowMenuGroup>
+									<RowMenuItem
+										icon={Delete02Icon}
+										variant="destructive"
+										onSelect={() => {
+											editing = registry;
+											deleteOpen = true;
+										}}
+									>
+										{l.translate('menu.delete')}
+									</RowMenuItem>
+								</RowMenuGroup>
+							</RowMenu>
+						</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
+		<div class="grid grid-cols-[20px_minmax(0,1fr)] gap-3 rounded-lg bg-sunken px-4 py-3.5">
 			<Icon icon={InformationCircleIcon} class="size-4.5 text-muted-foreground" />
 			<p class="text-[13px]/5 text-muted-foreground">{l.translate('registries.note')}</p>
 		</div>

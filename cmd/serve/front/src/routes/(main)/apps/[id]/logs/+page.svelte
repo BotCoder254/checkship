@@ -6,6 +6,9 @@
 	Copy menu copies the lines shown, joins them into one line or downloads them.
 -->
 <script lang="ts">
+	import ListViewIcon from '@hugeicons/core-free-icons/ListViewIcon';
+	import ContainerIcon from '@hugeicons/core-free-icons/ContainerIcon';
+	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
 	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
 	import AlertCircleIcon from '@hugeicons/core-free-icons/AlertCircleIcon';
 	import ArrowDown01Icon from '@hugeicons/core-free-icons/ArrowDown01Icon';
@@ -402,10 +405,14 @@
 		</Select.Trigger>
 		<Select.Content>
 			<Select.Item value="all" label={l.translate('logs.service.all')}>
+				<Icon icon={Layers01Icon} class="text-muted-foreground" />
 				{l.translate('logs.service.all')}
 			</Select.Item>
 			{#each knownServices as name (name)}
-				<Select.Item value={name} label={name}>{name}</Select.Item>
+				<Select.Item value={name} label={name}>
+					<Icon icon={ContainerIcon} class="text-muted-foreground" />
+					{name}
+				</Select.Item>
 			{/each}
 		</Select.Content>
 	</Select.Root>
@@ -419,7 +426,10 @@
 		<Select.Content>
 			{#each TAIL_CHOICES as count (count)}
 				{@const label = l.translate('logs.tail.option', [count])}
-				<Select.Item value={String(count)} {label}>{label}</Select.Item>
+				<Select.Item value={String(count)} {label}>
+					<Icon icon={ListViewIcon} class="text-muted-foreground" />
+					{label}
+				</Select.Item>
 			{/each}
 		</Select.Content>
 	</Select.Root>

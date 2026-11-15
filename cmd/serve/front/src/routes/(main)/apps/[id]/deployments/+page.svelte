@@ -15,19 +15,30 @@
 	import Copy01Icon from '@hugeicons/core-free-icons/Copy01Icon';
 	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
 	import Loading03Icon from '@hugeicons/core-free-icons/Loading03Icon';
-	import MoreHorizontalIcon from '@hugeicons/core-free-icons/MoreHorizontalIcon';
 	import RepeatIcon from '@hugeicons/core-free-icons/RepeatIcon';
 	import Rocket01Icon from '@hugeicons/core-free-icons/Rocket01Icon';
 	import Search01Icon from '@hugeicons/core-free-icons/Search01Icon';
+	import GitBranchIcon from '@hugeicons/core-free-icons/GitBranchIcon';
+	import GitCommitIcon from '@hugeicons/core-free-icons/GitCommitIcon';
+	import SourceCodeIcon from '@hugeicons/core-free-icons/SourceCodeIcon';
+	import Tag01Icon from '@hugeicons/core-free-icons/Tag01Icon';
+	import TestTube01Icon from '@hugeicons/core-free-icons/TestTube01Icon';
+	import Timer02Icon from '@hugeicons/core-free-icons/Timer02Icon';
+	import UserIcon from '@hugeicons/core-free-icons/UserIcon';
+	import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
 	import { toast } from 'svelte-sonner';
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
 	import EmptyState from '#lib/components/empty-state.svelte';
-	import type { IconData } from '#lib/components/icon.svelte';
 	import Icon from '#lib/components/icon.svelte';
-	import { Label } from '#lib/components/ui/label/index.js';
-	import * as Select from '#lib/components/ui/select/index.js';
+	import EnvironmentChip from '#lib/components/environment-chip.svelte';
+	import StatusBadge from '#lib/components/status-badge.svelte';
+	import ColumnsMenu from '#lib/components/table/columns-menu.svelte';
+	import FilterMenu, { type FilterOption } from '#lib/components/table/filter-menu.svelte';
+	import RowMenuGroup from '#lib/components/table/row-menu-group.svelte';
+	import RowMenuItem from '#lib/components/table/row-menu-item.svelte';
+	import RowMenu from '#lib/components/table/row-menu.svelte';
+	import * as Table from '#lib/components/ui/table/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import l from '#lib/localization/index.ts';
 	import routes from '#lib/path.ts';
@@ -38,7 +49,7 @@
 		type QueryDeploymentsFilters
 	} from '#lib/resources/deployments.ts';
 	import { deploymentBadge, deploymentMoment } from '#lib/status.ts';
-	import { cn } from '#lib/utils.js';
+	import { ACTIONS_CELL, ACTIONS_HEAD, TableColumns } from '#lib/table-columns.svelte.ts';
 	import AppWorkspace, { type AppActions } from '../app-workspace.svelte';
 
 	let { data } = $props();
@@ -101,22 +112,9 @@
 
 	const filtered = $derived(environment !== 'all' || status !== 'any' || !!searched);
 
-	const rowIcon: Record<DeploymentStatus, { icon: IconData; tone: string; spin?: boolean }> = {
-		[DeploymentStatus.Succeeded]: { icon: CheckmarkCircle02Icon, tone: 'text-success' },
-		[DeploymentStatus.Failed]: { icon: CancelCircleIcon, tone: 'text-danger' },
-		[DeploymentStatus.Running]: { icon: Loading03Icon, tone: 'text-warning', spin: true },
-		[DeploymentStatus.Pending]: { icon: Clock01Icon, tone: 'text-muted-foreground' }
-	};
-
 	const isLive = (d: Deployment) =>
 		d.state.status === DeploymentStatus.Succeeded &&
 		app.latest_deployments[d.environment]?.deployment_number === d.deployment_number;
-
-	function timing(d: Deployment) {
-		const { started_at, finished_at } = d.state;
-		const when = l.relative(deploymentMoment(d));
-		return started_at && finished_at ? `${when} · ${l.duration(started_at, finished_at)}` : when;
-	}
 
 	let promoteNumber = $state(0);
 	let promoteOpen = $state(false);
@@ -129,24 +127,98 @@
 		else toast.error(l.translate('copy_blocked'));
 	}
 
-	const columns = 'md:grid-cols-[124px_48px_100px_minmax(0,1fr)_minmax(0,170px)_140px_56px_36px]';
+	const columns = new TableColumns(
+		[
+			{
+				id: 'status',
+				label: l.translate('column.status'),
+				icon: CheckmarkCircle02Icon,
+				width: 'w-[12%]',
+				locked: true
+			},
+			{
+				id: 'number',
+				label: l.translate('column.number'),
+				icon: Tag01Icon,
+				width: 'w-[8%]',
+				locked: true
+			},
+			{
+				id: 'environment',
+				label: l.translate('column.environment'),
+				icon: Layers01Icon,
+				width: 'w-[12%]'
+			},
+			{
+				id: 'source',
+				label: l.translate('column.source'),
+				icon: SourceCodeIcon,
+				width: 'w-[10%]',
+				priority: 3
+			},
+			{
+				id: 'branch',
+				label: l.translate('column.branch'),
+				icon: GitBranchIcon,
+				width: 'w-[9%]',
+				priority: 2
+			},
+			{
+				id: 'commit',
+				label: l.translate('column.commit'),
+				icon: GitCommitIcon,
+				width: 'w-[11%]',
+				priority: 2
+			},
+			{
+				id: 'author',
+				label: l.translate('column.author'),
+				icon: UserIcon,
+				width: 'w-[14%]',
+				priority: 3
+			},
+			{ id: 'started', label: l.translate('column.started'), icon: Clock01Icon, width: 'w-[13%]' },
+			{
+				id: 'duration',
+				label: l.translate('column.duration'),
+				icon: Timer02Icon,
+				width: 'w-[9%]',
+				priority: 3
+			}
+		],
+		'deployments'
+	);
+
+	const environmentOptions: FilterOption<typeof environment>[] = [
+		{ value: 'all', label: environmentLabel.all, icon: Layers01Icon },
+		{ value: 'production', label: environmentLabel.production, icon: Rocket01Icon },
+		{ value: 'staging', label: environmentLabel.staging, icon: TestTube01Icon }
+	];
+	const statusOptions: FilterOption<typeof status>[] = [
+		{ value: 'any', label: statusLabel.any, icon: Layers01Icon },
+		{
+			value: 'succeeded',
+			label: statusLabel.succeeded,
+			icon: CheckmarkCircle02Icon,
+			tone: 'text-success'
+		},
+		{ value: 'failed', label: statusLabel.failed, icon: CancelCircleIcon, tone: 'text-danger' },
+		{ value: 'running', label: statusLabel.running, icon: Loading03Icon, tone: 'text-warning' }
+	];
 </script>
 
 <AppWorkspace {app} apiKey={data.user.api_key} tab="deployments">
 	{#snippet children(actions: AppActions)}
 		<div class="flex flex-col gap-3.5">
-			<!-- Search with a readable fixed width, then the two filters as dropdowns. -->
-			<div class="grid items-end gap-3 sm:grid-cols-[minmax(0,320px)_190px_190px]">
-				<div class="flex flex-col gap-1">
-					<Label for="filter-search" class="text-xs font-semibold text-muted-foreground">
-						{l.translate('detail.filter.search.label')}
-					</Label>
-					<div class="relative">
+			<div class="flex flex-wrap items-center justify-between gap-2">
+				<div class="flex flex-wrap items-center gap-2">
+					<div class="relative w-80 max-w-full">
 						<Input
 							id="filter-search"
 							type="search"
 							bind:value={search}
 							placeholder={l.translate('detail.filter.search')}
+							aria-label={l.translate('detail.filter.search.label')}
 							class="pr-9"
 						/>
 						<Icon
@@ -154,188 +226,174 @@
 							class="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
 						/>
 					</div>
+					<FilterMenu
+						label={l.translate('column.environment')}
+						icon={Layers01Icon}
+						bind:value={environment}
+						options={environmentOptions}
+					/>
+					<FilterMenu
+						label={l.translate('column.status')}
+						icon={CheckmarkCircle02Icon}
+						bind:value={status}
+						options={statusOptions}
+					/>
 				</div>
-				<div class="flex flex-col gap-1">
-					<Label for="filter-env" class="text-xs font-semibold text-muted-foreground">
-						{l.translate('deployment.environment')}
-					</Label>
-					<Select.Root type="single" bind:value={environment}>
-						<Select.Trigger id="filter-env" class="w-full">
-							{environmentLabel[environment]}
-						</Select.Trigger>
-						<Select.Content>
-							{#each Object.entries(environmentLabel) as [value, label] (value)}
-								<Select.Item {value} {label}>{label}</Select.Item>
-							{/each}
-						</Select.Content>
-					</Select.Root>
-				</div>
-				<div class="flex flex-col gap-1">
-					<Label for="filter-status" class="text-xs font-semibold text-muted-foreground">
-						{l.translate('jobs.status')}
-					</Label>
-					<Select.Root type="single" bind:value={status}>
-						<Select.Trigger id="filter-status" class="w-full">
-							{statusLabel[status]}
-						</Select.Trigger>
-						<Select.Content>
-							{#each Object.entries(statusLabel) as [value, label] (value)}
-								<Select.Item {value} {label}>{label}</Select.Item>
-							{/each}
-						</Select.Content>
-					</Select.Root>
-				</div>
+				<ColumnsMenu {columns} />
 			</div>
 
 			{#if list && list.data.length > 0}
-				<div
-					role="table"
-					aria-label={l.translate('detail.tab.deployments')}
-					class="flex flex-col gap-1.5"
-				>
-					<div
-						role="row"
-						class={cn(
-							'hidden gap-3 pr-2 pb-0.5 pl-4 text-xs font-semibold text-muted-foreground md:grid',
-							columns
-						)}
-					>
-						<span role="columnheader">{l.translate('jobs.status')}</span>
-						<span role="columnheader">#</span>
-						<span role="columnheader">{l.translate('deployment.environment')}</span>
-						<span role="columnheader">{l.translate('deployment.source')}</span>
-						<span role="columnheader">{l.translate('deployment.queued_by')}</span>
-						<span role="columnheader">{l.translate('detail.column.when')}</span>
-						<span role="columnheader"
-							><span class="sr-only">{l.translate('detail.card.live')}</span></span
-						>
-						<span role="columnheader"
-							><span class="sr-only">{l.translate('detail.row.actions')}</span></span
-						>
-					</div>
-					{#each list.data as d (d.deployment_number)}
-						{@const row = rowIcon[d.state.status]}
-						{@const live = isLive(d)}
-						<div
-							role="row"
-							class={cn(
-								'relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-md bg-sunken py-2.5 pr-2 pl-4 text-[13px] transition-colors hover:bg-hover md:min-h-13 md:py-0',
-								columns,
-								actions.previewNumber() === d.deployment_number && 'bg-raised hover:bg-raised'
-							)}
-						>
-							<span role="cell" class="flex items-center gap-2">
-								<Icon icon={row.icon} class={cn('size-4', row.tone, row.spin && 'animate-spin')} />
-								<!-- The whole row opens the preview; the button stretches over it. -->
-								<button
-									type="button"
-									class="text-left outline-none after:absolute after:inset-0 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
-									onclick={() => actions.openPreview(d.deployment_number)}
+				<div class="flex flex-col gap-2">
+					<Table.Root aria-label={l.translate('detail.tab.deployments')}>
+						<Table.Header>
+							<Table.Row>
+								{#each columns.shown as column (column.id)}
+									<Table.Head class={columns.head(column.id)}>{column.label}</Table.Head>
+								{/each}
+								<Table.Head class={ACTIONS_HEAD}>{l.translate('column.actions')}</Table.Head>
+							</Table.Row>
+						</Table.Header>
+						<Table.Body>
+							{#each list.data as d (d.deployment_number)}
+								{@const badge = deploymentBadge(d.state)}
+								{@const live = isLive(d)}
+								{@const hash = d.source.discriminator === 'git' ? d.source.data.hash : undefined}
+								<Table.Row
+									class="relative"
+									data-state={actions.previewNumber() === d.deployment_number
+										? 'selected'
+										: undefined}
 								>
-									{deploymentBadge(d.state).label}
-									<span class="font-semibold md:hidden">#{d.deployment_number}</span>
-								</button>
-							</span>
-							<span role="cell" class="hidden font-semibold tabular-nums md:block"
-								>#{d.deployment_number}</span
-							>
-							<span role="cell" class="max-md:hidden">
-								<span
-									class={cn(
-										'rounded-sm px-1.5 py-0.5 text-[11.5px] font-semibold',
-										d.environment === 'production'
-											? 'bg-accent-soft text-primary'
-											: 'bg-raised text-muted-foreground'
-									)}>{d.environment}</span
-								>
-							</span>
-							<span role="cell" class="min-w-0 truncate max-md:col-span-2">
-								{l.translate(`deployment.source.${d.source.discriminator}`)}
-								{#if d.source.discriminator === 'git'}
-									· {d.source.data.branch}
-									{#if d.source.data.hash}
-										· <span class="font-mono">{d.source.data.hash.slice(0, 7)}</span>
+									{#if columns.visible('status')}
+										<Table.Cell class={columns.cell('status')}>
+											<StatusBadge state={badge.state} label={badge.label} />
+										</Table.Cell>
 									{/if}
-								{/if}
-								{#if d.state.error_code}
-									· <span class="font-mono text-danger">{d.state.error_code}</span>
-								{/if}
-							</span>
-							<span role="cell" class="truncate text-muted-foreground max-md:hidden"
-								>{d.requested_by.email}</span
-							>
-							<span role="cell" class="text-muted-foreground tabular-nums max-md:col-span-2"
-								>{timing(d)}</span
-							>
-							<span role="cell" class="max-md:hidden">
-								{#if live}
-									<span class="flex items-center gap-1.5 text-xs font-semibold text-success">
-										<span class="size-2 rounded-full bg-current"></span>
-										{l.translate('detail.card.live')}
-									</span>
-								{/if}
-							</span>
-							<span role="cell" class="relative z-10 max-md:col-start-2 max-md:row-start-1">
-								<DropdownMenu.Root>
-									<DropdownMenu.Trigger>
-										{#snippet child({ props })}
-											<Button
-												{...props}
-												variant="outline"
-												size="icon-sm"
-												class="data-[state=open]:bg-line-strong"
-												aria-label={l.translate('detail.row.menu', [d.deployment_number])}
+									{#if columns.visible('number')}
+										<Table.Cell class={columns.cell('number', 'font-semibold tabular-nums')}>
+											<!-- The whole row opens the preview; the button stretches over it. -->
+											<button
+												type="button"
+												class="outline-none after:absolute after:inset-0 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
+												onclick={() => actions.openPreview(d.deployment_number)}
+												>#{d.deployment_number}</button
 											>
-												<Icon icon={MoreHorizontalIcon} />
-											</Button>
-										{/snippet}
-									</DropdownMenu.Trigger>
-									<DropdownMenu.Content align="end" sideOffset={4} class="w-[212px] p-1.5">
-										<DropdownMenu.Item
-											class="h-9 gap-2.5 px-2.5 whitespace-nowrap"
-											onSelect={() => actions.openPreview(d.deployment_number)}
-										>
-											<Icon icon={CommandLineIcon} class="text-muted-foreground" />
-											{l.translate('detail.row.logs')}
-										</DropdownMenu.Item>
-										{#if !app.cleanup_requested_at}
-											{#if d.environment === 'staging' && d.state.status === DeploymentStatus.Succeeded}
-												<DropdownMenu.Item
-													class="h-9 gap-2.5 px-2.5 whitespace-nowrap"
-													onSelect={() => {
-														promoteNumber = d.deployment_number;
-														promoteOpen = true;
-													}}
-												>
-													<Icon icon={Rocket01Icon} class="text-muted-foreground" />
-													{l.translate('detail.row.promote')}
-												</DropdownMenu.Item>
+											{#if live}
+												<span
+													class="ml-1 inline-block size-2 rounded-full bg-success"
+													title={l.translate('column.live')}
+												></span>
+												<span class="sr-only">{l.translate('column.live')}</span>
 											{/if}
-											{#if d.state.finished_at}
-												<DropdownMenu.Item
-													class="h-9 gap-2.5 px-2.5 whitespace-nowrap"
-													onSelect={() => {
-														redeploy = d;
-														redeployOpen = true;
-													}}
-												>
-													<Icon icon={RepeatIcon} class="text-muted-foreground" />
-													{l.translate('deployment.redeploy')}
-												</DropdownMenu.Item>
-											{/if}
-										{/if}
-										<DropdownMenu.Item
-											class="h-9 gap-2.5 px-2.5 whitespace-nowrap"
-											onSelect={() => copyLink(d)}
+										</Table.Cell>
+									{/if}
+									{#if columns.visible('environment')}
+										<Table.Cell class={columns.cell('environment')}>
+											<EnvironmentChip environment={d.environment} />
+										</Table.Cell>
+									{/if}
+									{#if columns.visible('source')}
+										<Table.Cell
+											class={columns.cell('source', 'text-muted-foreground')}
+											title={l.translate(`deployment.source.${d.source.discriminator}`)}
 										>
-											<Icon icon={Copy01Icon} class="text-muted-foreground" />
-											{l.translate('detail.row.copy')}
-										</DropdownMenu.Item>
-									</DropdownMenu.Content>
-								</DropdownMenu.Root>
-							</span>
-						</div>
-					{/each}
+											{l.translate(`deployment.source.${d.source.discriminator}`)}
+										</Table.Cell>
+									{/if}
+									{#if columns.visible('branch')}
+										<Table.Cell
+											class={columns.cell('branch')}
+											title={d.source.discriminator === 'git' ? d.source.data.branch : undefined}
+										>
+											{d.source.discriminator === 'git' ? d.source.data.branch : '—'}
+										</Table.Cell>
+									{/if}
+									{#if columns.visible('commit')}
+										<Table.Cell
+											class={columns.cell(
+												'commit',
+												d.state.error_code
+													? 'font-mono text-[12.5px] text-danger'
+													: 'font-mono text-[12.5px] text-muted-foreground'
+											)}
+											title={d.state.error_code ?? hash}
+										>
+											{d.state.error_code ?? hash?.slice(0, 7) ?? '—'}
+										</Table.Cell>
+									{/if}
+									{#if columns.visible('author')}
+										<Table.Cell
+											class={columns.cell('author', 'text-muted-foreground')}
+											title={d.requested_by.email}
+										>
+											{d.requested_by.email}
+										</Table.Cell>
+									{/if}
+									{#if columns.visible('started')}
+										<Table.Cell
+											class={columns.cell('started', 'text-muted-foreground tabular-nums')}
+										>
+											{l.relative(deploymentMoment(d))}
+										</Table.Cell>
+									{/if}
+									{#if columns.visible('duration')}
+										<Table.Cell
+											class={columns.cell('duration', 'text-muted-foreground tabular-nums')}
+										>
+											{d.state.started_at && d.state.finished_at
+												? l.duration(d.state.started_at, d.state.finished_at)
+												: '—'}
+										</Table.Cell>
+									{/if}
+									<Table.Cell class={ACTIONS_CELL}>
+										<RowMenu label={l.translate('detail.row.menu', [d.deployment_number])}>
+											<RowMenuGroup>
+												<RowMenuItem
+													icon={CommandLineIcon}
+													onSelect={() => actions.openPreview(d.deployment_number)}
+												>
+													{l.translate('detail.row.logs')}
+												</RowMenuItem>
+												<RowMenuItem
+													icon={ViewIcon}
+													href={routes.deployment(app.id, d.deployment_number)}
+												>
+													{l.translate('menu.open')}
+												</RowMenuItem>
+												{#if !app.cleanup_requested_at}
+													{#if d.environment === 'staging' && d.state.status === DeploymentStatus.Succeeded}
+														<RowMenuItem
+															icon={Rocket01Icon}
+															onSelect={() => {
+																promoteNumber = d.deployment_number;
+																promoteOpen = true;
+															}}
+														>
+															{l.translate('detail.row.promote')}
+														</RowMenuItem>
+													{/if}
+													{#if d.state.finished_at}
+														<RowMenuItem
+															icon={RepeatIcon}
+															onSelect={() => {
+																redeploy = d;
+																redeployOpen = true;
+															}}
+														>
+															{l.translate('deployment.redeploy')}
+														</RowMenuItem>
+													{/if}
+												{/if}
+												<RowMenuItem icon={Copy01Icon} onSelect={() => copyLink(d)}>
+													{l.translate('detail.row.copy')}
+												</RowMenuItem>
+											</RowMenuGroup>
+										</RowMenu>
+									</Table.Cell>
+								</Table.Row>
+							{/each}
+						</Table.Body>
+					</Table.Root>
 
 					<div class="flex items-center justify-between pt-2 text-[13px] text-muted-foreground">
 						<span>
