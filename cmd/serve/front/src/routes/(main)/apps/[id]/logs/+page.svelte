@@ -9,12 +9,9 @@
 	import ListViewIcon from '@hugeicons/core-free-icons/ListViewIcon';
 	import ContainerIcon from '@hugeicons/core-free-icons/ContainerIcon';
 	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
-	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
-	import AlertCircleIcon from '@hugeicons/core-free-icons/AlertCircleIcon';
 	import ArrowDown01Icon from '@hugeicons/core-free-icons/ArrowDown01Icon';
 	import ArrowDown02Icon from '@hugeicons/core-free-icons/ArrowDown02Icon';
 	import Clock01Icon from '@hugeicons/core-free-icons/Clock01Icon';
-	import ComputerTerminal01Icon from '@hugeicons/core-free-icons/ComputerTerminal01Icon';
 	import Copy01Icon from '@hugeicons/core-free-icons/Copy01Icon';
 	import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
 	import Download04Icon from '@hugeicons/core-free-icons/Download04Icon';
@@ -540,7 +537,7 @@
 {#snippet problemState(actions: AppActions)}
 	{#if problem === 'no_containers' || problem === 'not_found'}
 		<EmptyState
-			icon={ComputerTerminal01Icon}
+			illustration="terminal"
 			title={l.translate('logs.never.title')}
 			description={l.translate('logs.never.description', [environment])}
 		>
@@ -552,7 +549,7 @@
 		</EmptyState>
 	{:else if problem === 'too_many_streams'}
 		<EmptyState
-			icon={Alert02Icon}
+			illustration="logsWarn"
 			title={l.translate('logs.too_many.title')}
 			description={l.translate('logs.too_many.description')}
 		>
@@ -565,24 +562,18 @@
 		</EmptyState>
 	{:else if problem === 'logs_unavailable'}
 		<EmptyState
-			icon={AlertCircleIcon}
+			illustration="logsWarn"
 			title={l.translate('logs.unavailable.title')}
 			description={l.translate('logs.unavailable.description')}
-		>
-			{#snippet action()}
-				<a
-					class="text-sm font-semibold text-primary"
-					href="https://docs.docker.com/engine/logging/configure/"
-					target="_blank"
-					rel="noreferrer"
-				>
-					{l.translate('logs.unavailable.link')}
-				</a>
-			{/snippet}
-		</EmptyState>
+			link={{
+				href: 'https://docs.docker.com/engine/logging/configure/',
+				label: l.translate('logs.unavailable.link')
+			}}
+		/>
 	{:else}
 		<EmptyState
-			icon={AlertCircleIcon}
+			illustration="logsWarn"
+			role="alert"
 			title={l.translate('logs.failed.title')}
 			description={l.translate('logs.failed.description')}
 		>
@@ -811,7 +802,8 @@
 						{#if source.length > 0 && shown.length === 0}
 							<div class="flex h-full items-center justify-center p-6 font-sans">
 								<EmptyState
-									icon={Search01Icon}
+									illustration="search"
+									size="section"
 									title={l.translate('logs.no_match.title')}
 									description={l.translate('logs.no_match.description')}
 								>

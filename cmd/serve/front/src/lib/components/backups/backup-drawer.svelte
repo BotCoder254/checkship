@@ -18,6 +18,7 @@
 	import routes from '#lib/path.ts';
 	import service, { type BackupStorage, type Volume } from '#lib/resources/backups.ts';
 	import type { Environment } from '#lib/resources/deployments.ts';
+	import EmptyState from '#lib/components/empty-state.svelte';
 
 	type Props = {
 		open: boolean;
@@ -128,9 +129,13 @@
 				<Skeleton class="h-14 w-full" />
 				<Skeleton class="h-14 w-full" />
 			{:else if volumes.length === 0}
-				<p class="text-sm text-muted-foreground">
-					{l.translate('backups.drawer.no_volumes')}
-				</p>
+				<EmptyState
+					illustration="volumes"
+					size="compact"
+					level={3}
+					title={l.translate('backups.volumes.empty.title')}
+					description={l.translate('backups.drawer.no_volumes')}
+				/>
 			{:else}
 				{#each volumes as volume (volume.key)}
 					<label

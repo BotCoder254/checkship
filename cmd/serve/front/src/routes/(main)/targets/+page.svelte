@@ -21,6 +21,7 @@
 	import { toast } from 'svelte-sonner';
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
 	import EmptyState from '#lib/components/empty-state.svelte';
+	import docs from '#lib/docs.ts';
 	import Icon from '#lib/components/icon.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
 	import StatusBadge from '#lib/components/status-badge.svelte';
@@ -279,15 +280,31 @@
 				{/each}
 			</TimelineList>
 		{:else}
-			<p class="px-2 py-3 text-label text-muted-foreground">
-				{l.translate('detail.list.no_match')}
-			</p>
+			<EmptyState
+				illustration="search"
+				size="section"
+				title={l.translate('targets.no_match.title')}
+				description={l.translate('targets.no_match.description')}
+			>
+				{#snippet action()}
+					<Button
+						variant="outline"
+						onclick={() => {
+							search = '';
+							stateFilter = 'any';
+						}}
+					>
+						{l.translate('list.clear_filters')}
+					</Button>
+				{/snippet}
+			</EmptyState>
 		{/if}
 		<p class="text-label text-muted-foreground">{l.translate('targets.explainer')}</p>
 	</div>
 {:else if $targets}
 	<EmptyState
-		icon={ServerStack01Icon}
+		illustration="targets"
+		link={{ href: docs.targets, label: l.translate('empty.docs.targets') }}
 		title={l.translate('targets.empty.title')}
 		description={l.translate('targets.empty.description')}
 	>

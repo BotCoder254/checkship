@@ -541,6 +541,8 @@ History notes: v1→v2 migration `1706004450_add_target` created a default targe
 - Cardless (DESIGN.md §1): the workspace is the one container. No grey boxes around sections, notes or settings; use
   `section-heading.svelte`, `notice.svelte` (tinted only for warning or danger) and `setting-row.svelte`. `bg-sunken` is
   only for inputs, choice cards, the logs console, error text and row icon tiles.
+- Empty states: `empty-state.svelte` with an `illustration` from `illustration.svelte` and a `size` (page, section,
+  compact); never a grey line or a boxed blank slate. DESIGN.md §11.5.
 - **Data layer** `src/lib/fetcher`: `CacheFetchService`. `get` and `query` share a cache keyed by url+params, with 2s dedupe.
   `query` returns Svelte stores `{data, error, loading}` with optional polling (`refreshInterval`). Mutations
   (`post/patch/put/delete`) invalidate their url plus extra keys and call SvelteKit `invalidate`.

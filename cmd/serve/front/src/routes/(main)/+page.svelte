@@ -31,6 +31,7 @@
 	import StatsStrip from '#lib/components/dashboard/stats-strip.svelte';
 	import Tile from '#lib/components/dashboard/tile.svelte';
 	import Icon from '#lib/components/icon.svelte';
+	import Illustration from '#lib/components/illustration.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
 	import SectionHeading from '#lib/components/section-heading.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -47,6 +48,7 @@
 	import type { Environment } from '#lib/resources/deployments.ts';
 	import jobsService from '#lib/resources/jobs.ts';
 	import targetsService from '#lib/resources/targets.ts';
+	import EmptyState from '#lib/components/empty-state.svelte';
 
 	let range = $state<DashboardRange>(30);
 	let environment = $state<'' | Environment>('');
@@ -197,6 +199,7 @@
 
 {#if firstRun}
 	<section aria-labelledby="first-run" class="flex max-w-2xl flex-col gap-3">
+		<Illustration name="rocket" class="mb-2 w-[200px] max-w-full" />
 		<SectionHeading id="first-run">{l.translate('dashboard.first.title')}</SectionHeading>
 		<p class="text-sm text-muted-foreground">{l.translate('dashboard.first.description')}</p>
 		<ol class="-mx-2 flex flex-col gap-0.5">
@@ -265,15 +268,21 @@
 				<DeploysChart days={series} onselect={(day) => day.failed && (failuresOpen = true)} />
 				<p class="text-xs text-muted-foreground">{l.translate('dashboard.deploys.hint')}</p>
 			{:else}
-				<div class="flex flex-1 flex-col items-center justify-center gap-2.5 py-10 text-center">
-					<Icon icon={ChartHistogramIcon} class="size-6 text-faint" />
-					<strong class="text-sm">{l.translate('dashboard.empty.range.title', [range])}</strong>
-					{#if range !== 90}
-						<Button variant="outline" size="sm" onclick={() => (range = range === 7 ? 30 : 90)}>
-							{l.translate('dashboard.range', [range === 7 ? 30 : 90])}
-						</Button>
-					{/if}
-				</div>
+				<EmptyState
+					illustration="chart"
+					size="section"
+					level={3}
+					class="flex-1 justify-center"
+					title={l.translate('dashboard.empty.range.title', [range])}
+				>
+					{#snippet action()}
+						{#if range !== 90}
+							<Button variant="outline" onclick={() => (range = range === 7 ? 30 : 90)}>
+								{l.translate('dashboard.range', [range === 7 ? 30 : 90])}
+							</Button>
+						{/if}
+					{/snippet}
+				</EmptyState>
 			{/if}
 		</Tile>
 

@@ -474,13 +474,13 @@ Everything is in `src/components/` (alias `$components`). Each component maps to
 
 ### 11.5 Patterns
 
-- **Empty states.** Every empty state has exactly four parts:
-  1. a line icon or SVG in `faint`, with one node in `accent`;
-  2. a title;
-  3. one sentence saying what will appear here;
-  4. one action, the most likely next step (New application, New target and so on).
-
-  Today's blank slates use `{@html}` translations with inline links. In the migration they become the `Empty` component with a real `Button`.
+- **Empty states** (owner's call, 2026-11-17; artifact "checkship empty states", approved with the picks E1 to E4). `#lib/components/empty-state.svelte` everywhere a list, section or page can be empty, including no-results and error pages:
+  - **Parts, centred:** a drawing, a title, one sentence (what will appear here, or what to change), then at most one primary action and an optional documentation link (`#lib/docs.ts`). Written straight on the page: no box, fill or frame (§1 Cardless).
+  - **Sizes follow the space:** `page` (280px drawing, the empty state is the page's main content), `section` (200px, a tab or a filtered list), `compact` (140px, a dashboard section, a drawer, a part of a page). On a phone the drawing shrinks to the column.
+  - **Titles point forward for first use** ("Create your first application", "Add your first target", "Make your first backup"); no-results and problem titles stay plain ("No deployment matches", "The stream stopped"). No-results states offer Clear filters.
+  - **Never while loading:** skeletons until the answer is in, then the empty state.
+  - **Drawings** (`#lib/components/illustration.svelte`, 14: apps, targets, registries, rocket, backups, volumes, queue, allClear, search, chart, terminal, logsWarn, notFound, error). One family, drawn in the tokens so light and dark need no second file: objects `surface` with a 2px outline, details `sunken` and `raised`, one accent on the thing to do, `success` for good news, `warning` / `danger` for problems, a soft `sunken` floor shadow that is part of the drawing. In dark, outlines mix `line-strong` with 35% `muted` (derived, no new colour). Decorative: `aria-hidden`; the words carry the meaning. The accent badge floats 4px and the terminal cursor blinks, both off under reduced motion.
+  - **Where:** Applications, Targets, Registries, Backups and Jobs pages (`page`); filtered lists and an app's Backups tab (`section`); the Deployments tab (`page`, or `section` when filtered); Logs (`page`); Overview sections, Recent deployments, Services, a target's applications, volumes and the backup drawers (`compact`); the Failures drawer and Needs attention (`allClear`); error pages (`notFound`, `error`); the first-run checklist leads with the rocket.
 - **Spinners in buttons.** Every button that starts async work has a loading state. On the shadcn `Button` it is the `loading` prop (`<Button loading={$submitting}>`):
   - the spinner is mounted only while pending;
   - the label stays, so the width does not change;

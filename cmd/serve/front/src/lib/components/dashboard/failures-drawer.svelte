@@ -26,6 +26,7 @@
 	import routes from '#lib/path.ts';
 	import service, { type DashboardFilters } from '#lib/resources/dashboard.ts';
 	import { DeploymentStatus, type Deployment } from '#lib/resources/deployments.ts';
+	import EmptyState from '#lib/components/empty-state.svelte';
 
 	type Props = {
 		open: boolean;
@@ -81,7 +82,12 @@
 	{#if error}
 		<p class="text-sm text-danger">{l.translate('dashboard.tile.error')}</p>
 	{:else if rows.length === 0 && !loading}
-		<p class="text-sm text-muted-foreground">{l.translate('dashboard.failures.none')}</p>
+		<EmptyState
+			illustration="allClear"
+			size="section"
+			title={l.translate('dashboard.failures.none.title')}
+			description={l.translate('dashboard.failures.none')}
+		/>
 	{:else}
 		<div class="flex flex-col gap-3">
 			{#each groupByDay(rows, deploymentMoment, l.locale()) as group (group.key)}

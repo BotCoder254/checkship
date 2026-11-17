@@ -8,6 +8,7 @@
 	import { formatSeconds } from '#lib/dashboard.ts';
 	import l from '#lib/localization/index.ts';
 	import type { Day } from '#lib/resources/dashboard.ts';
+	import EmptyState from '#lib/components/empty-state.svelte';
 
 	let { days }: { days: Day[] } = $props();
 
@@ -81,7 +82,12 @@
 		</Chart.Container>
 	</figure>
 {:else}
-	<p class="flex flex-1 items-center text-label text-muted-foreground">
-		{l.translate('dashboard.duration.empty')}
-	</p>
+	<EmptyState
+		illustration="chart"
+		size="compact"
+		level={3}
+		class="flex-1 justify-center"
+		title={l.translate('dashboard.duration.empty.title')}
+		description={l.translate('dashboard.duration.empty')}
+	/>
 {/if}

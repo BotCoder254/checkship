@@ -333,7 +333,7 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 		'apps.deletion_requested': 'Suppression demandée',
 		'apps.deletion_requested.description':
 			'Ses ressources sont en cours de suppression sur les cibles.',
-		'apps.empty.title': "Aucune application pour l'instant",
+		'apps.empty.title': 'Créez votre première application',
 		'apps.empty.description':
 			"Une application regroupe les services d'un fichier compose, déployés en production et en staging.",
 		'targets.summary': (count: number, failing: number) =>
@@ -346,13 +346,13 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 		'targets.local': 'Moteur Docker local',
 		'targets.remote': (host: string) => `Docker via SSH · ${host}`,
 		'targets.manual_proxy': 'Services non exposés automatiquement',
-		'targets.empty.title': "Aucune cible pour l'instant",
+		'targets.empty.title': 'Ajoutez votre première cible',
 		'targets.empty.description':
 			'Une cible est un hôte Docker sur lequel checkship déploie, sur cette machine ou via SSH.',
 		'registries.summary': (count: number) => (count === 1 ? '1 registre' : `${count} registres`),
 		'registries.auth.none': 'Sans authentification',
 		'registries.auth.user': (username: string) => `Connecté en tant que ${username}`,
-		'registries.empty.title': 'Aucun registre personnalisé',
+		'registries.empty.title': 'Ajoutez un registre privé',
 		'registries.empty.description':
 			'Ajoutez-en un quand vos images sont dans un registre privé qui demande des identifiants.',
 		'status.pending': 'En attente',
@@ -409,7 +409,7 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 		'app.latest.follow': 'Suivre les logs',
 		'app.history': 'Historique',
 		'app.history.page': (page: number, pages: number) => `Page ${page} sur ${pages}`,
-		'app.empty.title': 'Rien de déployé pour le moment',
+		'app.empty.title': 'Lancez votre premier déploiement',
 		'app.empty.description':
 			'Lancez le premier déploiement depuis une branche Git, un fichier compose ou une archive.',
 		'app.env.empty.title': (env: string) => `Aucun déploiement en ${env}`,
@@ -888,6 +888,26 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 			total === 1 ? '1 déploiement' : `${shown} sur ${total} déploiements`,
 		'list.show_more': (count: number) => `Afficher plus (${count})`,
 		'list.took': (duration: string) => `en ${duration}`,
+		'empty.docs.applications': 'Fonctionnement des applications',
+		'empty.docs.targets': 'Fonctionnement des cibles',
+		'empty.docs.registries': 'Fonctionnement des registres',
+		'empty.docs.backups': 'Fonctionnement des sauvegardes',
+		'list.clear_filters': 'Effacer les filtres',
+		'apps.no_match.title': 'Aucune application ne correspond',
+		'apps.no_match.description': 'Essayez un autre nom ou une autre cible.',
+		'targets.no_match.title': 'Aucune cible ne correspond',
+		'targets.no_match.description': 'Essayez un autre nom ou un autre état.',
+		'dashboard.activity.empty.title': 'Aucun déploiement pour le moment',
+		'dashboard.activity.empty.description':
+			'Les déploiements de toutes les applications apparaissent ici pendant leur exécution.',
+		'dashboard.apps.empty.title': 'Aucune application pour le moment',
+		'dashboard.attention.none.title': 'Tout va bien',
+		'dashboard.failures.none.title': 'Aucun échec',
+		'dashboard.duration.empty.title': 'Pas encore de durées',
+		'detail.services.none.title': 'Aucun service pour le moment',
+		'targets.apps.none.title': 'Aucune application ici',
+		'backups.volumes.empty.title': 'Aucun volume à sauvegarder',
+		'backups.details.no_restores.title': 'Jamais restaurée',
 		'apps.row.production': (status: string) => `Production : ${status}`,
 		'apps.row.staging': (status: string) => `Staging : ${status}`,
 		'targets.row.apps': (count: number) =>
@@ -1146,7 +1166,7 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 			'Chaque sauvegarde est un .tar.gz avec les volumes choisis d’un environnement.',
 		'backups.summary': (count: number, size: string) =>
 			`${count} sauvegarde${count > 1 ? 's' : ''} · ${size}`,
-		'backups.empty.title': 'Aucune sauvegarde',
+		'backups.empty.title': 'Faites votre première sauvegarde',
 		'backups.empty.description':
 			'Les sauvegardes des volumes de cette application apparaîtront ici, avec leur emplacement.',
 		'backups.empty_all.description':
