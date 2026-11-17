@@ -1,11 +1,31 @@
 # Credits
 
-**checkship** is based on [seelf](https://github.com/YuukanOO/seelf), created by **Julien Leicher**, and is distributed under the same [GNU General Public License v3.0](https://github.com/checkship-deploy/checkship/blob/main/LICENSE).
+**checkship** is made by the [checkship-deploy](https://github.com/checkship-deploy) team. Its source code, issues and releases live on [GitHub](https://github.com/checkship-deploy/checkship).
 
-The checkship project has renamed and rebranded the code and keeps changing it. The original author is not involved in checkship and doesn't endorse it.
+## Built with {#built-with}
 
-If you want to support the original author of seelf, you can do so on:
+**checkship** stands on open-source work. Thank you to everyone behind it.
 
-- [GitHub Sponsors](https://github.com/sponsors/YuukanOO)
-- [Liberapay](https://liberapay.com/YuukanOO)
-- [Buy Me A Coffee](https://buymeacoffee.com/yuukanoo)
+**Server**
+
+- [Go](https://go.dev), with [Gin](https://gin-gonic.com) for the API, [Cobra](https://cobra.dev) for the command line and [zap](https://github.com/uber-go/zap) for logs
+- [SQLite](https://sqlite.org) through [go-sqlite3](https://github.com/mattn/go-sqlite3), and [golang-migrate](https://github.com/golang-migrate/migrate) for the schema
+- [Docker](https://www.docker.com) and [Docker Compose](https://docs.docker.com/compose/), whose libraries deploy the applications, and [compose-go](https://github.com/compose-spec/compose-go) to read `compose.yml` files
+- [go-git](https://github.com/go-git/go-git) to fetch repositories, and [minio-go](https://github.com/minio/minio-go) to store backups on S3-compatible storage
+
+**Dashboard**
+
+- [Svelte](https://svelte.dev) and [SvelteKit](https://svelte.dev/docs/kit)
+- [shadcn-svelte](https://www.shadcn-svelte.com) and [Bits UI](https://bits-ui.com) for the components, [Tailwind CSS](https://tailwindcss.com) for the styles
+- [Hugeicons](https://hugeicons.com) for the icons, [Inter](https://rsms.me/inter/) for the type, and [Shiki](https://shiki.style) to highlight code
+
+**On your targets**
+
+- [Traefik](https://traefik.io) as the proxy that exposes services and issues certificates
+- [Versity S3 Gateway](https://github.com/versity/versitygw) as the built-in backup storage, and [BusyBox](https://busybox.net) to copy volumes
+
+**This site** is built with [VitePress](https://vitepress.dev).
+
+## Origins and license {#license}
+
+**checkship** started as a fork of [seelf](https://github.com/YuukanOO/seelf) by Julien Leicher. It has since been renamed and largely rewritten, and it keeps the original's [GNU General Public License v3.0](https://github.com/checkship-deploy/checkship/blob/main/LICENSE): you may use, study, share and change it under the same terms.

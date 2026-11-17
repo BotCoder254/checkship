@@ -661,7 +661,11 @@ Where it's used:
   Inter 600 is bundled via `@fontsource/inter` (`latin-600.css` imported in `src/routes/+layout.svelte`).
 - Docs: `docs/public/logo-light.svg`, `logo-dark.svg` (fixed colours per theme), `favicon.svg`.
 - README: `<picture>` with the docs light/dark logos.
-- `docs/checkship-home.jpeg` is the quickstart screenshot. Retake it if the dashboard changes visually.
+- Docs theme (`docs/.vitepress/theme/custom.css`): the brand colours are the dashboard accent (`#2f5bea`, dark `#7f95ff`).
+- `docs/public/screenshots/*-{light,dark}.webp` are the quickstart screenshots (1440×900, WebP q82), shown per theme with
+  `class="screenshot light-only"` / `dark-only`. Retake them when the dashboard changes visually: a throwaway instance with
+  a `local` target and a `welcome` app (compose `traefik/whoami`), Firefox at 1440×900 ×2, both themes. The New target and
+  first-run shots come from a fresh instance with no target, so **This machine** is available.
 
 
 ## 14. Known issues, risks and tech debt (observed, not fixed)

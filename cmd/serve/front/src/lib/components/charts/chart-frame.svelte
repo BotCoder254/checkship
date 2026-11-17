@@ -83,20 +83,23 @@
 		{#if active >= 0}{@render tooltip(active)}{/if}
 	</div>
 </div>
-<table class="sr-only">
-	<caption>{label}</caption>
-	<thead>
-		<tr>
-			<th scope="col">{l.translate('charts.day')}</th>
-			{#each table.headers as h (h)}<th scope="col">{h}</th>{/each}
-		</tr>
-	</thead>
-	<tbody>
-		{#each table.rows as row (row.day)}
+<!-- Wrapped: Firefox draws a caption of an sr-only table outside its clipped box. -->
+<div class="sr-only">
+	<table>
+		<caption>{label}</caption>
+		<thead>
 			<tr>
-				<th scope="row">{longDay(row.day)}</th>
-				{#each row.cells as cell, i (i)}<td>{cell}</td>{/each}
+				<th scope="col">{l.translate('charts.day')}</th>
+				{#each table.headers as h (h)}<th scope="col">{h}</th>{/each}
 			</tr>
-		{/each}
-	</tbody>
-</table>
+		</thead>
+		<tbody>
+			{#each table.rows as row (row.day)}
+				<tr>
+					<th scope="row">{longDay(row.day)}</th>
+					{#each row.cells as cell, i (i)}<td>{cell}</td>{/each}
+				</tr>
+			{/each}
+		</tbody>
+	</table>
+</div>
