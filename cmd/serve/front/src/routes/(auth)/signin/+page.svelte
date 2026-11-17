@@ -7,7 +7,7 @@
 	import Icon from '#lib/components/icon.svelte';
 	import AlertCircleIcon from '@hugeicons/core-free-icons/AlertCircleIcon';
 	import CancelCircleIcon from '@hugeicons/core-free-icons/CancelCircleIcon';
-	import Logo from '$assets/logo.svelte';
+	import Logo from '#lib/components/logo.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';

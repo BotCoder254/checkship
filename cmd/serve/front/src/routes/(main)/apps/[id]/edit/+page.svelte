@@ -9,10 +9,16 @@
 	import l from '#lib/localization/index.ts';
 	import routes from '#lib/path.ts';
 	import service, { type UpdateApp } from '#lib/resources/apps.ts';
+	import appsService from '#lib/resources/apps.ts';
 	import AppForm from '../../app-form.svelte';
-	import AppTabs from '../app-tabs.svelte';
+	import AppWorkspace from '../app-workspace.svelte';
 
 	let { data } = $props();
+
+	// The header polls like on the other tabs; the form keeps the values it was opened with.
+	const appQuery = $derived(appsService.queryById(data.app.id));
+	const appStore = $derived(appQuery.data);
+	const app = $derived($appStore ?? data.app);
 
 	let deleteOpen = $state(false);
 	let deleting = $state(false);
@@ -32,33 +38,28 @@
 	}
 </script>
 
-<AppForm
-	title={l.translate('breadcrumb.settings')}
-	crumbs={[
-		{ href: routes.apps, label: l.translate('breadcrumb.applications') },
-		{ href: routes.app(data.app.id), label: data.app.name }
-	]}
-	targets={data.targets}
-	initialData={data.app}
-	handler={submit}
-	disabled={deleting || !!data.app.cleanup_requested_at}
->
-	{#snippet tabs()}
-		<AppTabs appId={data.app.id} active="settings" />
-	{/snippet}
-	{#snippet actions(submitting)}
-		{#if !data.app.cleanup_requested_at}
-			<Button variant="destructive" onclick={() => (deleteOpen = true)} disabled={submitting}>
-				<Icon icon={Delete02Icon} />
-				{l.translate('app.delete')}
-			</Button>
-			<Button type="submit" loading={submitting}>
-				<Icon icon={Tick02Icon} />
-				{l.translate('save')}
-			</Button>
-		{/if}
-	{/snippet}
-</AppForm>
+<AppWorkspace {app} apiKey={data.user.api_key} tab="settings">
+	<AppForm
+		embedded
+		targets={data.targets}
+		initialData={data.app}
+		handler={submit}
+		disabled={deleting || !!data.app.cleanup_requested_at}
+	>
+		{#snippet actions(submitting)}
+			{#if !data.app.cleanup_requested_at}
+				<Button variant="destructive" onclick={() => (deleteOpen = true)} disabled={submitting}>
+					<Icon icon={Delete02Icon} />
+					{l.translate('app.delete')}
+				</Button>
+				<Button type="submit" loading={submitting}>
+					<Icon icon={Tick02Icon} />
+					{l.translate('save')}
+				</Button>
+			{/if}
+		{/snippet}
+	</AppForm>
+</AppWorkspace>
 
 <ConfirmDialog
 	bind:open={deleteOpen}
@@ -72,7 +73,7 @@
 	onconfirm={remove}
 >
 	{#snippet extra()}
-		<div class="flex items-start gap-4 rounded-md bg-sunken px-3.5 py-3">
+		<div class="flex items-start gap-4 py-1">
 			<span class="flex min-w-0 flex-1 flex-col gap-1">
 				<label for="delete-backup" class="text-sm font-medium"
 					>{l.translate('app.delete.backup')}</label

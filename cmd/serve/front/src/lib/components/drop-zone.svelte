@@ -109,7 +109,7 @@
 				>
 			{/if}
 		</span>
-		<span class="text-[13px]/[18px] text-muted-foreground">{hint}</span>
+		<span class="text-label/[18px] text-muted-foreground">{hint}</span>
 	</span>
 </button>
 <input

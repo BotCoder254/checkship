@@ -65,12 +65,12 @@
 					xAxis: {
 						format: (d: Date) => format.format(d),
 						ticks: 4,
-						tickLabelProps: { class: 'fill-faint text-[11px]' }
+						tickLabelProps: { class: 'fill-muted-foreground text-xs' }
 					},
 					yAxis: {
 						format: (s: number) => (s < 60 ? `${Math.round(s)} s` : `${Math.round(s / 60)} min`),
 						ticks: 3,
-						tickLabelProps: { class: 'fill-faint text-[11px]' }
+						tickLabelProps: { class: 'fill-muted-foreground text-xs' }
 					}
 				}}
 			>
@@ -81,7 +81,7 @@
 		</Chart.Container>
 	</figure>
 {:else}
-	<p class="flex flex-1 items-center text-[13px] text-muted-foreground">
+	<p class="flex flex-1 items-center text-label text-muted-foreground">
 		{l.translate('dashboard.duration.empty')}
 	</p>
 {/if}

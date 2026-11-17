@@ -132,13 +132,13 @@
 	<div class="flex flex-wrap items-center gap-4">
 		<span
 			aria-hidden="true"
-			class="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary text-[22px] font-semibold text-primary-foreground"
+			class="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary text-xl font-semibold text-primary-foreground"
 		>
 			{initial}
 		</span>
 		<span class="flex min-w-0 flex-1 flex-col gap-0.5">
 			<span class="truncate text-lg/7 font-semibold">{savedEmail}</span>
-			<span class="text-[13px] text-muted-foreground">
+			<span class="text-label text-muted-foreground">
 				{l.translate('profile.created', [l.date(data.user.registered_at)])}
 			</span>
 		</span>
@@ -177,8 +177,11 @@
 				<FieldMessage id="profile-email-message" error={$accountErrors?.email ?? undefined} />
 			</div>
 			<div class="flex flex-wrap items-center gap-3">
+				<!-- Section saves are secondary and wait for a change: a page of settings has no single
+					primary action (DESIGN.md §3, one primary per view). -->
 				<Button
 					type="submit"
+					variant="outline"
 					loading={$accountLoading}
 					disabled={email === savedEmail && !$accountErrors}
 				>
@@ -186,7 +189,7 @@
 					{l.translate('profile.email.save')}
 				</Button>
 				{#if emailSaved}
-					<span role="status" class="flex items-center gap-1.5 text-[13px] text-success">
+					<span role="status" class="flex items-center gap-1.5 text-label text-success">
 						<Icon icon={CheckmarkCircle02Icon} class="size-3.5" />
 						{l.translate('profile.email.saved')}
 					</span>
@@ -245,12 +248,17 @@
 				</div>
 			</div>
 			<div class="flex flex-wrap items-center gap-3">
-				<Button type="submit" loading={$passwordLoading}>
+				<Button
+					type="submit"
+					variant="outline"
+					loading={$passwordLoading}
+					disabled={!password && !repeat}
+				>
 					<Icon icon={Key01Icon} />
 					{l.translate('profile.password.change')}
 				</Button>
 				{#if passwordChanged}
-					<span role="status" class="flex items-center gap-1.5 text-[13px] text-success">
+					<span role="status" class="flex items-center gap-1.5 text-label text-success">
 						<Icon icon={CheckmarkCircle02Icon} class="size-3.5" />
 						{l.translate('profile.password.changed')}
 					</span>
@@ -282,7 +290,7 @@
 					</Select.Content>
 				</Select.Root>
 			</div>
-			<p class="pb-2 text-[13px] text-muted-foreground">{l.translate('profile.locale.help')}</p>
+			<p class="pb-2 text-label text-muted-foreground">{l.translate('profile.locale.help')}</p>
 		</div>
 	</SettingsSection>
 
@@ -296,7 +304,7 @@
 				class="flex h-10 items-center gap-2 rounded-md border border-faint bg-sunken pr-1.5 pl-3"
 			>
 				<span class="sr-only">{l.translate('profile.key')}</span>
-				<span class="min-w-0 flex-1 truncate font-mono text-[13px]">
+				<span class="min-w-0 flex-1 truncate font-mono text-label">
 					{revealed ? apiKey : masked}
 				</span>
 				<Button
@@ -313,16 +321,14 @@
 					{l.translate('copy')}
 				</Button>
 			</div>
-			<p class="text-[12.5px] text-muted-foreground">{l.translate('profile.key.usage')}</p>
+			<p class="text-xs text-muted-foreground">{l.translate('profile.key.usage')}</p>
 			<CodeBlock code={curl} lang="shellscript" copy label={l.translate('profile.key.example')} />
-			<div
-				class="flex flex-wrap items-center justify-between gap-4 rounded-lg bg-danger-soft px-4 py-3.5"
-			>
+			<div class="flex min-h-[54px] flex-wrap items-center justify-between gap-4 py-2">
 				<span class="flex min-w-0 flex-col gap-0.5">
 					<strong class="text-sm font-semibold"
 						>{l.translate('profile.key.regenerate.title')}</strong
 					>
-					<span class="text-[13px]">{l.translate('profile.key.regenerate.description')}</span>
+					<span class="text-label">{l.translate('profile.key.regenerate.description')}</span>
 				</span>
 				<Button variant="destructive" onclick={() => (regenerateOpen = true)}>
 					<Icon icon={RefreshIcon} />

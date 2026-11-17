@@ -15,15 +15,17 @@ Versions were checked against the npm registry on 2026-11-14. Re-run `npm view <
 ## 1. Principles
 
 - **Flat and solid.** Solid colours only: no gradients, glows, glass or drop-shadow stacks. _Why: a deployment dashboard is read for its state (ready, failed, running), and flat colour keeps attention on that state rather than on chrome._
-- **Content first, little chrome.** Grouping comes from headings, spacing and tonal fills (canvas, surface, sunken).
-  - A card is used only where an entity is a unit you act on: an application, target, registry or environment.
-  - That card has a `line` border and no shadow.
-  - Forms, lists and details sit directly on the surface.
+- **Cardless: one container** (owner's call, 2026-11-17, after Inaudio's write-up; artifact "checkship cardless pass"). The workspace (`surface` on the `canvas` desk) is the one card. Everything on a page sits directly on it: no tile, card, band, note box or grey wrapper around sections, facts, settings, notes or empty states, in pages, dialogs and drawers alike.
+  - **A fill means something, so it is never decoration** (§3 Roles): `sunken` is a well you type into, click or read from; the state tints report a state; `accent-soft` is the active item; a shadow means it floats above the page.
+  - **Grouping comes from three quieter tools:** text style (the page title, then small `SectionHeading` labels, §5), space (sections 36 to 40px apart) and alignment (setting rows put every control in one column on the right; lists bleed 8px so their tiles line up with the page edge). Lines are not one of them (below).
+  - Rows have no resting fill: a wash appears on hover or focus, as a response.
+  - _Why: a box inside the workspace is a card in a card; edges pull the eye before words, and a fill used for looks could no longer mean "input" or "state". Fewer fills also keep light and dark small enough to tune by hand._
+  - Replaces "a card only where an entity is a unit you act on" (2026-11-14): environments and target facts are no longer cards either.
 - **Full height.** The shell fills the window. No floating centred panels with empty canvas around them. The sign-in screen is two full-height columns too (§5, Auth layout).
 - **State is colour, colour is state.** `success`, `warning`, `danger` and `record` only ever mean a state, never decoration. The accent marks the one primary action, the selection and focus.
-- **No dividers.** No separator lines, hairlines, rules or borders between groups, rows, panes or sections. Grouping comes from spacing, the size and weight of headings, and tonal fills (`canvas`, `surface`, `sunken`, `raised`).
+- **No dividers.** No separator lines, hairlines, rules or borders between groups, rows, panes or sections. Grouping comes from spacing, the size and weight of headings, and alignment (§1 Cardless); fills only carry meaning.
   - shadcn's `Separator` is never used, and `--border` and `--sidebar-border` are transparent.
-  - The only outlines left are input fields, selects, unselected radios and switches (the `faint` border), and the keyboard focus ring, because those are controls, not dividers.
+  - The only outlines left are input fields, selects, unselected radios and switches (the `faint` border), and the keyboard focus ring. (The table frame went with the tables, 2026-11-17: every list is a list, §5 Lists.)
   - Floating panels (menus, selects, dialogs, the mobile sheet) lift off the page with their own tone and a soft shadow, never a line.
   - _Why: the owner asked for no divider lines anywhere._
 - **Words over numbers that mean nothing.** If a value has nothing to compare against, say so ("Not configured", "No deployment yet"), never `0` or `-`.
@@ -117,11 +119,13 @@ Light amber is the only tone with dark text on the accent fill. _Why: white on #
 
 ### Roles
 
-- **Surfaces.** `canvas` is the app background, shared by the sidebar and the title bar so they read as one frame. `surface` is the workspace. `sunken` is for rows, wells, inputs and setting rows.
+- **Surfaces.** `canvas` is the app background, shared by the sidebar and the title bar so they read as one frame. `surface` is the workspace, the one container (§1 Cardless). `sunken` is only for a well you type into, click or read from: inputs, selects, the code editor, segmented-control tracks, drop zones, choice cards (target kind, registry, storage), the logs console, error text and a list row's icon tile. Never a section, note or setting row.
+- **What each fill means** (§1 Cardless): `sunken` = interact or read here; `success-soft` / `warning-soft` / `danger-soft` = a state, always with words and an icon (badges, state alerts, warning and danger Notices, trend chips); `accent-soft` = the active one (current nav item, open row, a row that just arrived); a shadow = floats above the page (menus, dialogs, drawers, toasts, the "new" pills). Anything else has no fill.
 - **Raised, overlay and hover** are not new colours; they reuse palette values now that lines are gone (§1):
   - `raised` = the `line` value: secondary buttons, segmented-control tracks, count chips.
   - `overlay` = `surface` in light, `line` in dark: menus, selects and dialogs.
-  - `hover` = `canvas` in light, `line-strong` in dark: the hover fill on rows, menu items and ghost buttons.
+  - `hover` = `canvas` in light, `line-strong` in dark: the hover fill on rows, menu items and ghost buttons on `surface`.
+  - `hover-frame` = `line` in light, `line-strong` in dark: the hover fill on anything that sits on `canvas` (sidebar, title bar, mobile menu). `hover` would be invisible there in light mode, since it equals `canvas`.
 - **Text.** `ink` is primary text. `muted` is descriptions, metadata, timestamps and secondary labels.
 - **`faint`** is for SVG line art, disabled glyphs, decorative strokes and **the border of form controls** (inputs, textareas, selects, checkboxes, switch tracks: the `input` token), where it gives the 3:1 a control needs (3.18:1 light, 4.88:1 dark). **It is never used for text.**
 - **`accent`** marks the primary action, the selection and focus. There is one primary action per view: New application, Deploy, Save, Sign in.
@@ -180,7 +184,7 @@ A future Settings › Interface › Contrast: More option changes three tokens a
 
 - **Accepted exception.** The owner accepted success, warning and the green accent at 4.38 to 4.43:1 on white. Wherever they carry text, they are paired with an icon or set at weight 600, so meaning never rests on a thin coloured word. This applies to every status badge in checkship.
 - **Control borders use `faint`, not `line-strong`.** `line-strong` is about 1.4:1 on surface, too weak to find a field; `faint` passes WCAG 1.4.11 (3:1) in both modes.
-- **`faint` is never used for text** in either mode (3.18:1 on white). That includes placeholders, timestamps and disabled labels; use `muted`. Today's `::placeholder` uses `--co-text-3` in italics, which the migration replaces with `muted`, not italic.
+- **`faint` is never used for text** in either mode (3.18:1 on white). That includes placeholders, timestamps, menu headings, chart axis labels and disabled labels; use `muted`. The one exception is the time column of a logs console (§11.6, §11.7), which is decorative next to the line it dates. Today's `::placeholder` uses `--co-text-3` in italics, which the migration replaces with `muted`, not italic.
 - **Open items, not covered by the exception.** Success and warning on their soft fills (3.81 and 3.93), the light amber hover fill (3.67) and light amber as text (3.76 on surface) are below 4.5:1. Until the owner decides:
   - set soft-fill badges in `ink` with a coloured icon;
   - do not use the amber accent as a text or link colour in light mode.
@@ -197,12 +201,12 @@ Hierarchy is **Page → Section → Component**. A page has one title (its bread
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│ ▣  ◯✓ checkship                                          ( A ) │ ← title bar, 44px, canvas
+│ ▣  ◯✓ checkship                                       🌐 ( A ) │ ← title bar, 56px, canvas
 ├──────────────┬─────────────────────────────────────────────────┤
 │ Workspace    │  Applications                 [+ New application]│ ← page header, 40px below the panel top
 │ ▦ Applications│  4 applications · 1 failed                      │ ← status line
 │ ▤ Targets  ⚠ │  ┌─────────────────────────────────────────────┐ │
-│ ▢ Registries │  │ row on sunken, 6px apart, no lines           │ │
+│ ▢ Registries │  │ rows on the surface, 2px apart, no lines     │ │
 │ ☑ Jobs     2 │  └─────────────────────────────────────────────┘ │
 │ Recent       │                                                   │
 │ ✓ welcome    │            workspace: surface, 6px corner         │
@@ -213,29 +217,34 @@ Hierarchy is **Page → Section → Component**. A page has one title (its bread
 └──────────────┴─────────────────────────────────────────────────┘
 ```
 
-- **Title bar.** 44px on `canvas`. Left: the sidebar toggle (1024px and up) or the menu button (below), then the logo at 22px. Right: the account avatar, a round `accent` circle with the email's initial, 36px (40px on phones). It opens the account menu: email, Profile, API key for CI, Sign out.
+- **Title bar.** 56px on `canvas` (owner's call 2026-11-17; it was 44px). Left: the sidebar toggle (1024px and up) or the menu button (below), then the logo at 22px, centred on the toggle's line. Right: the language menu (`#lib/components/shell/language-menu.svelte`: every language in its own name, the current one ticked; choosing one reloads the page, as Profile › Interface does), then the account avatar, a round `accent` circle with the email's initial, 36px (40px on phones), at least 8px clear of the workspace below. The avatar opens the account menu: email, Profile, API key for CI, Sign out.
+- **First paint.** `app.html` applies the stored theme (`.dark`) and the matching `canvas` ground before any script loads, so the window never flashes white before the app's CSS arrives.
 - **Sidebar.** On `canvas`, no edge line.
   - **Workspace** (from 24px under the title bar): Applications, Targets, Registries, Jobs; 40px items, 4px apart, Hugeicons at 20px. Targets shows a danger icon when a target is failing; Jobs shows the number of queued jobs.
   - **Recent:** the last five applications opened (stored in the browser, `#lib/preferences.svelte.ts`), each with its production state icon.
   - **Bottom:** Documentation (opens a new tab), the theme switch (System, Light, Dark), then the version with Source and Credits.
   - The current page is an `accent-soft` fill with `accent` text and weight 600.
 - **Breakpoints.**
-  - 1024px and up: sidebar 240px, collapsible to 56px from the title bar (remembered).
+  - 1024px and up: sidebar 240px, collapsible to 56px from the title bar (remembered). The width animates over 150ms (none under reduced motion).
   - 768 to 1023px: sidebar 56px, icons with tooltips; the menu button opens the full sidebar as a sheet.
   - Under 768px: no sidebar; the menu button (44px) opens a 300px sheet with the logo at 28px.
-- **Workspace.** The `surface` panel is flush to the right and bottom edges, with one 6px corner at the top left (top corners on phones). A 2px `accent` bar runs along the top of the window while SvelteKit navigates.
+- **Workspace.** The `surface` panel is flush to the right and bottom edges, with one 6px corner at the top left (top corners on phones). A 2px `accent` bar runs along the top of the window while SvelteKit navigates. It scrolls on its own (the body never does) and keeps its scrollbar gutter (`scrollbar-gutter: stable`), so a page that grows past the fold never shifts sideways. Scrollbars are thin, a `line-strong` thumb on a transparent track; a strip that scrolls sideways on phones (the application tabs) draws no scrollbar (`no-scrollbar`).
 - **Page header** (`#lib/components/page-header.svelte`). As tall as its buttons (36px), 40px below the top of the panel: the title is the page's one `h1` (20/28), optionally after a breadcrumb; actions on the right, one primary, every labelled button with an 18px icon. A status line in `muted` follows, then 30px before the body.
 - **Content width.** Every page fills the whole workspace (the floating `surface` panel next to the sidebar): no max width and no centring, at any screen size, with the same gap on every side (top, right, bottom, left): 20px on phones, 24px from 768px, 40px from 1024px. The page header is as tall as its buttons (36px), so the buttons sit exactly 40px below the top of the panel. Forms use two columns (`#lib/components/settings-section.svelte`, §11.6): the section title and one sentence on the left (260px), the fields on the right. Owner's call (2026-11-14): centred pages felt squeezed in the middle of wide screens, so the Profile › Content width setting was removed.
-- **Tables** (owner's call, 2026-11-15; replaces the old row lists). Every list of data is a shadcn `Table` (`#lib/components/ui/table`), like the owner's sample: a header row, then one row per item, the last column "Actions" right-aligned with a ⋯ menu. Design canvas: "checkship tables".
-  - **Frame:** a 1px `line-strong` outline with 8px corners and no fill around each table. No lines between rows; the hovered row, the row whose menu is open and the selected row (open drawer or preview) get a rounded fill.
-  - **Same rows everywhere:** 40px header, 48px body rows, one line per cell (long text ends in "…", the cell's `title` has the whole value). A second line under a name becomes its own column.
-  - **Same widths:** `table-layout: fixed`; each column has a set width in `#lib/table-columns.svelte.ts`. The Actions column is 80px on every table.
-  - **Headers are one word** (`column.*` strings): Name, URL, Target, Status, Number, Environment, Commit, Author, Started, Duration, Host, State, Configured, Apps, Credentials, Job, Subject, Detail, Retry, Queued, Deploys, Success, Failed, Last, Deployment, Error, Latest, Actions.
-  - **Never scrolls sideways:** each column has a priority. A container query on the table drops priority-3 columns below 760px of table width and priority-2 columns below 560px, so a half-width table drops columns on a wide screen too. Name, the main state and Actions always stay.
-  - **Row menu** (`#lib/components/table/row-menu*.svelte`): a ghost 32px ⋯ button with an accessible name ("Actions for blog"); the menu opens under it, aligned to the right edge. Every item has an icon. Groups are split by a 6px gap, never a separator; the destructive item comes last, in `danger`. Row buttons (Reconfigure, Cancel) live in the menu. The row's name (link or button) stretches over the row, so clicking the row still opens the item; the menu only opens from ⋯.
-  - **Above a table:** a search field, `FilterMenu` buttons ("State: Any", single choice, an icon on every option) and the `ColumnsMenu` (checkbox items with icons; locked columns greyed out; remembered per browser).
-  - **Every dropdown has icons:** row menus, filter menus, the Columns menu and the items of every `Select`.
-- **Setting rows.** On `sunken`: the text column flexes, the control (switch, select, segmented control) never shrinks and stays on the right.
+- **Lists** (owner's calls, 2026-11-17, after comparing every table with Inaudio's History list; artifact "checkship tables or lists"). Every list in the app is a list of rows, never a table: no header row, no columns, no frame. How a list is read decides how it is grouped:
+  - **Read by time → a list grouped by day** (`#lib/components/timeline/`, `#lib/timeline.ts`): the Deployments tab, Recent deployments, Activity, the Failures drawer and Backups (all apps and one app). No header row, no columns. One heading per day ("Today · 4", "Yesterday", the weekday within a week, then "12 November", the year only when it differs; words from `Intl`, so every language gets them), in `muted`, sentence case, sticky on a solid fill (no blur). Under it one row per item, 2px apart, no lines.
+  - **Read by state → a list grouped by state:** Jobs (Running, Failed and retrying, Waiting, Pending), since a queue drains in minutes and what matters is what is stuck.
+  - **Read by name → one plain list** (`timeline-list.svelte`): Applications, Targets, Registries, the dashboard's Applications tile, Services, Volumes, a target's applications and the "still in use" dialog. Each row says in words what the columns used to say: the state as the tile and a badge, the rest on the details line ("blog.example.com · edge-01 · Staging Failed · #21 · 2 hours ago"). A row that opens nothing (a volume) has no hover; a service row opens its URL in a new tab.
+  - **Was:** tables for those (owner's call 2026-11-15, design canvas "checkship tables"). On 2026-11-17 the time and state lists came first and the owner then asked for the rest to be lists too, so `ui/table`, `table-columns.svelte.ts`, the Columns menu and the `column.*` strings are gone. The only `<table>` left is the charts' screen-reader copy.
+  - **A list row** (`timeline-row.svelte`): a 32px tile with the state's icon and colour (a `sunken` well, `raised` in dark), the title (the row's one link or button, stretched over the row) with chips after it (a badge, an environment, the dashboard's success bar); a `tile` snippet replaces the icon with a picture (a registry's logo), then one details line in `muted` `text-xs`, time first, `tabular-nums` ("14:32 · main · a41c9e2 · took 48s"); error codes in mono `danger`. The ⋯ menu (and any quick action) is always visible, never hover-only. Hover: the `hover` fill (`raised` on a `sunken` tile), and the tile flips to `surface`; an open menu keeps `raised`; the open item (its drawer) and a just-arrived row are `accent-soft`. 6px corners. The link's accessible name says everything the row shows ("Deployment 5, Production, Failed, …"), and each group is a `section` with an `h3` and a `ul`.
+  - **Never scrolls sideways:** the details line ends in "…" when it runs out of room; the row's accessible name always has all of it.
+  - **Paging in lists:** "Show more (N)" with the count shown ("20 of 23 deployments"), never numbered pages, so a day is never cut in half (the one exception is the dashboard's Applications tile: a fixed-height tile of 6, with previous and next). Pages stay server-side (one polled query per page shown, joined, each item kept once); Activity and Failures keep their keyset cursor ("Load more").
+  - **Row menu** (`#lib/components/table/row-menu*.svelte`): a ghost 32px ⋯ button with an accessible name ("Actions for blog"); the menu opens under it, aligned to the right edge. Every item has an icon. Groups are split by a 6px gap, never a separator; the destructive item comes last, in `danger`. Row buttons (Reconfigure, Cancel) live in the menu. Clicking the row opens the item; the menu only opens from ⋯.
+  - **Above a list:** a search field and `FilterMenu` buttons ("State: Any", single choice, an icon on every option).
+  - **Every dropdown has icons:** row menus, filter menus and the items of every `Select`.
+- **Setting rows** (`#lib/components/setting-row.svelte`). No fill and no line (§1): the label (pointing at the control) and one line of help flex on the left; the control (switch, select, segmented control, a red button) never shrinks and stays on the right; at least 54px tall. Down a form the controls line up in one column on the right edge, which is the structure. Inaudio separates these rows with hairlines; checkship keeps space only (owner, 2026-11-17, §1 no dividers). Two-column form sections always use `#lib/components/settings-section.svelte`.
+- **Section headings** (`#lib/components/section-heading.svelte`). A section inside a page or drawer is labelled, not boxed: 12.5px semibold `muted`, sentence case, a little letter-spacing, the same style as the sidebar's "Workspace" label and the list day headings, with an optional aside on the right (a count, a link, actions). Inaudio's are uppercase in `faint`; checkship keeps sentence case and never uses `faint` for text (§4). Form sections keep their two-column title and sentence (§11.6).
+- **Notices** (`#lib/components/notice.svelte`). A note is an icon and words. Neutral notes have no fill. Only a real state gets a tint: `warning` (something is left out or waiting, such as a skipped mount) and `danger` (something failed). shadcn `Alert` keeps its tinted variants for states only.
 - **Form fields.** A label and its control stack vertically. Help text sits under the control in `muted`; a validation error replaces it in `danger`, with an icon (`#lib/components/field-message.svelte`).
 
 ### Auth layout (sign-in)
@@ -284,8 +293,12 @@ Component internals (button height, input padding) keep the shadcn defaults.
   | Heading 2 | 20 / 28            | 600    | `text-xl font-semibold`           |
   | Heading 3 | 18 / 28            | 600    | `text-lg font-semibold`           |
   | Body      | 16 / 24            | 400    | `text-base`                       |
+  | Small     | 14 / 20            | 400    | `text-sm` (controls, table cells) |
+  | Label     | 13 / 20            | 400    | `text-label` (descriptions, help) |
   | Caption   | 12 / 16            | 400    | `text-xs`                         |
   | Mono      | 12 / 16            | 400    | `font-mono text-xs`               |
+
+  These are the only sizes. `text-label` is defined in `@theme` in `routes/layout.css`. Never write an arbitrary size such as `text-[12.5px]`; pick the nearest step. Big dashboard figures use Heading 1 (`text-3xl`), and small ones Heading 2 (`text-xl`).
 
 - **Headings** are semibold (600) with tight tracking (`tracking-tight`).
 - **Descriptions** under headings and form fields are `muted`, at regular weight.
@@ -306,7 +319,7 @@ Component internals (button height, input padding) keep the shadcn defaults.
 - **Sizes:** 18px in buttons, 20px in the sidebar and title bar, 14px in badges.
 - **Every labelled button leads with an icon** that names its action (New: `Add01`, Save: `Tick02`, Promote: `Rocket01`, Redeploy and Reconfigure: `Refresh`, Copy: `Copy01`, Delete: `Delete02`). The icon is decorative: the label carries the meaning.
 - **Colour.** Icons inherit `currentColor`.
-- **Accessibility.** A decorative icon is `aria-hidden` (the default). An icon-only button has an `aria-label` and a `Tooltip`.
+- **Accessibility.** A decorative icon is `aria-hidden` (the default). An icon-only button has an `aria-label` and a `Tooltip`: use `#lib/components/icon-button.svelte`, whose `label` is both. Its `tone` is `frame` on canvas and `surface` elsewhere; `touch` makes it 44px on phones. A trigger owned by another Bits UI part (a menu, a sheet close) uses `iconButtonClass()` and its own `Tooltip`.
 - **Nav icons:** Applications `DashboardSquare01`, Targets `ServerStack01`, Registries `Package`, Jobs `TaskDone01`, Documentation `Book02`, theme `Computer` / `Sun03` / `Moon02`, sidebar toggle `SidebarLeft`, menu `Menu01`.
 - **Status icons:** `CheckmarkCircle02` succeeded or ready, `CancelCircle` failed, `Loading03` (spinning) running or configuring, `Clock01` pending, `Delete02` deletion requested, `Alert02` warnings.
 - **Old icons** (`src/assets/icons/*.svelte`) stay until the last old page that uses them is rebuilt.
@@ -314,7 +327,7 @@ Component internals (button height, input padding) keep the shadcn defaults.
 ## 9. Motion
 
 - **Allowed:**
-  - transitions on state change (150ms);
+  - transitions on state change (150ms), including the sidebar collapsing;
   - the navigation progress bar;
   - the spinner while work is pending;
   - Bits UI's open and close animations for menus, popovers, dialogs and the sheet (from `tw-animate-css`).
@@ -401,7 +414,7 @@ Everything is in `src/components/` (alias `$components`). Each component maps to
 | `input-file.svelte` | File input for .tar.gz | `Input type="file"` inside `Field` |
 | `form.svelte`, `form-section.svelte`, `form-errors.svelte` | `<form>` + fieldset disabled while submitting; titled section; error list | Keep `form.svelte` (it wraps `submitter`), re-styled; `FieldSet` / `FieldLegend` for sections; `Alert variant="destructive"` for errors |
 | `form-env-vars.svelte` | Per-service env var editors | `Field` + `Textarea` (mono) inside `Collapsible` per service |
-| `card.svelte`, `cards-grid.svelte` | Entity card with optional footer; responsive grid | **No cards:** tables (§5, Tables). Done for every list |
+| `card.svelte`, `cards-grid.svelte` | Entity card with optional footer; responsive grid | **No cards:** lists (§5, Lists). Done for every list |
 | `app-card`, `target-card`, `registry-card`, `environment-card`, `deployment-card` | Domain cards | Same names, rebuilt on `Card` |
 | `deployment-pill`, `entrypoint-pill` | Pill links (deployment number + state; service URL) | `Badge` (4px corner) with a status icon |
 | `status-indicator.svelte` | Coloured dot for success, failed, running, pending | Status dot + `Badge`; rules in 11.4 |
@@ -518,21 +531,21 @@ Added 2026-11-14 after the owner's review of the "application pages · v2 drawer
 
 Added 2026-11-14 after research into Vercel, Render, Railway and Coolify (the "Application details v3" canvas row). Only patterns checkship has the API for were kept.
 
-- **Header** (`routes/(main)/apps/[id]/app-workspace.svelte`): the name, a status line (what each environment serves: live, deploying, failed or not deployed, with its number; the repository; who created it), then Visit (the production URL), Settings and a split **Deploy** button.
+- **Header** (`routes/(main)/apps/[id]/app-workspace.svelte`): the name, a status line (what each environment serves: live, deploying, failed or not deployed, with its number; the repository; who created it), then Visit (the production URL) and a split **Deploy** button. **The header is the same on every tab, Settings included** (owner's call 2026-11-17): Settings is a tab, not a second button, and its Delete and Save sit under the form (Delete on the left, Save on the right).
   - Deploy is one click: the latest commit of the branch production last deployed (Coolify: "a one-click button … the adjacent dropdown for secondary actions"; Render's Manual Deploy). With no Git repository, or no branch yet, it opens the New deployment drawer instead.
   - The arrow opens the other ways: deploy staging, a compose file, an archive, redeploy production. Each queued deployment opens its preview drawer.
 - **Tabs** (`app-tabs.svelte`): Overview, Deployments (with the total), Logs, Settings. They are links, so each has its own address; the current one has the `raised` fill. Variables stay in Settings.
-- **Overview.** Staging and production as a pipeline: two cards with **Promote** between them, which names the deployment and says why it is offered (staging runs a newer commit), or why it is not (still running, failed, nothing on staging). Each card leads with the live URL, then a Live / Deploying / Failed marker, the state badge, source with branch and short commit (or the error code), and Logs and Redeploy. A running deployment adds a banner that says production keeps serving its current one. Below: the services of both environments (URL and image per environment) and the five most recent deployments.
-- **Deployments tab** (`deployments/+page.svelte`): environment and status as segmented controls and a search on number, branch or commit, all filtered on the server (`status`, `search` and `per_page` query parameters, 20 per page). The deployment each environment serves is marked Live. Each row opens its preview; its menu (Railway) has View logs, Promote to production (successful staging rows), Redeploy and Copy link. Promote and Redeploy confirm in a dialog.
+- **Overview.** Staging and production as a pipeline: two sections with **Promote** between them (cards until 2026-11-17; now no fill, §1 Cardless, and a running deploy shows in the marker and badge, no ring), which names the deployment and says why it is offered (staging runs a newer commit), or why it is not (still running, failed, nothing on staging). Each leads with the live URL, then a Live / Deploying / Failed marker, the state badge, source with branch and short commit (or the error code), and Logs and Redeploy. A running deployment adds a banner that says production keeps serving its current one. Below: the services of both environments (URL and image per environment) and the five most recent deployments.
+- **Deployments tab** (`deployments/+page.svelte`): environment and status as segmented controls and a search on number, branch or commit, all filtered on the server (`status`, `search` and `per_page` query parameters). A list grouped by day (§5 Lists), 20 at a time with Show more. The deployment each environment serves is marked Live. Each row opens its preview; its menu (Railway) has View logs, Promote to production (successful staging rows), Redeploy and Copy link. Promote and Redeploy confirm in a dialog.
 - **Logs tab** (`logs/+page.svelte`, added 2026-11-15, "Logs tab" canvas row): what the containers write, live, from `GET /apps/{id}/logs` (server-sent events, one stream per page, every service merged in time order). Reference: Render's live tail and copy of the displayed logs, Railway's `-term` filter, Coolify's restart indicator, Dozzle's pause and download.
   - Toolbar, wrapping: environment (segmented), service (All or one, filtered in the browser), lines to load (100, 200, 1000, 5000), search (`-term` hides lines), Errors only (stderr or error lines), the live state, Pause or Follow, timestamps and wrap (icon toggles, `accent-soft` when on), Clear (the view only) and a split Copy button whose menu has Copy all, Copy as one line (joined with ` | `) and Download .log.
-  - Status strip from `GET /apps/{id}/services`, kept current by the stream's `state` events: one `sunken` chip per container with a state dot, state, uptime, restarts (`warning`), health and last exit code (`danger`).
+  - Status strip from `GET /apps/{id}/services`, kept current by the stream's `state` events: one entry per container (no chip box since 2026-11-17) with a state dot, state, uptime, restarts (`warning`), health and last exit code (`danger`).
   - Console: mono rows on `sunken`, `faint` time, `muted` service column when several services show, a small `stderr` chip, `danger` for error lines, ANSI codes removed. A hovered or focused row takes the `raised` fill and shows its copy button. Pinned to the newest line while following; paused, an accent "N new lines" pill appears. The view keeps 5,000 lines and says when older ones were dropped.
   - States: connecting, reconnecting (a `warning-soft` banner, lines resume from the last one shown), every container stopped (the stream stays open, Redeploy offered), never deployed, too many streams, logs unavailable (logging driver), nothing matches, and copy over plain HTTP.
   - Phone: filters move into a sheet behind one button; each line wraps under its time and service, and the container chips scroll sideways.
   - The stream is read with `fetch`, not `EventSource` (`#lib/runtime-logs.svelte.ts`): EventSource hides the HTTP status, and 404 `no_containers`, 409 `logs_unavailable` and 429 `too_many_streams` each have their own state. It reconnects after 1, 2, 5 then 10 seconds with `since` set to the last line's time, and stops after four server errors in a row (a target that can't be reached). Parsing, the 5,000-line buffer, dedupe, search and the copy formats are pure functions in `#lib/runtime-logs.ts`.
   - The console's height is what is left of the workspace under the toolbar and chips (measured, since both wrap), at least 360px.
-  - Overview cards: the deployment button reads **Deployment log** (it opens the deployment preview) and a live environment adds **App logs**, which opens this tab on that environment.
+  - Overview environments: the deployment button reads **Deployment log** (it opens the deployment preview) and a live environment adds **App logs**, which opens this tab on that environment.
 - **Not added, on purpose:** restart and stop, metrics, a terminal, rollback without rebuilding. checkship has no endpoint for them yet; they can join the Deploy menu and the tabs when it does.
 
 ### 11.8 Targets and registries
@@ -540,7 +553,7 @@ Added 2026-11-14 after research into Vercel, Render, Railway and Coolify (the "A
 Added 2026-11-14, researched (Coolify servers and proxy, Dokploy remote servers and registries, Docker, GitHub, GitLab and Quay docs) and checked line by line against the Go backend.
 
 - **Targets list:** one row per Docker engine with where it is (`This machine · Docker engine` or `user@host:port`, with the server's defaults docker and 22 filled in), how it exposes services, its state and how many applications use it. Ready shows when it was configured: `last_ready_version` is a time, not a version. Failed shows its error and a Reconfigure button on the row. A target being deleted shows Deleting. Rows open the target.
-- **Target page** (`routes/(main)/targets/[id]`): tabs Overview and Settings. The overview has the state (failed: the error in its own block, three things to check, Reconfigure), Connection and Exposure as fact cards, and the applications that deploy to it.
+- **Target page** (`routes/(main)/targets/[id]`): tabs Overview and Settings, under one header (`target-header.svelte`: name, state, where it is, Reconfigure) that is the same on both tabs (owner's call 2026-11-17); Settings is a tab, not a second button, and its Delete and Save sit under the form. The overview has the state (failed: the error in its own block, three things to check, Reconfigure), Connection and Exposure as fact cards, and the applications that deploy to it.
 - **Form, following `infra/provider/docker/data.go` and `domain/target.go`:**
   - One target per Docker engine: "This machine" is offered only while no local target exists.
   - The host identifies a remote target and can't change (`target_provider_update_not_permitted`): read-only in Settings.
@@ -555,7 +568,7 @@ Added 2026-11-14, researched (Coolify servers and proxy, Dokploy remote servers 
 
 Added 2026-11-14, researched (Oban Web, SolidQueueWeb, Bull Board; SaaS UI patterns for API keys, profile and settings pages; Zuplo's API key practices) and checked against `pkg/bus/sqlite/store.go` and `internal/auth/app`.
 
-- **Jobs list** (`routes/(main)/jobs`): the live queue, 10 per page, oldest first (the server's order, said on the page). The header shows the count, a Live dot (polls every 5 s) and that failed jobs retry on their own every 15 seconds. Pause updates stops polling; it also pauses while a job's drawer is open and while the tab is hidden.
+- **Jobs list** (`routes/(main)/jobs`): the live queue, grouped by state (§5 Lists), 10 at a time with Show more, oldest first within a state (the server's order, said on the page). The header shows the count, a Live dot (polls every 5 s) and that failed jobs retry on their own every 15 seconds. Pause updates stops polling; it also pauses while a job's drawer is open and while the tab is hidden.
 - **Row states, from the server's fields** (`#lib/job.ts`): Running (`retrieved`), Failed, retrying (an error; "next try in N s" from `not_before`), Waiting (a running job of its group, or an earlier job on its resource for jobs that wait for it, is on the same page; "after welcome #5"), Pending. Each row is named for what it acts on: a deployment as "app #N" with its environment (read from the group, `deployment.deployment.deploy.<app>-<env>-<id>`), cleanups by app, target jobs by target. The third column shows the error, else the resource id.
 - **State filter:** `GET /api/v1/jobs?status=running|failed|pending` (`bus.GetJobsFilters.Status`); pending means not retrieved and never failed.
 - **Actions follow the policy:** Cancel only on cancellable jobs (cleanups), behind a confirmation naming the job. No Retry (automatic) and no bulk actions (the API cancels one job at a time). Deployments can't be cancelled.
@@ -569,8 +582,8 @@ Added 2026-11-14, researched (Oban Web, SolidQueueWeb, Bull Board; SaaS UI patte
 Added 2026-11-14. Research: DeployHQ, Kyndryl, ServiceNow, CloudBees, Metabase DORA, Harness, Datadog, Dokploy and Coolify; SaaSFrame and StudioMeyer bento guides; LayerChart 2.x. Checked against the Go backend.
 
 - **Where:** "/" is the Overview; Applications moved to `/apps` with its own sidebar item. Sign-in lands on the Overview.
-- **Bento** (`src/routes/(main)/+page.svelte`, tiles in `src/lib/components/dashboard/`): 4 columns from xl, 2 from md, 1 on phones; 16px gaps; one tile style (sunken, 8px radius, 20px padding).
-  - Row 1: a **stats strip** (`stats-strip.svelte`): one sunken band with four figures (Deployments, Success rate, Median duration, Time to recover), not four cards. Segments are separated by space, never lines. Each has a label with an icon, the figure, its change against the previous period of the same length (green when the change is good news), the previous value in words and a sparkline. It is 2×2 below xl; phones drop the previous-value line. The first period shows no change badge. Research: connected KPI bars, Shopify's metrics bar, the flat KPI band pattern, Stripe's home.
+- **Bento** (`src/routes/(main)/+page.svelte`, sections in `src/lib/components/dashboard/`): 4 columns from xl, 2 from md, 1 on phones; 40px gaps. Since 2026-11-17 the tiles have no fill (§1 Cardless): each is a section on the page, labelled by a `SectionHeading` with its icon and actions (`tile.svelte` keeps the loading and error states). Was: sunken tiles, 8px radius, 20px padding, 16px gaps.
+  - Row 1: a **stats strip** (`stats-strip.svelte`): four figures in one row on the page, no band (Deployments, Success rate, Median duration, Time to recover), not four cards. Segments are separated by space, never lines. Each has a label with an icon, the figure, its change against the previous period of the same length (green when the change is good news), the previous value in words and a sparkline. It is 2×2 below xl; phones drop the previous-value line. The first period shows no change badge. Research: connected KPI bars, Shopify's metrics bar, the flat KPI band pattern, Stripe's home.
   - The deployments-per-day chart is the hero (2×2). Next to it: Needs attention (failed production deploys → Open, failed targets → Reconfigure, failing jobs → Jobs) and Infrastructure (targets and job queue by state, as two link rows with no inner cards).
   - Then Activity and Applications (2×2 each), Duration (2×1), By environment and Failures (1×1).
 - **Charts:** shadcn-svelte Chart on **LayerChart 2.9.2**, pinned exactly; it was the newest release older than two weeks. Colours come from `--chart-1…5`, mapped to palette tokens. Each chart has a text summary; the bar chart also has a hidden data table. Legends always name the series.
@@ -586,6 +599,16 @@ Added 2026-11-14. Research: DeployHQ, Kyndryl, ServiceNow, CloudBees, Metabase D
   - The page also refreshes every 30 s, because bulk failures at startup and app-delete cascades send no event.
 - **States:** first run (a three-step checklist), skeletons while loading, a failing tile says so and offers Try again, and an empty range offers a longer one. Phones get one column with no sideways scroll.
 - **Not added (no data):** lead time for changes (no commit times), CPU, memory and traffic (no agent).
+
+
+### 11.11 Inaudio comparison (2026-11-17)
+
+The owner had the dashboard checked against the layout and design write-up of Inaudio, a desktop app built on the same ideas (canvas desk, raised surface, one accent, tokens through `@theme inline`). Audit: the "checkship design audit" artifact.
+
+- **Taken from it:** a themed first paint (no white flash), `scrollbar-gutter: stable` and thin token scrollbars, the sidebar width animation, an icon button whose label is its tooltip, one setting-row component, a closed type scale, `::selection` in `accent-soft`, and a hover that shows on the frame (Inaudio's own bug, which checkship had too).
+- **Left out, because a checkship rule wins:** the 1px ring around the workspace and hairlines between rows (§1 no dividers), a centred column with a max width (pages fill the workspace), the active nav item as a ringed surface (§3 uses `accent-soft`), `faint` group labels (§4), icons that animate (MOTION 1), focus outside the control (§11.5), and `user-select: none` (people copy ids and errors from a dashboard).
+- **Not applicable:** the frameless window and its drag regions, app menus, the update and "What's new" pill, the floating playback bar and per-window surfaces.
+- **Second pass, the cardless write-up (2026-11-17, artifact "checkship cardless pass", approved with the picks D1 to D6):** every decorative box went: dashboard tiles and the stats band, the environment cards, the target's Connection and Exposure cards, grey notes and "nothing here" boxes, the backups numbers, setting-row fills, empty and error state boxes, the profile's red key block (now a setting row with a red button), the account menu header, and the grey fact boxes in drawers. Kept: inputs and choice cards, the logs console and error text, state tints, `accent-soft` for the active item, and floating layers. Not copied: hairlines (D1), uppercase `faint` headings (D2), the centred column, a 24px title, actions that fade in on hover, and a 1px ring on the workspace (D6).
 
 ---
 
@@ -864,7 +887,7 @@ shadcn components use their own variable names, and three of them collide with o
 - **Step 8 is done (2026-11-14):** the shell (§5, Shell). The old `topbar`, `account`, `bottom-bar` and `progress-bar` are deleted.
 - **Rebuilt pages:** every page. Sign in, Applications, Application, New application and Settings, New deployment, Deployment, Targets, New target and Target settings, Registries (with New and edit), Jobs, Profile and the error pages. Destructive and changing actions confirm in `ConfirmDialog` (`#lib/components/confirm-dialog.svelte`), which replaces `window.confirm`; deleting an application, a target or a registry asks for its name. Drawers, drop zones and highlighted code follow §11.6.
 - **End-to-end tests** (`npm run test:e2e`, `make test-e2e`): Playwright against the real Go server and a fresh database; `e2e/auth.test.ts`, `e2e/shell.test.ts` and `e2e/pages.test.ts`.
-- **Next:** step 10. No route imports `src/components/` any more; delete it with the legacy CSS layer, then check the pages still look the same.
+- **Step 10 is done (2026-11-17):** `src/components/`, `src/assets/` (old icons and `styles.css`), the CSS reset, the `legacy` cascade layer, `svelte-preprocess-cssmodules` and the `$components` / `$assets` aliases are gone. The logo moved to `#lib/components/logo.svelte` (runes, Tailwind). Tailwind's preflight is the only reset. The legacy layer had been overriding the theme: page text came out in the old grey, placeholders were italic, and disabled controls were turned grey with a filter.
 
 Make each step its own commit, and make sure `npm run check`, `npm test`, `npm run build` and `make build` pass before starting the next. After any frontend build, restore `cmd/serve/front/build/.keep`, because the build deletes it:
 

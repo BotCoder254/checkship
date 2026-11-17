@@ -1,22 +1,20 @@
 <!--
-	Applications (DESIGN.md §5 Tables, §11.1): one table row per application with its URL, target and
-	the latest production and staging deployments. The name opens the application; the ⋯ menu has
-	Open, Deploy, Logs, Settings, Copy URL and Delete. Filter by name and target, hide columns.
+	Applications (DESIGN.md §5 Lists, §11.1): one list row per application. The tile and the badge
+	carry the latest production deployment; the details line has the URL, target, staging and when it
+	last changed. The row opens the application; the ⋯ menu has Open, Deploy, Logs, Settings, Copy
+	URL and Delete. Filter by name and target.
 -->
 <script lang="ts">
 	import Add01Icon from '@hugeicons/core-free-icons/Add01Icon';
-	import Clock01Icon from '@hugeicons/core-free-icons/Clock01Icon';
 	import CommandLineIcon from '@hugeicons/core-free-icons/CommandLineIcon';
 	import Copy01Icon from '@hugeicons/core-free-icons/Copy01Icon';
 	import DashboardSquare01Icon from '@hugeicons/core-free-icons/DashboardSquare01Icon';
 	import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
-	import Globe02Icon from '@hugeicons/core-free-icons/Globe02Icon';
+	import Loading03Icon from '@hugeicons/core-free-icons/Loading03Icon';
 	import Rocket01Icon from '@hugeicons/core-free-icons/Rocket01Icon';
 	import Search01Icon from '@hugeicons/core-free-icons/Search01Icon';
 	import ServerStack01Icon from '@hugeicons/core-free-icons/ServerStack01Icon';
 	import Settings02Icon from '@hugeicons/core-free-icons/Settings02Icon';
-	import TestTube01Icon from '@hugeicons/core-free-icons/TestTube01Icon';
-	import TextIcon from '@hugeicons/core-free-icons/TextIcon';
 	import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
 	import { toast } from 'svelte-sonner';
 	import { copyText } from '#lib/clipboard.ts';
@@ -25,21 +23,21 @@
 	import Icon from '#lib/components/icon.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
 	import StatusBadge from '#lib/components/status-badge.svelte';
-	import ColumnsMenu from '#lib/components/table/columns-menu.svelte';
+	import TimelineList from '#lib/components/timeline/timeline-list.svelte';
+	import TimelineRow from '#lib/components/timeline/timeline-row.svelte';
 	import FilterMenu from '#lib/components/table/filter-menu.svelte';
 	import RowMenuGroup from '#lib/components/table/row-menu-group.svelte';
 	import RowMenuItem from '#lib/components/table/row-menu-item.svelte';
 	import RowMenu from '#lib/components/table/row-menu.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
-	import * as Table from '#lib/components/ui/table/index.js';
 	import l from '#lib/localization/index.ts';
 	import routes from '#lib/path.ts';
 	import service, { type App } from '#lib/resources/apps.ts';
+	import { deploymentTile } from '#lib/deployment-row.ts';
 	import { DeploymentStatus, type Deployment } from '#lib/resources/deployments.ts';
 	import jobsService from '#lib/resources/jobs.ts';
 	import { deploymentBadge, deploymentMoment } from '#lib/status.ts';
-	import { ACTIONS_CELL, ACTIONS_HEAD, TableColumns } from '#lib/table-columns.svelte.ts';
 
 	const { data: apps } = service.queryAll();
 	const { data: jobs } = jobsService.queryAll({ page: 1 });
@@ -48,54 +46,6 @@
 		($apps ?? []).filter(
 			(app) => app.latest_deployments.production?.state.status === DeploymentStatus.Failed
 		).length
-	);
-
-	const columns = new TableColumns(
-		[
-			{
-				id: 'name',
-				label: l.translate('column.name'),
-				icon: TextIcon,
-				width: 'w-[18%]',
-				locked: true
-			},
-			{
-				id: 'url',
-				label: l.translate('column.url'),
-				icon: Globe02Icon,
-				width: 'w-[22%]',
-				priority: 3
-			},
-			{
-				id: 'target',
-				label: l.translate('column.target'),
-				icon: ServerStack01Icon,
-				width: 'w-[14%]',
-				priority: 2
-			},
-			{
-				id: 'production',
-				label: l.translate('column.production'),
-				icon: Rocket01Icon,
-				width: 'w-[17%]',
-				locked: true
-			},
-			{
-				id: 'staging',
-				label: l.translate('column.staging'),
-				icon: TestTube01Icon,
-				width: 'w-[17%]',
-				priority: 2
-			},
-			{
-				id: 'updated',
-				label: l.translate('column.updated'),
-				icon: Clock01Icon,
-				width: 'w-[12%]',
-				priority: 3
-			}
-		],
-		'apps'
 	);
 
 	let search = $state('');
@@ -139,6 +89,37 @@
 		return latest ? l.relative(latest) : undefined;
 	}
 
+	function deploymentText(d: Deployment): string {
+		return `${deploymentBadge(d.state).label} · #${d.deployment_number}`;
+	}
+
+	/** The details line, in reading order: where it lives, staging, when it last changed. */
+	function detailsOf(app: App, url: string | undefined): string[] {
+		const staging = app.latest_deployments.staging;
+		return [
+			url ?? l.translate('targets.url.manual'),
+			app.production_target.name,
+			!app.cleanup_requested_at && staging
+				? l.translate('apps.row.staging', [deploymentText(staging)])
+				: undefined,
+			updated(app)
+		].filter((part): part is string => !!part);
+	}
+
+	/** Everything the row shows, for its accessible name. */
+	function label(app: App, url: string | undefined): string {
+		const production = app.latest_deployments.production;
+		return [
+			app.name,
+			app.cleanup_requested_at
+				? l.translate('apps.deletion_requested')
+				: l.translate('apps.row.production', [
+						production ? deploymentText(production) : l.translate('apps.no_deployment')
+					]),
+			...detailsOf(app, url)
+		].join(', ');
+	}
+
 	async function copyUrl(url: string) {
 		if (await copyText(url)) toast.success(l.translate('copied'));
 		else toast.error(l.translate('copy_blocked'));
@@ -152,15 +133,6 @@
 		await service.fetchAll({ cache: 'no-store' });
 	}
 </script>
-
-{#snippet environment(deployment: Deployment | undefined)}
-	{#if deployment}
-		{@const badge = deploymentBadge(deployment.state)}
-		<StatusBadge state={badge.state} label="{badge.label} · #{deployment.deployment_number}" />
-	{:else}
-		<span class="text-muted-foreground">{l.translate('apps.no_deployment')}</span>
-	{/if}
-{/snippet}
 
 <PageHeader title={l.translate('breadcrumb.applications')}>
 	{#snippet actions()}
@@ -200,76 +172,41 @@
 					options={targetOptions}
 				/>
 			</div>
-			<ColumnsMenu {columns} />
 		</div>
 
-		<Table.Root aria-label={l.translate('breadcrumb.applications')}>
-			<Table.Header>
-				<Table.Row>
-					{#each columns.shown as column (column.id)}
-						<Table.Head class={columns.head(column.id)}>{column.label}</Table.Head>
-					{/each}
-					<Table.Head class={ACTIONS_HEAD}>{l.translate('column.actions')}</Table.Head>
-				</Table.Row>
-			</Table.Header>
-			<Table.Body>
+		{#if shown.length > 0}
+			<TimelineList label={l.translate('breadcrumb.applications')}>
 				{#each shown as app (app.id)}
 					{@const url = appUrl(app)}
-					<Table.Row class="relative">
-						{#if columns.visible('name')}
-							<Table.Cell class={columns.cell('name')}>
-								<!-- The whole row opens the application; the link stretches over it. -->
-								<a
-									href={routes.app(app.id)}
-									title={app.name}
-									class="text-sm font-semibold outline-none after:absolute after:inset-0 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
-									>{app.name}</a
+					{@const production = app.latest_deployments.production}
+					{@const tile = app.cleanup_requested_at
+						? { icon: Loading03Icon, tone: 'muted' as const, spin: true }
+						: production
+							? deploymentTile(production.state)
+							: { icon: DashboardSquare01Icon, tone: 'muted' as const, spin: false }}
+					<TimelineRow
+						icon={tile.icon}
+						tone={tile.tone}
+						spin={tile.spin}
+						label={label(app, url)}
+						href={routes.app(app.id)}
+						muted={!!app.cleanup_requested_at}
+					>
+						{#snippet title()}{app.name}{/snippet}
+						{#snippet badge()}
+							{#if app.cleanup_requested_at}
+								<StatusBadge state="deleting" label={l.translate('apps.deletion_requested')} />
+							{:else if production}
+								{@const status = deploymentBadge(production.state)}
+								<StatusBadge state={status.state} label={deploymentText(production)} />
+							{:else}
+								<span class="text-xs font-normal text-muted-foreground"
+									>{l.translate('apps.no_deployment')}</span
 								>
-							</Table.Cell>
-						{/if}
-						{#if columns.visible('url')}
-							<Table.Cell
-								class={columns.cell(
-									'url',
-									url ? 'font-mono text-[12.5px] text-primary' : 'text-muted-foreground'
-								)}
-								title={url}
-							>
-								{url ?? l.translate('targets.url.manual')}
-							</Table.Cell>
-						{/if}
-						{#if columns.visible('target')}
-							<Table.Cell class={columns.cell('target', 'text-muted-foreground')}>
-								{app.production_target.name}
-							</Table.Cell>
-						{/if}
-						{#if app.cleanup_requested_at}
-							{#if columns.visible('production')}
-								<Table.Cell class={columns.cell('production')}>
-									<StatusBadge state="deleting" label={l.translate('apps.deletion_requested')} />
-								</Table.Cell>
 							{/if}
-							{#if columns.visible('staging')}
-								<Table.Cell class={columns.cell('staging', 'text-muted-foreground')}>—</Table.Cell>
-							{/if}
-						{:else}
-							{#if columns.visible('production')}
-								<Table.Cell class={columns.cell('production')}>
-									{@render environment(app.latest_deployments.production)}
-								</Table.Cell>
-							{/if}
-							{#if columns.visible('staging')}
-								<Table.Cell class={columns.cell('staging')}>
-									{@render environment(app.latest_deployments.staging)}
-								</Table.Cell>
-							{/if}
-						{/if}
-						{#if columns.visible('updated')}
-							<Table.Cell class={columns.cell('updated', 'text-muted-foreground')}>
-								{updated(app) ?? '—'}
-							</Table.Cell>
-						{/if}
-						<Table.Cell class={ACTIONS_CELL}>
+						{/snippet}
+						{#snippet details()}{detailsOf(app, url).join(' · ')}{/snippet}
+						{#snippet actions()}
 							<RowMenu label={l.translate('table.menu', [app.name])}>
 								<RowMenuGroup>
 									<RowMenuItem icon={ViewIcon} href={routes.app(app.id)}>
@@ -307,17 +244,15 @@
 									</RowMenuGroup>
 								{/if}
 							</RowMenu>
-						</Table.Cell>
-					</Table.Row>
-				{:else}
-					<Table.Row>
-						<Table.Cell colspan={columns.shown.length + 1} class="text-muted-foreground">
-							{l.translate('detail.list.no_match')}
-						</Table.Cell>
-					</Table.Row>
+						{/snippet}
+					</TimelineRow>
 				{/each}
-			</Table.Body>
-		</Table.Root>
+			</TimelineList>
+		{:else}
+			<p class="px-2 py-3 text-label text-muted-foreground">
+				{l.translate('detail.list.no_match')}
+			</p>
+		{/if}
 	</div>
 {:else if $apps}
 	<EmptyState

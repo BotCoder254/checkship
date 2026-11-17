@@ -1,5 +1,5 @@
 <!--
-	Overview (DESIGN.md §11.10): a bento grid. A stats strip compares the period with the previous
+	Overview (DESIGN.md §11.10): a bento grid of sections on the page, no tiles or boxes (§1 Cardless), 40px apart. A stats strip compares the period with the previous
 	one; the deployments chart is the hero; then what needs attention, infrastructure, the live
 	activity feed, applications, durations, environments and failures.
 
@@ -32,6 +32,7 @@
 	import Tile from '#lib/components/dashboard/tile.svelte';
 	import Icon from '#lib/components/icon.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
+	import SectionHeading from '#lib/components/section-heading.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { connectLive, liveChanges, liveStatus } from '#lib/live.ts';
@@ -121,7 +122,7 @@
 <PageHeader title={l.translate('breadcrumb.overview')}>
 	{#snippet actions()}
 		<span
-			class="mr-1 flex items-center gap-2 text-[13px] {$liveStatus === 'offline'
+			class="mr-1 flex items-center gap-2 text-label {$liveStatus === 'offline'
 				? 'text-warning'
 				: 'text-muted-foreground'}"
 			aria-live="polite"
@@ -195,37 +196,36 @@
 </PageHeader>
 
 {#if firstRun}
-	<section
-		aria-labelledby="first-run"
-		class="flex max-w-2xl flex-col gap-3 rounded-lg bg-sunken p-6"
-	>
-		<h2 id="first-run" class="text-base font-semibold">{l.translate('dashboard.first.title')}</h2>
+	<section aria-labelledby="first-run" class="flex max-w-2xl flex-col gap-3">
+		<SectionHeading id="first-run">{l.translate('dashboard.first.title')}</SectionHeading>
 		<p class="text-sm text-muted-foreground">{l.translate('dashboard.first.description')}</p>
-		{#each [{ done: activeTargets > 0, label: l.translate('dashboard.first.target'), href: routes.createTarget }, { done: false, label: l.translate('dashboard.first.app'), href: routes.createApp }, { done: false, label: l.translate('dashboard.first.deploy') }] as step, i (i)}
-			<div
-				class="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3 rounded-md bg-surface p-3"
-			>
-				<span
-					class="flex size-7 items-center justify-center rounded-full text-[13px] font-semibold {step.done
-						? 'bg-success-soft text-success'
-						: 'bg-raised text-muted-foreground'}"
+		<ol class="-mx-2 flex flex-col gap-0.5">
+			{#each [{ done: activeTargets > 0, label: l.translate('dashboard.first.target'), href: routes.createTarget }, { done: false, label: l.translate('dashboard.first.app'), href: routes.createApp }, { done: false, label: l.translate('dashboard.first.deploy') }] as step, i (i)}
+				<li
+					class="grid min-h-[54px] grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3 px-2 py-2"
 				>
-					{#if step.done}<Icon icon={Tick02Icon} class="size-3.5" />{:else}{i + 1}{/if}
-				</span>
-				<span class="text-sm {step.done ? 'text-muted-foreground line-through' : ''}"
-					>{step.label}</span
-				>
-				{#if step.href && !step.done && (i === 0 || activeTargets > 0)}
-					<Button size="sm" href={step.href}>
-						<Icon icon={ArrowRight01Icon} />
-						{l.translate('dashboard.first.go')}
-					</Button>
-				{/if}
-			</div>
-		{/each}
+					<span
+						class="flex size-7 items-center justify-center rounded-full text-label font-semibold {step.done
+							? 'bg-success-soft text-success'
+							: 'bg-raised text-muted-foreground'}"
+					>
+						{#if step.done}<Icon icon={Tick02Icon} class="size-3.5" />{:else}{i + 1}{/if}
+					</span>
+					<span class="text-sm {step.done ? 'text-muted-foreground line-through' : ''}"
+						>{step.label}</span
+					>
+					{#if step.href && !step.done && (i === 0 || activeTargets > 0)}
+						<Button size="sm" href={step.href}>
+							<Icon icon={ArrowRight01Icon} />
+							{l.translate('dashboard.first.go')}
+						</Button>
+					{/if}
+				</li>
+			{/each}
+		</ol>
 	</section>
 {:else}
-	<div class="grid grid-flow-row-dense grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+	<div class="grid grid-flow-row-dense grid-cols-1 gap-x-10 gap-y-10 md:grid-cols-2 xl:grid-cols-4">
 		<StatsStrip
 			{summary}
 			{range}
@@ -243,7 +243,7 @@
 			onretry={retrySummary}
 		>
 			{#snippet actions()}
-				<ul class="flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-muted-foreground">
+				<ul class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
 					<li class="flex items-center gap-1.5">
 						<span class="size-2 rounded-full bg-success"></span>{l.translate(
 							'dashboard.series.succeeded'
@@ -263,7 +263,7 @@
 			{/snippet}
 			{#if summary && summary.current.deployments > 0}
 				<DeploysChart days={series} onselect={(day) => day.failed && (failuresOpen = true)} />
-				<p class="text-[12.5px] text-muted-foreground">{l.translate('dashboard.deploys.hint')}</p>
+				<p class="text-xs text-muted-foreground">{l.translate('dashboard.deploys.hint')}</p>
 			{:else}
 				<div class="flex flex-1 flex-col items-center justify-center gap-2.5 py-10 text-center">
 					<Icon icon={ChartHistogramIcon} class="size-6 text-faint" />
@@ -311,7 +311,7 @@
 			onretry={retrySummary}
 		>
 			{#snippet actions()}
-				<ul class="flex gap-4 text-[12.5px] text-muted-foreground">
+				<ul class="flex gap-4 text-xs text-muted-foreground">
 					<li class="flex items-center gap-1.5">
 						<span class="size-2 rounded-full bg-primary"></span>{l.translate(
 							'dashboard.duration.median'
@@ -345,15 +345,14 @@
 			onretry={retrySummary}
 		>
 			<div class="flex items-baseline gap-2">
-				<strong class="text-[30px]/9 font-semibold tabular-nums"
-					>{summary?.current.failed ?? 0}</strong
+				<strong class="text-3xl/9 font-semibold tabular-nums">{summary?.current.failed ?? 0}</strong
 				>
-				<span class="text-[13px] text-muted-foreground"
+				<span class="text-label text-muted-foreground"
 					>{l.translate('dashboard.failures.in', [range])}</span
 				>
 			</div>
 			{#if summary?.errors.length}
-				<ul class="flex flex-col gap-1.5 text-[12.5px] text-muted-foreground">
+				<ul class="flex flex-col gap-1.5 text-xs text-muted-foreground">
 					{#each summary.errors as e (e.code)}
 						<li class="flex justify-between gap-3">
 							<span class="truncate font-mono">{e.code}</span>

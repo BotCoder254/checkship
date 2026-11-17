@@ -56,7 +56,7 @@
 		bind:this={element}
 		aria-label={label}
 		class={cn(
-			'overflow-auto rounded-md bg-canvas px-4 py-3 font-mono text-[12.5px]/5 break-all whitespace-pre-wrap text-ink',
+			'overflow-auto rounded-md bg-canvas px-4 py-3 font-mono text-xs/5 break-all whitespace-pre-wrap text-ink',
 			copy && 'pr-24',
 			className
 		)}><code>{@html rendered}</code></pre>

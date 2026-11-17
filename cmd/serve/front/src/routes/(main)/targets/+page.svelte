@@ -1,24 +1,22 @@
 <!--
-	Targets (DESIGN.md §5 Tables, §11.8): one table row per Docker engine with where it is, the URL it
-	exposes services on, its state (Failed shows the error code where Configured goes) and how many
-	applications deploy to it. The name opens the target; the ⋯ menu has Open, Reconfigure (failed
-	targets), Settings and Delete (only while no application uses it).
+	Targets (DESIGN.md §5 Lists, §11.8): one list row per Docker engine. The tile and the badge carry
+	its state; the details line has where it is, the URL it exposes services on, how many
+	applications deploy to it and when it was last configured (the error code when it failed). The
+	row opens the target; the ⋯ menu has Open, Reconfigure (failed targets), Settings and Delete
+	(only while no application uses it).
 -->
 <script lang="ts">
 	import Add01Icon from '@hugeicons/core-free-icons/Add01Icon';
-	import Calendar03Icon from '@hugeicons/core-free-icons/Calendar03Icon';
 	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
 	import CancelCircleIcon from '@hugeicons/core-free-icons/CancelCircleIcon';
-	import DashboardSquare01Icon from '@hugeicons/core-free-icons/DashboardSquare01Icon';
 	import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
-	import Globe02Icon from '@hugeicons/core-free-icons/Globe02Icon';
+	import type { IconData } from '#lib/components/icon.svelte';
 	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
 	import Loading03Icon from '@hugeicons/core-free-icons/Loading03Icon';
 	import RefreshIcon from '@hugeicons/core-free-icons/RefreshIcon';
 	import Search01Icon from '@hugeicons/core-free-icons/Search01Icon';
 	import ServerStack01Icon from '@hugeicons/core-free-icons/ServerStack01Icon';
 	import Settings02Icon from '@hugeicons/core-free-icons/Settings02Icon';
-	import TextIcon from '@hugeicons/core-free-icons/TextIcon';
 	import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
 	import { toast } from 'svelte-sonner';
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
@@ -26,21 +24,20 @@
 	import Icon from '#lib/components/icon.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
 	import StatusBadge from '#lib/components/status-badge.svelte';
-	import ColumnsMenu from '#lib/components/table/columns-menu.svelte';
+	import TimelineList from '#lib/components/timeline/timeline-list.svelte';
+	import TimelineRow, { type TimelineTone } from '#lib/components/timeline/timeline-row.svelte';
 	import FilterMenu, { type FilterOption } from '#lib/components/table/filter-menu.svelte';
 	import RowMenuGroup from '#lib/components/table/row-menu-group.svelte';
 	import RowMenuItem from '#lib/components/table/row-menu-item.svelte';
 	import RowMenu from '#lib/components/table/row-menu.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
-	import * as Table from '#lib/components/ui/table/index.js';
 	import l from '#lib/localization/index.ts';
 	import routes from '#lib/path.ts';
 	import appsService from '#lib/resources/apps.ts';
 	import service, { TargetStatus, type Target } from '#lib/resources/targets.ts';
 	import { targetBadge } from '#lib/status.ts';
-	import { ACTIONS_CELL, ACTIONS_HEAD, TableColumns } from '#lib/table-columns.svelte.ts';
-	import { connectionLabel, isLocal, usesOf } from '#lib/target.ts';
+	import { connectionLabel, usesOf } from '#lib/target.ts';
 
 	const { data: targets } = service.queryAll();
 	const { data: apps } = appsService.queryAll();
@@ -48,54 +45,6 @@
 	const count = (status: TargetStatus) =>
 		($targets ?? []).filter((t) => !t.cleanup_requested_at && t.state.status === status).length;
 	const deleting = $derived(($targets ?? []).filter((t) => t.cleanup_requested_at).length);
-
-	const columns = new TableColumns(
-		[
-			{
-				id: 'name',
-				label: l.translate('column.name'),
-				icon: TextIcon,
-				width: 'w-[16%]',
-				locked: true
-			},
-			{
-				id: 'host',
-				label: l.translate('column.host'),
-				icon: ServerStack01Icon,
-				width: 'w-[19%]',
-				priority: 3
-			},
-			{
-				id: 'url',
-				label: l.translate('column.url'),
-				icon: Globe02Icon,
-				width: 'w-[21%]',
-				priority: 2
-			},
-			{
-				id: 'state',
-				label: l.translate('column.state'),
-				icon: CheckmarkCircle02Icon,
-				width: 'w-[14%]',
-				locked: true
-			},
-			{
-				id: 'configured',
-				label: l.translate('column.configured'),
-				icon: Calendar03Icon,
-				width: 'w-[16%]',
-				priority: 3
-			},
-			{
-				id: 'apps',
-				label: l.translate('column.apps'),
-				icon: DashboardSquare01Icon,
-				width: 'w-[9%]',
-				priority: 2
-			}
-		],
-		'targets'
-	);
 
 	type StateFilter = 'any' | 'ready' | 'configuring' | 'failed';
 	let search = $state('');
@@ -136,6 +85,33 @@
 				t.name.toLowerCase().includes(search.trim().toLowerCase())
 		)
 	);
+
+	function tileOf(target: Target): { icon: IconData; tone: TimelineTone; spin: boolean } {
+		if (target.cleanup_requested_at) return { icon: Loading03Icon, tone: 'muted', spin: true };
+		switch (target.state.status) {
+			case TargetStatus.Ready:
+				return { icon: ServerStack01Icon, tone: 'success', spin: false };
+			case TargetStatus.Failed:
+				return { icon: CancelCircleIcon, tone: 'danger', spin: false };
+			default:
+				return { icon: Loading03Icon, tone: 'warning', spin: true };
+		}
+	}
+
+	/** The details line: where it is, its URL, what deploys to it, then when it was configured. */
+	function detailsOf(target: Target, appsUsing: number | undefined): string[] {
+		const failed = !target.cleanup_requested_at && target.state.status === TargetStatus.Failed;
+		return [
+			connectionLabel(target),
+			target.url ?? l.translate('targets.url.manual'),
+			appsUsing === undefined ? undefined : l.translate('targets.row.apps', [appsUsing]),
+			failed
+				? (target.state.error_code ?? undefined)
+				: target.state.last_ready_version
+					? l.translate('targets.row.configured', [l.datetime(target.state.last_ready_version)])
+					: undefined
+		].filter((part): part is string => !!part);
+	}
 
 	let reconfiguring = $state<string>();
 
@@ -219,92 +195,38 @@
 					options={stateOptions}
 				/>
 			</div>
-			<ColumnsMenu {columns} />
 		</div>
 
-		<Table.Root aria-label={l.translate('breadcrumb.targets')}>
-			<Table.Header>
-				<Table.Row>
-					{#each columns.shown as column (column.id)}
-						<Table.Head class={columns.head(column.id)}>{column.label}</Table.Head>
-					{/each}
-					<Table.Head class={ACTIONS_HEAD}>{l.translate('column.actions')}</Table.Head>
-				</Table.Row>
-			</Table.Header>
-			<Table.Body>
+		{#if shown.length > 0}
+			<TimelineList label={l.translate('breadcrumb.targets')}>
 				{#each shown as target (target.id)}
-					{@const badge = targetBadge(target.state)}
+					{@const status = targetBadge(target.state)}
 					{@const failed =
 						!target.cleanup_requested_at && target.state.status === TargetStatus.Failed}
 					{@const uses = $apps ? usesOf($apps, target.id) : undefined}
 					{@const appsUsing = uses ? new Set(uses.map((u) => u.app.id)).size : undefined}
-					<Table.Row class="relative">
-						{#if columns.visible('name')}
-							<Table.Cell class={columns.cell('name')}>
-								<!-- The whole row opens the target; the link stretches over it. -->
-								<a
-									href={routes.target(target.id)}
-									title={target.name}
-									class="text-sm font-semibold outline-none after:absolute after:inset-0 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
-									>{target.name}</a
-								>
-							</Table.Cell>
-						{/if}
-						{#if columns.visible('host')}
-							<Table.Cell
-								class={columns.cell(
-									'host',
-									isLocal(target)
-										? 'text-muted-foreground'
-										: 'font-mono text-[12.5px] text-muted-foreground'
-								)}
-								title={connectionLabel(target)}
-							>
-								{connectionLabel(target)}
-							</Table.Cell>
-						{/if}
-						{#if columns.visible('url')}
-							<Table.Cell
-								class={columns.cell(
-									'url',
-									target.url ? 'font-mono text-[12.5px] text-primary' : 'text-muted-foreground'
-								)}
-								title={target.url ?? l.translate('targets.manual_proxy')}
-							>
-								{target.url ?? l.translate('targets.url.manual')}
-							</Table.Cell>
-						{/if}
-						{#if columns.visible('state')}
-							<Table.Cell class={columns.cell('state')}>
-								{#if target.cleanup_requested_at}
-									<StatusBadge state="deleting" label={l.translate('targets.state.deleting')} />
-								{:else}
-									<StatusBadge state={badge.state} label={badge.label} />
-								{/if}
-							</Table.Cell>
-						{/if}
-						{#if columns.visible('configured')}
-							{#if failed && target.state.error_code}
-								<Table.Cell
-									class={columns.cell('configured', 'font-mono text-[12.5px] text-danger')}
-									title={target.state.error_code}
-								>
-									{target.state.error_code}
-								</Table.Cell>
+					{@const tile = tileOf(target)}
+					{@const stateLabel = target.cleanup_requested_at
+						? l.translate('targets.state.deleting')
+						: status.label}
+					<TimelineRow
+						icon={tile.icon}
+						tone={tile.tone}
+						spin={tile.spin}
+						label={[target.name, stateLabel, ...detailsOf(target, appsUsing)].join(', ')}
+						href={routes.target(target.id)}
+						muted={!!target.cleanup_requested_at}
+					>
+						{#snippet title()}{target.name}{/snippet}
+						{#snippet badge()}
+							{#if target.cleanup_requested_at}
+								<StatusBadge state="deleting" label={stateLabel} />
 							{:else}
-								<Table.Cell class={columns.cell('configured', 'text-muted-foreground')}>
-									{target.state.last_ready_version
-										? l.datetime(target.state.last_ready_version)
-										: '—'}
-								</Table.Cell>
+								<StatusBadge state={status.state} label={status.label} />
 							{/if}
-						{/if}
-						{#if columns.visible('apps')}
-							<Table.Cell class={columns.cell('apps', 'text-muted-foreground tabular-nums')}>
-								{appsUsing ?? ''}
-							</Table.Cell>
-						{/if}
-						<Table.Cell class={ACTIONS_CELL}>
+						{/snippet}
+						{#snippet details()}{detailsOf(target, appsUsing).join(' · ')}{/snippet}
+						{#snippet actions()}
 							<RowMenu label={l.translate('table.menu', [target.name])}>
 								<RowMenuGroup>
 									<RowMenuItem icon={ViewIcon} href={routes.target(target.id)}>
@@ -352,18 +274,16 @@
 									</RowMenuGroup>
 								{/if}
 							</RowMenu>
-						</Table.Cell>
-					</Table.Row>
-				{:else}
-					<Table.Row>
-						<Table.Cell colspan={columns.shown.length + 1} class="text-muted-foreground">
-							{l.translate('detail.list.no_match')}
-						</Table.Cell>
-					</Table.Row>
+						{/snippet}
+					</TimelineRow>
 				{/each}
-			</Table.Body>
-		</Table.Root>
-		<p class="text-[13px] text-muted-foreground">{l.translate('targets.explainer')}</p>
+			</TimelineList>
+		{:else}
+			<p class="px-2 py-3 text-label text-muted-foreground">
+				{l.translate('detail.list.no_match')}
+			</p>
+		{/if}
+		<p class="text-label text-muted-foreground">{l.translate('targets.explainer')}</p>
 	</div>
 {:else if $targets}
 	<EmptyState

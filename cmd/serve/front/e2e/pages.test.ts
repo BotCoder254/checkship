@@ -186,7 +186,16 @@ test.describe('desktop', () => {
 		await signIn(page);
 		const { app } = await fixtures(page);
 		await page.goto(`/apps/${app}/edit/`);
-		await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
+		// The application header is the same on every tab: the app's name, with Settings current.
+		const tabs = page.getByRole('navigation', { name: 'Application' });
+		await expect(tabs.getByRole('link', { name: 'Settings' })).toHaveAttribute(
+			'aria-current',
+			'page'
+		);
+		const tabsTop = (await tabs.boundingBox())!.y;
+		await page.goto(`/apps/${app}/`);
+		expect((await tabs.boundingBox())!.y).toBe(tabsTop);
+		await page.goto(`/apps/${app}/edit/`);
 
 		// Section title on the left, fields on the right.
 		const general = page.getByRole('heading', { level: 2, name: 'General' });
@@ -234,7 +243,7 @@ test.describe('desktop', () => {
 		await drawer.getByRole('button', { name: 'Create registry' }).click();
 		await expect(drawer).toHaveCount(0);
 
-		const row = page.getByRole('row').filter({ hasText: 'e2e registry' });
+		const row = page.getByRole('main').getByRole('listitem').filter({ hasText: 'e2e registry' });
 		await expect(row).toBeVisible();
 		await expect(row).toContainText('e2e-bot');
 		await row.click();
@@ -255,7 +264,7 @@ test.describe('desktop', () => {
 	}) => {
 		await signIn(page, '/targets/');
 		const { target } = await fixtures(page);
-		const row = page.getByRole('row').filter({ hasText: 'pages-target' });
+		const row = page.getByRole('main').getByRole('listitem').filter({ hasText: 'pages-target' });
 		await expect(row).toContainText('e2e@pages.e2e.invalid:22');
 
 		// It can't reach that host: wait for the configuration to fail.
@@ -273,8 +282,17 @@ test.describe('desktop', () => {
 		await expect(page.getByRole('link', { name: /pages-app/ })).toBeVisible();
 		await shot(page, 'target-failed');
 
-		await page.getByRole('link', { name: 'Settings' }).last().click();
+		// Settings is a tab, not a second button, and the header stays the same on it.
+		const tabs = page.getByRole('navigation', { name: 'Target' });
+		const tabsTop = (await tabs.boundingBox())!.y;
+		await tabs.getByRole('link', { name: 'Settings' }).click();
 		await expect(page).toHaveURL(new RegExp(`/targets/${target}/edit/$`));
+		await expect(page.getByRole('heading', { level: 1, name: 'pages-target' })).toBeVisible();
+		await expect(tabs.getByRole('link', { name: 'Settings' })).toHaveAttribute(
+			'aria-current',
+			'page'
+		);
+		expect((await tabs.boundingBox())!.y).toBe(tabsTop);
 		await expect(page.getByLabel('Host')).toHaveAttribute('readonly', '');
 		await expect(page.getByLabel('User')).toHaveAttribute('placeholder', 'docker');
 
@@ -315,7 +333,8 @@ test.describe('desktop', () => {
 		await state.click();
 		await page.getByRole('menuitemradio', { name: 'Any state' }).click();
 
-		const rows = page.getByRole('row').filter({ has: page.getByRole('button') });
+		// Jobs are grouped by state, one list item per job.
+		const rows = page.getByRole('main').getByRole('listitem');
 		if ((await rows.count()) === 0) {
 			await expect(page.getByText('The queue is empty')).toBeVisible();
 			return;
@@ -355,7 +374,13 @@ test.describe('desktop', () => {
 			'aria-current',
 			'page'
 		);
-		const row = page.getByRole('row').filter({ hasText: '#1' }).first();
+		// A list grouped by day (DESIGN.md §5 Lists and tables), not a table.
+		await expect(page.getByRole('main').getByRole('table')).toHaveCount(0);
+		await expect(page.getByRole('heading', { level: 3, name: /^Today/ })).toBeVisible();
+		const row = page
+			.getByRole('main')
+			.getByRole('listitem')
+			.filter({ has: page.getByRole('button', { name: /^Deployment 1,/ }) });
 		await expect(row).toBeVisible();
 
 		await row.getByRole('button', { name: 'Actions for deployment #1' }).click();
@@ -415,9 +440,11 @@ test.describe('desktop', () => {
 		});
 		expect(queued.ok()).toBe(true);
 		const { deployment_number: number } = await queued.json();
-		await expect(activity.getByRole('link', { name: `pages-app #${number}` })).toBeVisible({
-			timeout: 10_000
-		});
+		// Rows are grouped by day; each row's link names everything it shows.
+		await expect(
+			activity.getByRole('link', { name: new RegExp(`^pages-app, Deployment ${number},`) })
+		).toBeVisible({ timeout: 10_000 });
+		await expect(activity.getByRole('heading', { level: 3, name: /^Today/ })).toBeVisible();
 
 		// Load more appends older rows without repeating any.
 		const loadMore = activity.getByRole('button', { name: 'Load more' });

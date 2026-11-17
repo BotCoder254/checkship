@@ -8,7 +8,9 @@
 	import Cancel01Icon from '@hugeicons/core-free-icons/Cancel01Icon';
 	import type { Snippet } from 'svelte';
 	import Icon from '#lib/components/icon.svelte';
+	import { iconButtonClass } from '#lib/components/icon-button.svelte';
 	import * as Sheet from '#lib/components/ui/sheet/index.js';
+	import * as Tooltip from '#lib/components/ui/tooltip/index.js';
 	import l from '#lib/localization/index.ts';
 	import { cn } from '#lib/utils.js';
 
@@ -70,12 +72,17 @@
 					</Sheet.Description>
 				{/if}
 			</div>
-			<Sheet.Close
-				class="flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset md:size-9"
-			>
-				<Icon icon={Cancel01Icon} class="size-4.5" />
-				<span class="sr-only">{l.translate('close')}</span>
-			</Sheet.Close>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props: tooltipProps })}
+						<Sheet.Close {...tooltipProps} class={iconButtonClass({ touch: true })}>
+							<Icon icon={Cancel01Icon} class="size-4.5" />
+							<span class="sr-only">{l.translate('close')}</span>
+						</Sheet.Close>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content side="bottom">{l.translate('close')}</Tooltip.Content>
+			</Tooltip.Root>
 		</header>
 
 		<div

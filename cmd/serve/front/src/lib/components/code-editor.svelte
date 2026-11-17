@@ -43,7 +43,7 @@
 	});
 
 	const shared =
-		'col-start-1 row-start-1 m-0 px-3 py-2.5 font-mono text-[12.5px]/5 break-all whitespace-pre-wrap';
+		'col-start-1 row-start-1 m-0 px-3 py-2.5 font-mono text-xs/5 break-all whitespace-pre-wrap';
 </script>
 
 <div

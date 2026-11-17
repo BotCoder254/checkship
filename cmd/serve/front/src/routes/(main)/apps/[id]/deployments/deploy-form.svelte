@@ -190,7 +190,7 @@
 		<p id="{id}-env-help" class="text-sm text-muted-foreground">
 			{l.translate('deploy.environment.help', [target.name])}
 			{#if target.url}
-				· <span class="font-mono text-[13px]">{target.url}</span>
+				· <span class="font-mono text-label">{target.url}</span>
 			{/if}
 		</p>
 	</div>
@@ -208,7 +208,7 @@
 					id="{id}-branch"
 					bind:value={branch}
 					required
-					class="font-mono text-[13px]"
+					class="font-mono text-label"
 					aria-invalid={!!fieldError('git.branch') || undefined}
 					aria-describedby="{id}-branch-message"
 				/>
@@ -224,7 +224,7 @@
 					id="{id}-hash"
 					bind:value={hash}
 					placeholder={l.translate('deploy.commit.placeholder')}
-					class="font-mono text-[13px]"
+					class="font-mono text-label"
 					aria-invalid={!!fieldError('git.hash') || undefined}
 					aria-describedby="{id}-hash-message"
 				/>
@@ -245,7 +245,7 @@
 				onfile={readCompose}
 			/>
 			{#if rawFile}
-				<div class="flex items-center justify-between gap-3 text-[13px]/[18px]">
+				<div class="flex items-center justify-between gap-3 text-label/[18px]">
 					<span class="flex min-w-0 items-center gap-1.5 text-muted-foreground">
 						<Icon icon={CheckmarkCircle02Icon} class="size-3.5 text-success" />
 						{l.translate('deploy.compose.loaded_from')}
@@ -350,7 +350,7 @@
 			/>
 		</Collapsible.Trigger>
 		<Collapsible.Content class="flex flex-col gap-2.5">
-			<p class="text-[13px] text-muted-foreground">{l.translate('deploy.curl.help')}</p>
+			<p class="text-label text-muted-foreground">{l.translate('deploy.curl.help')}</p>
 			<CodeBlock code={curl} lang="shellscript" copy label={l.translate('deploy.curl')} />
 		</Collapsible.Content>
 	</Collapsible.Root>

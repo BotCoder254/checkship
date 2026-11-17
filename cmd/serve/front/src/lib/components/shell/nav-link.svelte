@@ -49,7 +49,7 @@
 		target={external ? '_blank' : undefined}
 		rel={external ? 'noopener noreferrer' : undefined}
 		class={cn(
-			'flex h-10 items-center gap-3 rounded-md text-sm font-medium text-ink transition-colors outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+			'flex h-10 items-center gap-3 rounded-md text-sm font-medium text-ink transition-colors outline-none hover:bg-hover-frame focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
 			collapsed ? 'w-10 justify-center' : 'px-3',
 			active && 'bg-accent-soft font-semibold text-primary hover:bg-accent-soft'
 		)}

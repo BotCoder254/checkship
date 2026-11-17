@@ -1,6 +1,7 @@
 <!--
 	Application tabs (DESIGN.md §11.7): Overview, Deployments (with the total), Logs, Backups, Settings. Links, so
-	each tab has its own address; the current one has the raised fill. They scroll sideways on phones.
+	each tab has its own address; the current one has the raised fill. They scroll sideways on phones
+	with no scrollbar drawn (it read as a line), and the current tab is scrolled into view.
 -->
 <script lang="ts">
 	import Archive02Icon from '@hugeicons/core-free-icons/Archive02Icon';
@@ -8,6 +9,7 @@
 	import DashboardSquare01Icon from '@hugeicons/core-free-icons/DashboardSquare01Icon';
 	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
 	import Settings02Icon from '@hugeicons/core-free-icons/Settings02Icon';
+	import { tick } from 'svelte';
 	import Icon from '#lib/components/icon.svelte';
 	import l from '#lib/localization/index.ts';
 	import routes from '#lib/path.ts';
@@ -20,6 +22,27 @@
 	};
 
 	let { appId, active }: Props = $props();
+
+	let strip = $state<HTMLElement>();
+
+	// Bring the current tab into view when the strip scrolls (phones). Again once the deployment
+	// count and the font have arrived, since both widen the tabs before it. Scrolls the strip only.
+	$effect(() => {
+		void total;
+		void active;
+		const nav = strip;
+		if (!nav) return;
+		const reveal = () => {
+			const current = nav.querySelector<HTMLElement>('[aria-current="page"]');
+			if (!current) return;
+			const left = current.offsetLeft - nav.offsetLeft;
+			const right = left + current.offsetWidth;
+			if (left < nav.scrollLeft) nav.scrollLeft = left;
+			else if (right > nav.scrollLeft + nav.clientWidth) nav.scrollLeft = right - nav.clientWidth;
+		};
+		tick().then(reveal);
+		document.fonts?.ready.then(reveal);
+	});
 
 	// Page 1 of the whole history is enough to know the total.
 	const totalQuery = $derived(service.queryAllByApp(appId, { page: 1 }));
@@ -61,7 +84,11 @@
 	]);
 </script>
 
-<nav aria-label={l.translate('detail.tabs')} class="-mx-1 flex gap-1 overflow-x-auto px-1">
+<nav
+	bind:this={strip}
+	aria-label={l.translate('detail.tabs')}
+	class="-mx-1 no-scrollbar flex gap-1 overflow-x-auto px-1"
+>
 	{#each tabs as tab (tab.id)}
 		{@const current = tab.id === active}
 		<a
@@ -77,7 +104,7 @@
 			{#if tab.count !== undefined}
 				<span
 					class={cn(
-						'min-w-5 rounded-full px-1.5 text-center text-[11.5px]/[18px] tabular-nums',
+						'min-w-5 rounded-sm px-1.5 text-center text-xs/[18px] tabular-nums',
 						current ? 'bg-line-strong' : 'bg-raised'
 					)}>{tab.count}</span
 				>

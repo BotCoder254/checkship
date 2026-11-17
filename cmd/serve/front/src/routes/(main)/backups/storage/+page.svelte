@@ -12,6 +12,7 @@
 	import { toast } from 'svelte-sonner';
 	import FieldMessage from '#lib/components/field-message.svelte';
 	import Icon from '#lib/components/icon.svelte';
+	import SettingRow from '#lib/components/setting-row.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
 	import SettingsSection from '#lib/components/settings-section.svelte';
 	import StatusBadge from '#lib/components/status-badge.svelte';
@@ -290,7 +291,7 @@
 				description={l.translate('storage.builtin.description')}
 			>
 				{#if !$targets?.length}
-					<p class="rounded-md bg-sunken px-3.5 py-3 text-sm text-muted-foreground">
+					<p class="text-sm text-muted-foreground">
 						{l.translate('storage.builtin.no_target')}
 						<a href={routes.createTarget} class="text-primary hover:underline"
 							>{l.translate('settings.create_target')}</a
@@ -320,9 +321,7 @@
 					</div>
 
 					{#if $storage?.mode === 'builtin'}
-						<dl
-							class="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-x-3 gap-y-2.5 rounded-md bg-sunken px-4 py-3.5 text-sm"
-						>
+						<dl class="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-x-3 gap-y-2.5 text-sm">
 							<dt class="text-muted-foreground">{l.translate('storage.state')}</dt>
 							<dd class="flex flex-wrap items-center gap-2">
 								{#if builtinState}
@@ -336,11 +335,11 @@
 								{/if}
 							</dd>
 							<dt class="text-muted-foreground">{l.translate('storage.endpoint')}</dt>
-							<dd class="truncate font-mono text-[12.5px]">{$storage.endpoint || '—'}</dd>
+							<dd class="truncate font-mono text-xs">{$storage.endpoint || '—'}</dd>
 							<dt class="text-muted-foreground">{l.translate('storage.bucket')}</dt>
-							<dd class="font-mono text-[12.5px]">{$storage.bucket}</dd>
+							<dd class="font-mono text-xs">{$storage.bucket}</dd>
 							<dt class="text-muted-foreground">{l.translate('storage.access_key')}</dt>
-							<dd class="truncate font-mono text-[12.5px]">{$storage.access_key}</dd>
+							<dd class="truncate font-mono text-xs">{$storage.access_key}</dd>
 						</dl>
 					{/if}
 				{/if}
@@ -442,23 +441,16 @@
 						{/if}
 					</div>
 				</div>
-				<div class="flex items-start gap-4 rounded-md bg-sunken px-3.5 py-3">
-					<label for="s3-ssl" class="flex-1 text-sm font-medium"
-						>{l.translate('storage.use_ssl')}</label
-					>
+				<SettingRow for="s3-ssl" label={l.translate('storage.use_ssl')}>
 					<Switch id="s3-ssl" bind:checked={external.use_ssl} />
-				</div>
-				<div class="flex items-start gap-4 rounded-md bg-sunken px-3.5 py-3">
-					<span class="flex min-w-0 flex-1 flex-col gap-1">
-						<label for="s3-path" class="text-sm font-medium"
-							>{l.translate('storage.path_style')}</label
-						>
-						<span class="text-xs/[18px] text-muted-foreground"
-							>{l.translate('storage.path_style.help')}</span
-						>
-					</span>
+				</SettingRow>
+				<SettingRow
+					for="s3-path"
+					label={l.translate('storage.path_style')}
+					description={l.translate('storage.path_style.help')}
+				>
 					<Switch id="s3-path" bind:checked={external.path_style} />
-				</div>
+				</SettingRow>
 				<div class="flex flex-wrap items-center gap-3">
 					<Button variant="outline" loading={testing} onclick={test}>
 						<Icon icon={TestTube01Icon} />
@@ -479,17 +471,13 @@
 				title={l.translate('storage.copies.title')}
 				description={l.translate('storage.copies.description')}
 			>
-				<div class="flex items-start gap-4 rounded-md bg-sunken px-3.5 py-3">
-					<span class="flex min-w-0 flex-1 flex-col gap-1">
-						<label for="keep-local" class="text-sm font-medium"
-							>{l.translate('storage.keep_local')}</label
-						>
-						<span class="text-xs/[18px] text-muted-foreground"
-							>{l.translate('storage.keep_local.help')}</span
-						>
-					</span>
+				<SettingRow
+					for="keep-local"
+					label={l.translate('storage.keep_local')}
+					description={l.translate('storage.keep_local.help')}
+				>
 					<Switch id="keep-local" bind:checked={keepLocal} />
-				</div>
+				</SettingRow>
 			</SettingsSection>
 		{/if}
 
@@ -498,19 +486,19 @@
 				title={l.translate('storage.images.title')}
 				description={l.translate('storage.images.description')}
 			>
-				<dl class="flex flex-col gap-2">
+				<dl class="flex flex-col gap-4">
 					{#if mode === 'builtin'}
-						<div class="flex flex-col gap-1 rounded-md bg-sunken px-3.5 py-3">
+						<div class="flex flex-col gap-1">
 							<dt class="text-sm font-medium">{l.translate('storage.images.storage')}</dt>
-							<dd class="font-mono text-[12.5px]">{$storage.image}</dd>
+							<dd class="font-mono text-xs">{$storage.image}</dd>
 							<dd class="text-xs/[18px] text-muted-foreground">
 								{l.translate('storage.images.storage.help')}
 							</dd>
 						</div>
 					{/if}
-					<div class="flex flex-col gap-1 rounded-md bg-sunken px-3.5 py-3">
+					<div class="flex flex-col gap-1">
 						<dt class="text-sm font-medium">{l.translate('storage.images.helper')}</dt>
-						<dd class="font-mono text-[12.5px]">{$storage.helper_image}</dd>
+						<dd class="font-mono text-xs">{$storage.helper_image}</dd>
 						<dd class="text-xs/[18px] text-muted-foreground">
 							{l.translate('storage.images.helper.help')}
 						</dd>

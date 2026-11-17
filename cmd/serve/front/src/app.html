@@ -4,15 +4,34 @@
 		<meta charset="utf-8" />
 		<link rel="icon" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<style>
+			/* First paint, before the app's CSS arrives with its JS: the canvas ground of the right
+			   theme, so the page never flashes white (DESIGN.md §3 canvas values). */
+			html {
+				background: #eef0f3;
+				color-scheme: light;
+			}
+			html.dark {
+				background: #0b0b0d;
+				color-scheme: dark;
+			}
+		</style>
 		<script>
-			// Dark is the default until every page is migrated (DESIGN.md §13.5). mode-watcher 1.1.0
-			// stores "system" when it is first imported, before <ModeWatcher defaultMode> is read, so the
-			// default never applies. Seed it here, before the app loads, only when nobody has chosen yet.
-			// Remove this (and defaultMode) when switching the default to "system".
+			// Dark is the default until someone picks a theme. mode-watcher 1.1.0 stores "system" when
+			// it is first imported, before <ModeWatcher defaultMode> is read, so the default never
+			// applies: seed it here, before the app loads, only when nobody has chosen yet. Then apply
+			// the stored mode at once, so the first frame already has the right ground (mode-watcher
+			// takes over when the app starts).
 			try {
-				if (!localStorage.getItem('mode-watcher-mode')) {
-					localStorage.setItem('mode-watcher-mode', 'dark');
+				let mode = localStorage.getItem('mode-watcher-mode');
+				if (!mode) {
+					mode = 'dark';
+					localStorage.setItem('mode-watcher-mode', mode);
 				}
+				const dark =
+					mode === 'dark' ||
+					(mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+				document.documentElement.classList.toggle('dark', dark);
 			} catch {
 				// Storage blocked (private mode): mode-watcher falls back to the system setting.
 			}

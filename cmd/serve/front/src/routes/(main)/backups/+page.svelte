@@ -11,7 +11,7 @@
 	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
 	import Tag01Icon from '@hugeicons/core-free-icons/Tag01Icon';
 	import Upload04Icon from '@hugeicons/core-free-icons/Upload04Icon';
-	import BackupsTable from '#lib/components/backups/backups-table.svelte';
+	import BackupsList from '#lib/components/backups/backups-list.svelte';
 	import DetailsDrawer from '#lib/components/backups/details-drawer.svelte';
 	import RestoreDrawer from '#lib/components/backups/restore-drawer.svelte';
 	import UploadDrawer from '#lib/components/backups/upload-drawer.svelte';
@@ -110,21 +110,21 @@
 
 {#if $backups && $backups.length > 0}
 	<div class="flex flex-col gap-6">
-		<dl class="grid grid-cols-2 gap-3 md:grid-cols-4">
-			<div class="flex flex-col gap-1 rounded-lg bg-sunken px-4 py-3.5">
-				<dt class="text-[12.5px] text-muted-foreground">{l.translate('backups.list.title')}</dt>
+		<dl class="grid grid-cols-2 gap-x-10 gap-y-5 md:grid-cols-4">
+			<div class="flex flex-col gap-1">
+				<dt class="text-xs text-muted-foreground">{l.translate('backups.list.title')}</dt>
 				<dd class="text-xl font-semibold tabular-nums">{stats.count}</dd>
 			</div>
-			<div class="flex flex-col gap-1 rounded-lg bg-sunken px-4 py-3.5">
-				<dt class="text-[12.5px] text-muted-foreground">{l.translate('backups.stored.here')}</dt>
+			<div class="flex flex-col gap-1">
+				<dt class="text-xs text-muted-foreground">{l.translate('backups.stored.here')}</dt>
 				<dd class="text-xl font-semibold tabular-nums">{formatBytes(stats.local)}</dd>
 			</div>
-			<div class="flex flex-col gap-1 rounded-lg bg-sunken px-4 py-3.5">
-				<dt class="text-[12.5px] text-muted-foreground">{l.translate('storage.open')}</dt>
+			<div class="flex flex-col gap-1">
+				<dt class="text-xs text-muted-foreground">{l.translate('storage.open')}</dt>
 				<dd class="text-xl font-semibold tabular-nums">{formatBytes(stats.stored)}</dd>
 			</div>
-			<div class="flex flex-col gap-1 rounded-lg bg-sunken px-4 py-3.5">
-				<dt class="text-[12.5px] text-muted-foreground">
+			<div class="flex flex-col gap-1">
+				<dt class="text-xs text-muted-foreground">
 					{l.translate('backups.status.failed')} / {l.translate('backups.status.local_only')}
 				</dt>
 				<dd class="text-xl font-semibold tabular-nums {stats.attention ? 'text-warning' : ''}">
@@ -150,7 +150,7 @@
 			/>
 		</div>
 
-		<BackupsTable
+		<BackupsList
 			backups={shown}
 			showApp
 			label={l.translate('breadcrumb.backups')}

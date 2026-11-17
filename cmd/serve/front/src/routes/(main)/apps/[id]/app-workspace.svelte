@@ -1,7 +1,7 @@
 <!--
-	Application header shared by Overview and Deployments (DESIGN.md §11.7): the name, a status line
-	(what each environment serves, the repository), Visit, Settings and a split Deploy button, then
-	the tabs. It owns the New deployment and deployment preview drawers and hands the pages a few
+	Application header shared by every tab (DESIGN.md §11.7): the name, a status line (what each
+	environment serves, the repository), Visit and a split Deploy button, then the tabs. The header
+	never changes between tabs; Settings is a tab, not a second button. It owns the New deployment and deployment preview drawers and hands the pages a few
 	actions to open them.
 
 	Deploy is one click (Coolify, Render): the latest commit of production's branch. Its arrow opens
@@ -28,7 +28,6 @@
 	import Loading03Icon from '@hugeicons/core-free-icons/Loading03Icon';
 	import RepeatIcon from '@hugeicons/core-free-icons/RepeatIcon';
 	import Rocket01Icon from '@hugeicons/core-free-icons/Rocket01Icon';
-	import Settings02Icon from '@hugeicons/core-free-icons/Settings02Icon';
 	import Upload04Icon from '@hugeicons/core-free-icons/Upload04Icon';
 	import type { Snippet } from 'svelte';
 	import { toast } from 'svelte-sonner';
@@ -50,7 +49,7 @@
 	type Props = {
 		app: AppDetail;
 		apiKey: string;
-		tab: 'overview' | 'deployments' | 'logs' | 'backups';
+		tab: 'overview' | 'deployments' | 'logs' | 'backups' | 'settings';
 		children: Snippet<[AppActions]>;
 	};
 
@@ -148,10 +147,6 @@
 				<Icon icon={LinkSquare02Icon} />
 				{l.translate('detail.visit')}
 			</Button>
-			<Button variant="outline" href={routes.editApp(app.id)}>
-				<Icon icon={Settings02Icon} />
-				{l.translate('app.settings')}
-			</Button>
 			<div class="flex gap-0.5">
 				<Button
 					class="rounded-r-none"
@@ -180,7 +175,7 @@
 					<DropdownMenu.Content align="end" sideOffset={6} class="w-74 p-1.5">
 						{#if app.version_control}
 							<DropdownMenu.Label
-								class="px-2.5 pt-2 pb-1 text-[11.5px] font-semibold tracking-wide text-faint uppercase"
+								class="px-2.5 pt-2 pb-1 text-xs font-semibold text-muted-foreground"
 							>
 								{l.translate('detail.menu.git')}
 							</DropdownMenu.Label>
@@ -192,7 +187,7 @@
 								>
 									<Icon icon={Rocket01Icon} class="text-muted-foreground" />
 									<span class="flex flex-col">
-										<span class="text-[13.5px] font-medium"
+										<span class="text-label font-medium"
 											>{l.translate(`detail.menu.deploy.${environment}`)}</span
 										>
 										<span class="text-xs text-muted-foreground">
@@ -205,7 +200,7 @@
 							{/each}
 						{/if}
 						<DropdownMenu.Label
-							class="px-2.5 pt-2 pb-1 text-[11.5px] font-semibold tracking-wide text-faint uppercase"
+							class="px-2.5 pt-2 pb-1 text-xs font-semibold text-muted-foreground"
 						>
 							{l.translate('detail.menu.other')}
 						</DropdownMenu.Label>
@@ -215,7 +210,7 @@
 						>
 							<Icon icon={File01Icon} class="text-muted-foreground" />
 							<span class="flex flex-col">
-								<span class="text-[13.5px] font-medium">{l.translate('detail.menu.compose')}</span>
+								<span class="text-label font-medium">{l.translate('detail.menu.compose')}</span>
 								<span class="text-xs text-muted-foreground"
 									>{l.translate('detail.menu.compose.hint')}</span
 								>
@@ -227,7 +222,7 @@
 						>
 							<Icon icon={Upload04Icon} class="text-muted-foreground" />
 							<span class="flex flex-col">
-								<span class="text-[13.5px] font-medium">{l.translate('detail.menu.archive')}</span>
+								<span class="text-label font-medium">{l.translate('detail.menu.archive')}</span>
 								<span class="text-xs text-muted-foreground"
 									>{l.translate('detail.menu.archive.hint')}</span
 								>
@@ -235,7 +230,7 @@
 						</DropdownMenu.Item>
 						{#if app.latest_deployments.production}
 							<DropdownMenu.Label
-								class="px-2.5 pt-2 pb-1 text-[11.5px] font-semibold tracking-wide text-faint uppercase"
+								class="px-2.5 pt-2 pb-1 text-xs font-semibold text-muted-foreground"
 							>
 								{l.translate('detail.menu.again')}
 							</DropdownMenu.Label>
@@ -245,7 +240,7 @@
 							>
 								<Icon icon={RepeatIcon} class="text-muted-foreground" />
 								<span class="flex flex-col">
-									<span class="text-[13.5px] font-medium">
+									<span class="text-label font-medium">
 										{l.translate('detail.menu.redeploy', [
 											app.latest_deployments.production.deployment_number
 										])}

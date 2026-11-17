@@ -11,6 +11,7 @@
 	import PackageIcon from '@hugeicons/core-free-icons/PackageIcon';
 	import FieldMessage from '#lib/components/field-message.svelte';
 	import Icon from '#lib/components/icon.svelte';
+	import SettingRow from '#lib/components/setting-row.svelte';
 	import RegistryLogo from '#lib/components/registry-logo.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -120,8 +121,8 @@
 						/>{/if}
 				</span>
 				<span class="flex flex-col">
-					<strong class="text-[15px]">{initial.name}</strong>
-					<span class="text-[12.5px] text-muted-foreground">
+					<strong class="text-base">{initial.name}</strong>
+					<span class="text-xs text-muted-foreground">
 						{preset
 							? l.translate('registries.recognised', [
 									l.translate(`registries.preset.${preset.id}`)
@@ -147,7 +148,7 @@
 							role="radio"
 							aria-checked={selected}
 							class={cn(
-								'flex flex-col items-center gap-1.5 rounded-lg bg-sunken px-1 pt-3 pb-2.5 text-[12.5px] font-medium text-muted-foreground outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+								'flex flex-col items-center gap-1.5 rounded-lg bg-sunken px-1 pt-3 pb-2.5 text-xs font-medium text-muted-foreground outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
 								selected &&
 									'bg-accent-soft font-semibold text-ink ring-2 ring-primary ring-inset hover:bg-accent-soft'
 							)}
@@ -163,7 +164,7 @@
 						</button>
 					{/each}
 				</div>
-				<p class="text-[13px] text-muted-foreground">{l.translate('registries.preset.help')}</p>
+				<p class="text-label text-muted-foreground">{l.translate('registries.preset.help')}</p>
 			</div>
 		{/if}
 
@@ -186,7 +187,7 @@
 				type="url"
 				bind:value={url}
 				required
-				class="font-mono text-[13px]"
+				class="font-mono text-label"
 				placeholder="https://registry.example.com"
 				aria-invalid={!!fieldError('url') || undefined}
 				aria-describedby="{id}-url-message"
@@ -202,17 +203,15 @@
 			</FieldMessage>
 		</div>
 
-		<div class="flex items-center justify-between gap-4 rounded-md bg-sunken px-4 py-3.5">
-			<div class="flex flex-col gap-0.5">
-				<Label for="{id}-auth">{l.translate('registries.auth.label')}</Label>
-				<p class="text-[13px] text-muted-foreground">
-					{initial?.credentials
-						? l.translate('registries.auth.off_removes')
-						: l.translate('registries.auth.help')}
-				</p>
-			</div>
+		<SettingRow
+			for="{id}-auth"
+			label={l.translate('registries.auth.label')}
+			description={initial?.credentials
+				? l.translate('registries.auth.off_removes')
+				: l.translate('registries.auth.help')}
+		>
 			<Switch id="{id}-auth" bind:checked={useCredentials} />
-		</div>
+		</SettingRow>
 
 		{#if useCredentials}
 			<div class="grid gap-4 sm:grid-cols-2">
@@ -252,7 +251,7 @@
 			</div>
 
 			{#if preset && !initial}
-				<div class="flex flex-col gap-1 rounded-lg bg-sunken px-3.5 py-3 text-[13px]/[19px]">
+				<div class="flex flex-col gap-1 text-label/[19px]">
 					<span class="flex items-center gap-2 font-semibold">
 						<RegistryLogo name={preset.id} class="size-4" />
 						{l.translate('registries.where')}
@@ -267,9 +266,9 @@
 		{/if}
 
 		{#if initial}
-			<div class="flex flex-col gap-1 rounded-lg bg-sunken px-3.5 py-3">
-				<strong class="text-[13.5px] font-semibold">{l.translate('registries.used.title')}</strong>
-				<p class="text-[13px] text-muted-foreground">
+			<div class="flex flex-col gap-1">
+				<strong class="text-label font-semibold">{l.translate('registries.used.title')}</strong>
+				<p class="text-label text-muted-foreground">
 					{l.translate('registries.used.description', [initial.name])}
 				</p>
 			</div>

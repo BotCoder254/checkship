@@ -57,7 +57,9 @@
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content align="start" class="w-60 p-1.5">
 		<DropdownMenu.Group>
-			<DropdownMenu.GroupHeading class="px-2.5 pt-1.5 pb-1 text-xs font-semibold text-faint">
+			<DropdownMenu.GroupHeading
+				class="px-2.5 pt-1.5 pb-1 text-xs font-semibold text-muted-foreground"
+			>
 				{label}
 			</DropdownMenu.GroupHeading>
 			<DropdownMenu.RadioGroup

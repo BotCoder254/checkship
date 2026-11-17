@@ -55,7 +55,7 @@
 		{href}
 		class="grid min-h-11 grid-cols-[minmax(84px,120px)_40px_minmax(0,1fr)_16px] items-center gap-4 rounded-md px-2 py-1.5 transition-colors outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
 	>
-		<span class="text-[13.5px] text-muted-foreground">{title}</span>
+		<span class="text-label text-muted-foreground">{title}</span>
 		<strong class="text-xl font-semibold tabular-nums">{total}</strong>
 		<span class="flex min-w-0 flex-col gap-1.5">
 			<span class="flex h-1.5 gap-0.5 overflow-hidden rounded-full bg-raised" aria-hidden="true">
@@ -63,7 +63,7 @@
 					{#if part.value}<span class={part.color} style="flex: {part.value}"></span>{/if}
 				{/each}
 			</span>
-			<span class="flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] text-muted-foreground">
+			<span class="flex flex-wrap gap-x-3.5 gap-y-1 text-xs text-muted-foreground">
 				{#each parts.filter((p) => p.value) as part (part.label)}
 					<span class="flex items-center gap-1.5">
 						<span class="size-2 rounded-full {part.color}"></span>

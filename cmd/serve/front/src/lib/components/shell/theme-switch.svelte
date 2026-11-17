@@ -50,7 +50,7 @@
 					{...props}
 					type="button"
 					aria-label={l.translate('theme.switch', [currentOption.label])}
-					class="flex size-10 items-center justify-center rounded-md text-ink outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+					class="flex size-10 items-center justify-center rounded-md text-ink outline-none hover:bg-hover-frame focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
 					onclick={() => pick(options.indexOf(currentOption) + 1)}
 				>
 					<Icon icon={currentOption.icon} class="size-5" />
