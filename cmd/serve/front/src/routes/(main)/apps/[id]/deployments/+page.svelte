@@ -51,6 +51,7 @@
 		type Deployment,
 		type QueryDeploymentsFilters
 	} from '#lib/resources/deployments.ts';
+	import DeployStrip from '#lib/components/deploy-strip.svelte';
 	import AppWorkspace, { type AppActions } from '../app-workspace.svelte';
 
 	let { data } = $props();
@@ -196,6 +197,13 @@
 			</div>
 
 			{#if rows.length > 0}
+				<!-- The pattern of what is shown, at a glance (DESIGN.md §11.7). -->
+				<DeployStrip
+					appId={app.id}
+					deployments={rows}
+					environment={environment === 'all' ? undefined : environment}
+					onopen={(n) => workspace.openPreview(n)}
+				/>
 				<div class="flex flex-col gap-4">
 					{#each groups as group (group.key)}
 						<TimelineGroup label={group.label} count={group.items.length}>
@@ -302,14 +310,26 @@
 				</div>
 			{:else if first}
 				<EmptyState
-					icon={Layers01Icon}
+					illustration={filtered ? 'search' : 'rocket'}
+					size={filtered ? 'section' : 'page'}
 					title={filtered ? l.translate('detail.list.no_match') : l.translate('app.empty.title')}
 					description={filtered
 						? l.translate('detail.list.no_match.description')
 						: l.translate('app.empty.description')}
 				>
 					{#snippet action()}
-						{#if !filtered && !app.cleanup_requested_at}
+						{#if filtered}
+							<Button
+								variant="outline"
+								onclick={() => {
+									environment = 'all';
+									status = 'any';
+									search = '';
+								}}
+							>
+								{l.translate('list.clear_filters')}
+							</Button>
+						{:else if !app.cleanup_requested_at}
 							<Button onclick={() => workspace.openDeploy('production')}>
 								<Icon icon={Rocket01Icon} />
 								{l.translate('deployment.new')}

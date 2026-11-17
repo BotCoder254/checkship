@@ -1,17 +1,15 @@
 <!--
-	Not found and unexpected errors (DESIGN.md §11.5): written on the page like an empty state (no box), with the way back.
+	Not found and unexpected errors (DESIGN.md §11.5): written on the page like an empty state (no box): the notFound or error drawing at page size, then the way back.
 	404 names what was missing; anything else offers Try again and shows the code.
 -->
 <script lang="ts">
-	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
 	import ArrowLeft01Icon from '@hugeicons/core-free-icons/ArrowLeft01Icon';
 	import RefreshIcon from '@hugeicons/core-free-icons/RefreshIcon';
-	import Search01Icon from '@hugeicons/core-free-icons/Search01Icon';
 	import { page } from '$app/state';
 	import Icon from '#lib/components/icon.svelte';
+	import Illustration from '#lib/components/illustration.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import l, { type AppTranslationsString } from '#lib/localization/index.ts';
-	import { cn } from '#lib/utils.js';
 
 	type Props = {
 		/** What was being looked for, e.g. errors.app */
@@ -32,18 +30,11 @@
 
 <div
 	role={notFound ? undefined : 'alert'}
-	class="mt-6 flex flex-col items-center gap-3 px-6 py-14 text-center"
+	class="flex flex-col items-center gap-3 px-6 py-12 text-center"
 >
-	<span
-		class={cn(
-			'flex size-12 items-center justify-center rounded-full',
-			notFound ? 'bg-raised text-muted-foreground' : 'bg-danger-soft text-danger'
-		)}
-	>
-		<Icon icon={notFound ? Search01Icon : Alert02Icon} class="size-6" />
-	</span>
-	<div class="flex max-w-100 flex-col gap-1">
-		<h1 class="text-base font-semibold">
+	<Illustration name={notFound ? 'notFound' : 'error'} class="w-[280px] max-w-full" />
+	<div class="mt-2 flex max-w-100 flex-col gap-1.5">
+		<h1 class="text-lg/[26px] font-semibold">
 			{notFound
 				? l.translate(`errors.not_found.${what}` as AppTranslationsString)
 				: l.translate('errors.title')}

@@ -46,6 +46,13 @@ func Test_DashboardParams(t *testing.T) {
 	})
 }
 
+func Test_DashboardIDParam(t *testing.T) {
+	assert.Equal(t, "3MDVPFzEqkIJs51zinbSnHpG3LL", idParam("3MDVPFzEqkIJs51zinbSnHpG3LL").MustGet())
+	assert.False(t, idParam("").HasValue())
+	assert.False(t, idParam("' OR 1=1 --").HasValue())
+	assert.False(t, idParam("short").HasValue())
+}
+
 // The dashboard routes sit behind the session-only group: the CI API key is refused.
 func Test_DashboardRequiresASession(t *testing.T) {
 	s := &server{router: gin.New(), live: live.NewHub(5, 100, 4)}

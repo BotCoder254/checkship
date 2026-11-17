@@ -137,6 +137,7 @@
 		{/if}
 
 		<SettingsSection
+			id="settings-general"
 			title={l.translate('settings.general')}
 			description={initialData
 				? l.translate('targets.section.general.edit')
@@ -157,6 +158,7 @@
 		</SettingsSection>
 
 		<SettingsSection
+			id="settings-connection"
 			title={initialData ? l.translate('targets.connection') : l.translate('targets.where')}
 			description={initialData
 				? l.translate('targets.section.connection.edit')
@@ -310,6 +312,7 @@
 		</SettingsSection>
 
 		<SettingsSection
+			id="settings-exposure"
 			title={l.translate('targets.exposure')}
 			description={initialData
 				? l.translate('targets.section.exposure.edit')

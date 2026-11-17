@@ -7,7 +7,6 @@
 	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
 	import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
 	import CancelCircleIcon from '@hugeicons/core-free-icons/CancelCircleIcon';
-	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
 	import RefreshIcon from '@hugeicons/core-free-icons/RefreshIcon';
 	import { toast } from 'svelte-sonner';
 	import Tile from '#lib/components/dashboard/tile.svelte';
@@ -19,6 +18,7 @@
 	import { DeploymentStatus } from '#lib/resources/deployments.ts';
 	import targetsService, { TargetStatus, type Target } from '#lib/resources/targets.ts';
 	import { cn } from '#lib/utils.js';
+	import EmptyState from '#lib/components/empty-state.svelte';
 
 	type Props = {
 		apps: App[] | undefined;
@@ -157,9 +157,13 @@
 			{/each}
 		</ul>
 	{:else}
-		<p class="flex flex-1 items-center gap-2.5 py-4 text-sm text-muted-foreground">
-			<Icon icon={CheckmarkCircle02Icon} class="size-5 text-success" />
-			{l.translate('dashboard.attention.none')}
-		</p>
+		<EmptyState
+			illustration="allClear"
+			size="compact"
+			level={3}
+			class="flex-1 justify-center"
+			title={l.translate('dashboard.attention.none.title')}
+			description={l.translate('dashboard.attention.none')}
+		/>
 	{/if}
 </Tile>

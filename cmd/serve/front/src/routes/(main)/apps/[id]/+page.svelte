@@ -1,7 +1,8 @@
 <!--
-	Application overview (DESIGN.md §11.7): staging and production as a pipeline, each card led by
-	what is live (URL, state, source), with Promote between them; then the services of both
-	environments and the recent deployments. A running deployment gets a banner. Logs and previews
+	Application overview (DESIGN.md §11.7): this application's four figures (the dashboard summary
+	filtered by app), staging and production as a pipeline side by side with Promote between them
+	and each one's last 20 deploys, the two charts, then the services of both environments and the
+	recent deployments. A running deployment gets a banner. Logs and previews
 	open in drawers (app-workspace.svelte). Polls the application and the recent list.
 -->
 <script lang="ts">
@@ -50,14 +51,26 @@
 	} from '#lib/resources/deployments.ts';
 	import { deploymentBadge, deploymentMoment } from '#lib/status.ts';
 	import { cn } from '#lib/utils.js';
+	import DeployCharts from '#lib/components/dashboard/deploy-charts.svelte';
+	import StatsStrip from '#lib/components/dashboard/stats-strip.svelte';
+	import dashboard from '#lib/resources/dashboard.ts';
 	import AppWorkspace, { type AppActions } from './app-workspace.svelte';
+	import DeployStrip from '#lib/components/deploy-strip.svelte';
 	import { liveUrl } from './app-state.ts';
+	import EmptyState from '#lib/components/empty-state.svelte';
 
 	let { data } = $props();
 
 	const appQuery = $derived(appsService.queryById(data.app.id));
 	const appStore = $derived(appQuery.data);
 	const app = $derived($appStore ?? data.app);
+
+	// This application's figures and charts: the dashboard summary filtered by app (DESIGN.md §11.7).
+	const summaryQuery = $derived(dashboard.querySummary({ range: 30, app: data.app.id }));
+	const summaryStore = $derived(summaryQuery.data);
+	const summaryError = $derived(summaryQuery.error);
+	const retrySummary = () =>
+		dashboard.fetchSummary({ range: 30, app: data.app.id }, { cache: 'no-store' }).catch(() => {});
 
 	const recentQuery = $derived(service.queryAllByApp(data.app.id, { page: 1 }));
 	const recentStore = $derived(recentQuery.data);
@@ -138,7 +151,7 @@
 
 <AppWorkspace {app} apiKey={data.user.api_key} tab="overview">
 	{#snippet children(workspace: AppActions)}
-		<div class="flex flex-col gap-8">
+		<div class="flex flex-col gap-12">
 			{#if deleting}
 				<Alert.Root variant="destructive">
 					<Icon icon={Loading03Icon} class="animate-spin" />
@@ -175,21 +188,33 @@
 				</div>
 			{/if}
 
+			<StatsStrip
+				summary={$summaryStore}
+				range={30}
+				label={l.translate('detail.figures.label', [30])}
+				error={$summaryError}
+				onretry={retrySummary}
+			/>
+
 			<section class="flex flex-col gap-3" aria-labelledby="environments-title">
 				<SectionHeading id="environments-title">
 					{l.translate('detail.environments')}
 					{#snippet aside()}{l.translate('detail.environments.help')}{/snippet}
 				</SectionHeading>
 
-				<!-- Stacked, each environment the full width (owner's call, 2026-11-14): staging, then
-				     Promote, then production. No cards (§1 Cardless, 2026-11-17): the state is the badge. -->
-				<div class="flex flex-col gap-6">
+				<!-- A pipeline in the direction code moves (owner, 2026-11-17): staging, Promote, production
+				     side by side from xl, stacked below. No cards (§1 Cardless): the state is the badge. -->
+				<div
+					class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_150px_minmax(0,1fr)] xl:items-start xl:gap-8"
+				>
 					{#each ['staging', 'connector', 'production'] as const as slot (slot)}
 						{#if slot === 'connector'}
-							<div class="flex flex-wrap items-center gap-x-3.5 gap-y-2">
+							<div
+								class="flex flex-wrap items-center gap-x-3.5 gap-y-2 xl:flex-col xl:pt-10 xl:text-center"
+							>
 								<span
 									class={cn(
-										'flex size-9 shrink-0 items-center justify-center rounded-full bg-raised',
+										'flex size-9 shrink-0 items-center justify-center rounded-full bg-raised xl:-rotate-90',
 										canPromote ? 'text-primary' : 'text-muted-foreground'
 									)}
 								>
@@ -228,10 +253,7 @@
 							{@const target = app[environment].target}
 							{@const url = liveUrl(latest)}
 							{@const state = latest ? cardState(latest) : undefined}
-							<section
-								aria-labelledby="card-{environment}"
-								class="grid min-w-0 items-center gap-x-8 gap-y-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_150px]"
-							>
+							<section aria-labelledby="card-{environment}" class="flex min-w-0 flex-col gap-4">
 								<div class="flex min-w-0 flex-col gap-2.5">
 									<div class="flex flex-wrap items-center gap-2.5">
 										<h3 id="card-{environment}" class="text-lg/[26px] font-semibold">
@@ -316,11 +338,16 @@
 										<dt class="text-muted-foreground">{l.translate('deployment.queued_by')}</dt>
 										<dd class="truncate">{latest.requested_by.email}</dd>
 									</dl>
-									<div class="flex gap-1.5 md:flex-col">
+									<DeployStrip
+										appId={app.id}
+										{environment}
+										live={state === 'live' ? latest.deployment_number : undefined}
+										onopen={(n) => workspace.openPreview(n)}
+									/>
+									<div class="flex flex-wrap gap-1.5">
 										<Button
 											variant="outline"
 											size="sm"
-											class="max-md:flex-1"
 											onclick={() => workspace.openPreview(latest.deployment_number)}
 										>
 											<Icon icon={CommandLineIcon} />
@@ -332,7 +359,6 @@
 											<Button
 												variant="outline"
 												size="sm"
-												class="max-md:flex-1"
 												href={routes.appLogs(app.id, environment)}
 											>
 												<Icon icon={ComputerTerminal01Icon} />
@@ -343,7 +369,6 @@
 											<Button
 												variant="outline"
 												size="sm"
-												class="max-md:flex-1"
 												onclick={() => {
 													redeployNumber = latest.deployment_number;
 													redeployOpen = true;
@@ -358,7 +383,7 @@
 									<p class="text-sm text-muted-foreground">
 										{l.translate(`app.env.empty.${environment}`)}
 									</p>
-									<div class="flex md:flex-col">
+									<div class="flex">
 										{#if !deleting}
 											<Button
 												variant="outline"
@@ -376,6 +401,14 @@
 					{/each}
 				</div>
 			</section>
+
+			<DeployCharts
+				summary={$summaryStore}
+				range={30}
+				error={$summaryError}
+				onretry={retrySummary}
+				app={app.name}
+			/>
 
 			<div class="grid items-start gap-8 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
 				<section class="flex min-w-0 flex-col gap-3" aria-labelledby="services-title">
@@ -430,9 +463,13 @@
 							{/each}
 						</TimelineList>
 					{:else}
-						<p class="text-label text-muted-foreground">
-							{l.translate('detail.services.none')}
-						</p>
+						<EmptyState
+							illustration="rocket"
+							size="compact"
+							level={3}
+							title={l.translate('detail.services.none.title')}
+							description={l.translate('detail.services.none')}
+						/>
 					{/if}
 				</section>
 
@@ -510,15 +547,22 @@
 							{/each}
 						</div>
 					{:else}
-						<div class="flex flex-col items-start gap-3">
-							<p class="text-label text-muted-foreground">{l.translate('app.empty.description')}</p>
-							{#if !deleting}
-								<Button size="sm" onclick={() => workspace.openDeploy('production')}>
-									<Icon icon={Rocket01Icon} />
-									{l.translate('deployment.new')}
-								</Button>
-							{/if}
-						</div>
+						<EmptyState
+							illustration="rocket"
+							size="compact"
+							level={3}
+							title={l.translate('app.empty.title')}
+							description={l.translate('app.empty.description')}
+						>
+							{#snippet action()}
+								{#if !deleting}
+									<Button size="sm" onclick={() => workspace.openDeploy('production')}>
+										<Icon icon={Rocket01Icon} />
+										{l.translate('deployment.new')}
+									</Button>
+								{/if}
+							{/snippet}
+						</EmptyState>
 					{/if}
 				</section>
 			</div>

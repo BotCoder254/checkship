@@ -177,6 +177,8 @@ test.describe('pages', () => {
 		const row = page.getByRole('main').getByRole('listitem').filter({ hasText: 'e2e-local' });
 		await expect(row).toBeVisible();
 		await expect(row).toContainText('This machine · Docker engine');
+		// Figures and the spread over targets sit above the list (DESIGN.md §11.8).
+		await expect(page.getByRole('region', { name: 'Targets at a glance' })).toBeVisible();
 		await expectNoLines(page, 'main li');
 		// Every list is a list now (DESIGN.md §5 Lists): no tables, no Columns menu.
 		await expect(page.getByRole('main').getByRole('table')).toHaveCount(0);

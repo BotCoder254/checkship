@@ -26,6 +26,7 @@
 	import l from '#lib/localization/index.ts';
 	import routes from '#lib/path.ts';
 	import service, { type AppsSort, type DashboardFilters } from '#lib/resources/dashboard.ts';
+	import EmptyState from '#lib/components/empty-state.svelte';
 
 	type Props = { filters: DashboardFilters; refresh: number; class?: string };
 
@@ -188,8 +189,12 @@
 			{/if}
 		</div>
 	{:else if apps}
-		<p class="flex flex-1 items-center justify-center py-8 text-label text-muted-foreground">
-			{l.translate('dashboard.apps.empty')}
-		</p>
+		<EmptyState
+			illustration="apps"
+			size="compact"
+			level={3}
+			class="flex-1 justify-center"
+			title={l.translate('dashboard.apps.empty.title')}
+		/>
 	{/if}
 </Tile>

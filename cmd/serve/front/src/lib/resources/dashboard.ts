@@ -68,6 +68,10 @@ export type Activity = {
 export type DashboardFilters = {
 	range: DashboardRange;
 	environment?: Environment;
+	/** One application's deployments only (the summary on its page). */
+	app?: string;
+	/** Deployments to one target only (the summary on its page). */
+	target?: string;
 };
 
 export type AppsFilters = DashboardFilters & {
@@ -89,10 +93,12 @@ export type ActivityFilters = {
 /** The viewer's offset from UTC in minutes, east positive (what the API expects as `tz`). */
 export const viewerOffset = () => -new Date().getTimezoneOffset();
 
-const base = ({ range, environment }: DashboardFilters) => ({
+const base = ({ range, environment, app, target }: DashboardFilters) => ({
 	range,
 	tz: viewerOffset(),
-	...(environment ? { environment } : {})
+	...(environment ? { environment } : {}),
+	...(app ? { app } : {}),
+	...(target ? { target } : {})
 });
 
 const appsParams = (f: AppsFilters) => ({

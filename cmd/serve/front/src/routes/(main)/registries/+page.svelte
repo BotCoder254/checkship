@@ -13,6 +13,7 @@
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
 	import Drawer from '#lib/components/drawer.svelte';
 	import EmptyState from '#lib/components/empty-state.svelte';
+	import docs from '#lib/docs.ts';
 	import Notice from '#lib/components/notice.svelte';
 	import Icon from '#lib/components/icon.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
@@ -134,7 +135,8 @@
 	</div>
 {:else if $registries}
 	<EmptyState
-		icon={PackageIcon}
+		illustration="registries"
+		link={{ href: docs.registries, label: l.translate('empty.docs.registries') }}
 		title={l.translate('registries.empty.title')}
 		description={l.translate('registries.empty.description')}
 	>

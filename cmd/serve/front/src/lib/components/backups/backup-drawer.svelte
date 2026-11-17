@@ -13,11 +13,13 @@
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
 	import { Switch } from '#lib/components/ui/switch/index.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
-	import { messageOf } from '#lib/backup.ts';
+	import { formatBytes, messageOf } from '#lib/backup.ts';
 	import l from '#lib/localization/index.ts';
 	import routes from '#lib/path.ts';
-	import service, { type BackupStorage, type Volume } from '#lib/resources/backups.ts';
+	import service, { type Backup, type BackupStorage, type Volume } from '#lib/resources/backups.ts';
+	import { lastVolumeBackup } from '#lib/backup-stats.ts';
 	import type { Environment } from '#lib/resources/deployments.ts';
+	import EmptyState from '#lib/components/empty-state.svelte';
 
 	type Props = {
 		open: boolean;
@@ -25,6 +27,8 @@
 		environment?: Environment;
 		storage?: BackupStorage;
 		storageLabel?: string;
+		/** This application's backups, to say when each volume was last backed up. */
+		backups?: Backup[];
 	};
 
 	let {
@@ -32,11 +36,19 @@
 		app,
 		environment = 'production',
 		storage,
-		storageLabel
+		storageLabel,
+		backups = []
 	}: Props = $props();
 
 	let env = $state<Environment>('production');
 	let volumes = $state<Volume[]>();
+
+	const lastOf = (key: string) => {
+		const last = lastVolumeBackup(backups, app.id, env, key);
+		return last
+			? l.translate('backups.volume.last', [l.relative(last.at), formatBytes(last.size)])
+			: l.translate('backups.volume.never');
+	};
 	let loadError = $state<string>();
 	let unticked = $state<string[]>([]);
 	let stop = $state(true);
@@ -128,9 +140,13 @@
 				<Skeleton class="h-14 w-full" />
 				<Skeleton class="h-14 w-full" />
 			{:else if volumes.length === 0}
-				<p class="text-sm text-muted-foreground">
-					{l.translate('backups.drawer.no_volumes')}
-				</p>
+				<EmptyState
+					illustration="volumes"
+					size="compact"
+					level={3}
+					title={l.translate('backups.volumes.empty.title')}
+					description={l.translate('backups.drawer.no_volumes')}
+				/>
 			{:else}
 				{#each volumes as volume (volume.key)}
 					<label
@@ -144,7 +160,8 @@
 						<span class="flex min-w-0 flex-col gap-0.5">
 							<span class="truncate font-mono text-label">{volume.key}</span>
 							<span class="text-xs text-muted-foreground">
-								{l.translate('backups.drawer.used_by', [volume.services.join(', ') || '—'])}
+								{l.translate('backups.drawer.used_by', [volume.services.join(', ') || '—'])} ·
+								{lastOf(volume.key)}
 							</span>
 						</span>
 					</label>

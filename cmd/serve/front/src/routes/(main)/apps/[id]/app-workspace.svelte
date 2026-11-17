@@ -273,13 +273,17 @@
 						)}
 					></span>
 				{/if}
-				{l.translate(`detail.state.${environment}.${state}`)}{#if latest}&nbsp;· #{latest.deployment_number}{/if}
+				{l.translate(`detail.state.${environment}.${state}`)}{#if latest}&nbsp;·&nbsp;<span
+						class="font-mono text-xs">#{latest.deployment_number}</span
+					>{/if}
 			</span>
 		{/each}
 		{#if app.version_control}
 			<span class="flex min-w-0 items-center gap-1.5">
 				<Icon icon={GitBranchIcon} class="size-3.5" />
-				<span class="truncate">{app.version_control.url.replace(/^https?:\/\//, '')}</span>
+				<span class="truncate font-mono text-xs"
+					>{app.version_control.url.replace(/^https?:\/\//, '')}</span
+				>{#if productionBranch}<span class="shrink-0">· {productionBranch}</span>{/if}
 			</span>
 		{/if}
 		<span>{l.translate('app.created', [l.date(app.created_at), app.created_by.email])}</span>
