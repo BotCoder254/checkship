@@ -1,7 +1,8 @@
 <!--
 	What happened to a deployment, in order (DESIGN.md §11.7 Deployment): queued, started, then
-	finished (or failed, or still running), each with its time, plus how long it waited and how long
-	it ran. Drawn by the shared Steps.
+	finished (succeeded or failed), each with its time, plus how long it waited and how long it ran.
+	The step in progress spins: Queued while it waits for its turn, Started while it runs. Drawn by
+	the shared Steps, centered, since the page leads with it.
 -->
 <script lang="ts">
 	import Steps, { type Step } from '#lib/components/steps.svelte';
@@ -12,22 +13,14 @@
 
 	let { requestedAt, state }: Props = $props();
 
-	const last = $derived(
-		state.finished_at
-			? state.status === DeploymentStatus.Failed
-				? 'failed'
-				: 'succeeded'
-			: state.started_at
-				? 'running'
-				: 'waiting'
-	);
+	const failed = $derived(state.status === DeploymentStatus.Failed);
 
 	const steps = $derived<Step[]>([
 		{
 			key: 'queued',
 			label: l.translate('deployment.step.queued'),
 			time: l.time(requestedAt),
-			state: 'done'
+			state: state.started_at || state.finished_at ? 'done' : 'current'
 		},
 		{
 			key: 'started',
@@ -36,26 +29,28 @@
 			note: state.started_at
 				? l.translate('deployment.step.waited', [l.duration(requestedAt, state.started_at)])
 				: undefined,
-			state: state.started_at ? 'done' : 'current'
+			// A deployment can end without ever starting (cancelled, or failed before it ran).
+			state: !state.started_at ? 'todo' : state.finished_at ? 'done' : 'current'
 		},
 		{
 			key: 'end',
-			label: l.translate(`deployment.step.${last}`),
+			label: l.translate(
+				!state.finished_at
+					? 'deployment.step.finished'
+					: failed
+						? 'deployment.step.failed'
+						: 'deployment.step.succeeded'
+			),
 			time: state.finished_at ? l.time(state.finished_at) : undefined,
 			note:
 				state.started_at && state.finished_at
 					? l.translate('deployment.step.ran', [l.duration(state.started_at, state.finished_at)])
 					: undefined,
-			state:
-				last === 'failed'
-					? 'failed'
-					: state.finished_at
-						? 'done'
-						: state.started_at
-							? 'current'
-							: 'todo'
+			state: !state.finished_at ? 'todo' : failed ? 'failed' : 'done'
 		}
 	]);
 </script>
 
-<Steps {steps} label={l.translate('deployment.timeline')} />
+<div class="py-2">
+	<Steps {steps} label={l.translate('deployment.timeline')} align="center" />
+</div>
