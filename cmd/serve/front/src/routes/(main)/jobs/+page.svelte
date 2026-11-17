@@ -13,7 +13,6 @@
 	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
 	import Clock01Icon from '@hugeicons/core-free-icons/Clock01Icon';
 	import RefreshIcon from '@hugeicons/core-free-icons/RefreshIcon';
-	import Task01Icon from '@hugeicons/core-free-icons/Task01Icon';
 	import CancelCircleIcon from '@hugeicons/core-free-icons/CancelCircleIcon';
 	import InformationCircleIcon from '@hugeicons/core-free-icons/InformationCircleIcon';
 	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
@@ -320,7 +319,8 @@
 		</div>
 	{:else if jobs && stateFilter}
 		<EmptyState
-			icon={Task01Icon}
+			illustration="search"
+			size="section"
 			title={l.translate('jobs.empty.filtered.title')}
 			description={l.translate('jobs.empty.filtered.description')}
 		>
@@ -332,7 +332,7 @@
 		</EmptyState>
 	{:else if jobs}
 		<EmptyState
-			icon={CheckmarkCircle02Icon}
+			illustration="queue"
 			title={l.translate('jobs.empty.title')}
 			description={l.translate('jobs.empty.description')}
 		/>

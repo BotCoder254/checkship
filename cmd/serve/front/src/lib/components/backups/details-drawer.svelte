@@ -21,6 +21,7 @@
 	} from '#lib/backup.ts';
 	import l from '#lib/localization/index.ts';
 	import service, { type Backup, type BackupDetail } from '#lib/resources/backups.ts';
+	import EmptyState from '#lib/components/empty-state.svelte';
 
 	type Props = { open: boolean; backupId?: string; onrestore: (backup: Backup) => void };
 
@@ -135,7 +136,12 @@
 					{/if}
 				</div>
 			{:else}
-				<p class="text-sm text-muted-foreground">{l.translate('backups.details.no_restores')}</p>
+				<EmptyState
+					illustration="backups"
+					size="compact"
+					level={3}
+					title={l.translate('backups.details.no_restores.title')}
+				/>
 			{/each}
 		</section>
 	{/if}

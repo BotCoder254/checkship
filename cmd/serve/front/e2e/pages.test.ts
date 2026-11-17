@@ -394,7 +394,12 @@ test.describe('desktop', () => {
 		await page.keyboard.press('Escape');
 
 		await page.getByRole('searchbox', { name: 'Search' }).fill('no-such-branch');
-		await expect(page.getByText('No deployment matches')).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'No deployment matches' })).toBeVisible();
+		// The empty state is a drawing on the page (DESIGN.md §11.5), decorative and with no box.
+		const empty = page.getByRole('heading', { name: 'No deployment matches' }).locator('..');
+		await expect(empty.locator('svg[aria-hidden="true"]').first()).toBeVisible();
+		await expect(empty).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+		await expect(page.getByRole('button', { name: 'Clear filters' })).toBeVisible();
 		await page.getByRole('searchbox', { name: 'Search' }).fill('');
 		await expect(row).toBeVisible();
 		await shot(page, 'deployments-tab');

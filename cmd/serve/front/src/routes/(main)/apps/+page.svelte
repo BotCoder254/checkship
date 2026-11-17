@@ -20,6 +20,7 @@
 	import { copyText } from '#lib/clipboard.ts';
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
 	import EmptyState from '#lib/components/empty-state.svelte';
+	import docs from '#lib/docs.ts';
 	import Icon from '#lib/components/icon.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
 	import StatusBadge from '#lib/components/status-badge.svelte';
@@ -249,14 +250,30 @@
 				{/each}
 			</TimelineList>
 		{:else}
-			<p class="px-2 py-3 text-label text-muted-foreground">
-				{l.translate('detail.list.no_match')}
-			</p>
+			<EmptyState
+				illustration="search"
+				size="section"
+				title={l.translate('apps.no_match.title')}
+				description={l.translate('apps.no_match.description')}
+			>
+				{#snippet action()}
+					<Button
+						variant="outline"
+						onclick={() => {
+							search = '';
+							target = 'all';
+						}}
+					>
+						{l.translate('list.clear_filters')}
+					</Button>
+				{/snippet}
+			</EmptyState>
 		{/if}
 	</div>
 {:else if $apps}
 	<EmptyState
-		icon={DashboardSquare01Icon}
+		illustration="apps"
+		link={{ href: docs.applications, label: l.translate('empty.docs.applications') }}
 		title={l.translate('apps.empty.title')}
 		description={l.translate('apps.empty.description')}
 	>

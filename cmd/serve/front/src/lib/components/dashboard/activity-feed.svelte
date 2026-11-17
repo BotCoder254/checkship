@@ -36,6 +36,7 @@
 	import routes from '#lib/path.ts';
 	import service from '#lib/resources/dashboard.ts';
 	import type { Deployment, Environment } from '#lib/resources/deployments.ts';
+	import EmptyState from '#lib/components/empty-state.svelte';
 
 	type Props = {
 		environment?: Environment;
@@ -208,9 +209,14 @@
 			{/each}
 		</div>
 	{:else}
-		<p class="flex flex-1 items-center justify-center py-8 text-label text-muted-foreground">
-			{l.translate('dashboard.activity.empty')}
-		</p>
+		<EmptyState
+			illustration="rocket"
+			size="compact"
+			level={3}
+			class="flex-1 justify-center"
+			title={l.translate('dashboard.activity.empty.title')}
+			description={l.translate('dashboard.activity.empty.description')}
+		/>
 	{/if}
 
 	{#if cursor}

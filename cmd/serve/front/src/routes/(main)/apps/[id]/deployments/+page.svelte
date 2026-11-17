@@ -302,14 +302,26 @@
 				</div>
 			{:else if first}
 				<EmptyState
-					icon={Layers01Icon}
+					illustration={filtered ? 'search' : 'rocket'}
+					size={filtered ? 'section' : 'page'}
 					title={filtered ? l.translate('detail.list.no_match') : l.translate('app.empty.title')}
 					description={filtered
 						? l.translate('detail.list.no_match.description')
 						: l.translate('app.empty.description')}
 				>
 					{#snippet action()}
-						{#if !filtered && !app.cleanup_requested_at}
+						{#if filtered}
+							<Button
+								variant="outline"
+								onclick={() => {
+									environment = 'all';
+									status = 'any';
+									search = '';
+								}}
+							>
+								{l.translate('list.clear_filters')}
+							</Button>
+						{:else if !app.cleanup_requested_at}
 							<Button onclick={() => workspace.openDeploy('production')}>
 								<Icon icon={Rocket01Icon} />
 								{l.translate('deployment.new')}

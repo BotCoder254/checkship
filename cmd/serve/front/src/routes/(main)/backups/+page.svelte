@@ -5,7 +5,6 @@
 	the storage settings.
 -->
 <script lang="ts">
-	import Archive02Icon from '@hugeicons/core-free-icons/Archive02Icon';
 	import DashboardSquare01Icon from '@hugeicons/core-free-icons/DashboardSquare01Icon';
 	import HardDriveIcon from '@hugeicons/core-free-icons/HardDriveIcon';
 	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
@@ -16,6 +15,7 @@
 	import RestoreDrawer from '#lib/components/backups/restore-drawer.svelte';
 	import UploadDrawer from '#lib/components/backups/upload-drawer.svelte';
 	import EmptyState from '#lib/components/empty-state.svelte';
+	import docs from '#lib/docs.ts';
 	import Icon from '#lib/components/icon.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
 	import FilterMenu, { type FilterOption } from '#lib/components/table/filter-menu.svelte';
@@ -164,7 +164,8 @@
 	</div>
 {:else if $backups}
 	<EmptyState
-		icon={Archive02Icon}
+		illustration="backups"
+		link={{ href: docs.backups, label: l.translate('empty.docs.backups') }}
 		title={l.translate('backups.empty.title')}
 		description={l.translate('backups.empty_all.description')}
 	>

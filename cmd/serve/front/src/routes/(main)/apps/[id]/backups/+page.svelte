@@ -14,6 +14,7 @@
 	import RestoreDrawer from '#lib/components/backups/restore-drawer.svelte';
 	import UploadDrawer from '#lib/components/backups/upload-drawer.svelte';
 	import EmptyState from '#lib/components/empty-state.svelte';
+	import docs from '#lib/docs.ts';
 	import Notice from '#lib/components/notice.svelte';
 	import Icon from '#lib/components/icon.svelte';
 	import Segmented from '#lib/components/segmented.svelte';
@@ -126,13 +127,15 @@
 			{:else if !volumes}
 				<Skeleton class="h-24 w-full" />
 			{:else if volumes.volumes.length === 0}
-				<Notice>
-					<p>
-						{l.translate('backups.volumes.empty', [
-							l.translate(`deploy.environment.${environment}`)
-						])}
-					</p>
-				</Notice>
+				<EmptyState
+					illustration="volumes"
+					size="compact"
+					level={3}
+					title={l.translate('backups.volumes.empty.title')}
+					description={l.translate('backups.volumes.empty', [
+						l.translate(`deploy.environment.${environment}`)
+					])}
+				/>
 			{:else}
 				{@const where = volumes.target}
 				<TimelineList label={l.translate('backups.volumes.title')}>
@@ -183,7 +186,9 @@
 				/>
 			{:else if backups}
 				<EmptyState
-					icon={Archive02Icon}
+					illustration="backups"
+					size="section"
+					link={{ href: docs.backups, label: l.translate('empty.docs.backups') }}
 					title={l.translate('backups.empty.title')}
 					description={l.translate('backups.empty.description')}
 				>

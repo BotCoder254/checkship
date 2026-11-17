@@ -16,7 +16,6 @@
 	import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
 	import EnvironmentChip from '#lib/components/environment-chip.svelte';
 	import Icon from '#lib/components/icon.svelte';
-	import Notice from '#lib/components/notice.svelte';
 	import SectionHeading from '#lib/components/section-heading.svelte';
 	import RowMenuGroup from '#lib/components/table/row-menu-group.svelte';
 	import RowMenuItem from '#lib/components/table/row-menu-item.svelte';
@@ -33,6 +32,7 @@
 	import { deploymentBadge, deploymentMoment } from '#lib/status.ts';
 	import { DOCKER_DEFAULT_PORT, DOCKER_DEFAULT_USER, isLocal, usesOf } from '#lib/target.ts';
 	import TargetHeader from './target-header.svelte';
+	import EmptyState from '#lib/components/empty-state.svelte';
 
 	let { data } = $props();
 
@@ -262,13 +262,15 @@
 				{/each}
 			</TimelineList>
 		{:else if usedApps}
-			<Notice>
-				<p>
-					{target.state.last_ready_version || targetStatus !== TargetStatus.Failed
-						? l.translate('targets.apps.none', [target.name])
-						: l.translate('targets.apps.none_never_ready', [target.name])}
-				</p>
-			</Notice>
+			<EmptyState
+				illustration="apps"
+				size="compact"
+				level={3}
+				title={l.translate('targets.apps.none.title')}
+				description={target.state.last_ready_version || targetStatus !== TargetStatus.Failed
+					? l.translate('targets.apps.none', [target.name])
+					: l.translate('targets.apps.none_never_ready', [target.name])}
+			/>
 		{/if}
 	</section>
 </div>

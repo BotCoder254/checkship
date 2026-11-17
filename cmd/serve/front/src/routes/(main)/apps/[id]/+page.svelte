@@ -52,6 +52,7 @@
 	import { cn } from '#lib/utils.js';
 	import AppWorkspace, { type AppActions } from './app-workspace.svelte';
 	import { liveUrl } from './app-state.ts';
+	import EmptyState from '#lib/components/empty-state.svelte';
 
 	let { data } = $props();
 
@@ -430,9 +431,13 @@
 							{/each}
 						</TimelineList>
 					{:else}
-						<p class="text-label text-muted-foreground">
-							{l.translate('detail.services.none')}
-						</p>
+						<EmptyState
+							illustration="rocket"
+							size="compact"
+							level={3}
+							title={l.translate('detail.services.none.title')}
+							description={l.translate('detail.services.none')}
+						/>
 					{/if}
 				</section>
 
@@ -510,15 +515,22 @@
 							{/each}
 						</div>
 					{:else}
-						<div class="flex flex-col items-start gap-3">
-							<p class="text-label text-muted-foreground">{l.translate('app.empty.description')}</p>
-							{#if !deleting}
-								<Button size="sm" onclick={() => workspace.openDeploy('production')}>
-									<Icon icon={Rocket01Icon} />
-									{l.translate('deployment.new')}
-								</Button>
-							{/if}
-						</div>
+						<EmptyState
+							illustration="rocket"
+							size="compact"
+							level={3}
+							title={l.translate('app.empty.title')}
+							description={l.translate('app.empty.description')}
+						>
+							{#snippet action()}
+								{#if !deleting}
+									<Button size="sm" onclick={() => workspace.openDeploy('production')}>
+										<Icon icon={Rocket01Icon} />
+										{l.translate('deployment.new')}
+									</Button>
+								{/if}
+							{/snippet}
+						</EmptyState>
 					{/if}
 				</section>
 			</div>
