@@ -1,13 +1,17 @@
 <!--
 	Restore (canvas artboard 2): the backup it comes from, where it goes (any application that is not
 	being deleted, either environment), which volumes, and whether the current data is backed up
-	first (on by default). A destructive dialog names the volumes before anything is replaced.
+	first (on by default). Then what will happen, as steps in the order the server follows (check the
+	archive, back up the current data, stop, replace, start). A destructive dialog names the volumes
+	before anything is replaced.
 -->
 <script lang="ts">
 	import DatabaseRestoreIcon from '@hugeicons/core-free-icons/DatabaseRestoreIcon';
 	import DashboardSquare01Icon from '@hugeicons/core-free-icons/DashboardSquare01Icon';
 	import InformationCircleIcon from '@hugeicons/core-free-icons/InformationCircleIcon';
 	import { toast } from 'svelte-sonner';
+	import Notice from '#lib/components/notice.svelte';
+	import Steps, { type Step } from '#lib/components/steps.svelte';
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
 	import Drawer from '#lib/components/drawer.svelte';
 	import Icon from '#lib/components/icon.svelte';
@@ -70,6 +74,37 @@
 	const declared = (key: string) => destination?.find((v) => v.key === key);
 	const selected = $derived(keys.filter((v) => !unticked.includes(v.key)).map((v) => v.key));
 	const target = $derived(candidates.find((a) => a.id === appId));
+	const plan = $derived<Step[]>([
+		{
+			key: 'check',
+			label: l.translate('restore.plan.check'),
+			note: l.translate('restore.plan.check.note'),
+			state: 'todo'
+		},
+		...(snapshot
+			? [
+					{
+						key: 'snapshot',
+						label: l.translate('restore.plan.snapshot', [l.translate(`deploy.environment.${env}`)]),
+						note: l.translate('restore.plan.snapshot.note'),
+						state: 'todo' as const
+					}
+				]
+			: []),
+		{
+			key: 'stop',
+			label: l.translate('restore.plan.stop'),
+			note: l.translate('restore.plan.stop.note'),
+			state: 'todo'
+		},
+		{
+			key: 'replace',
+			label: l.translate('restore.plan.replace'),
+			note: selected.length ? selected.join(', ') : l.translate('restore.plan.nothing'),
+			state: selected.length ? 'todo' : 'failed'
+		},
+		{ key: 'start', label: l.translate('restore.plan.start'), state: 'todo' }
+	]);
 	const samePlace = $derived(!!backup && backup.app.id === appId && backup.environment === env);
 
 	function toggle(key: string, on: boolean) {
@@ -187,6 +222,24 @@
 			</span>
 			<Switch id="restore-snapshot" bind:checked={snapshot} />
 		</div>
+
+		<!-- What will happen, in the order the server follows (restore_volumes.go), before anything is
+		     replaced; it follows the switches and the volumes ticked. -->
+		<section class="flex flex-col gap-3" aria-labelledby="restore-plan">
+			<h3 id="restore-plan" class="text-xs font-semibold tracking-wide text-muted-foreground">
+				{l.translate('restore.plan.title')}
+			</h3>
+			<Steps label={l.translate('restore.plan.title')} steps={plan} />
+		</section>
+
+		{#if !snapshot && selected.length}
+			<Notice tone="danger">
+				<strong class="font-semibold">{l.translate('restore.plan.no_way_back')}</strong>
+				<p class="text-muted-foreground">
+					{l.translate('restore.confirm.no_snapshot', [selected.join(', ')])}
+				</p>
+			</Notice>
+		{/if}
 
 		<p class="flex gap-2.5 text-xs/[18px] text-muted-foreground">
 			<Icon icon={InformationCircleIcon} class="mt-px size-4 shrink-0" />

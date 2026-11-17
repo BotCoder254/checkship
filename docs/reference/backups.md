@@ -21,12 +21,12 @@ volumes:
 
 The **Backups** tab of an application lists the volumes of each environment, read live from its target, and the mounts a backup leaves out, with the reason:
 
-| Mount                                    | Backed up | Why                                                                                       |
-| ---------------------------------------- | --------- | ----------------------------------------------------------------------------------------- |
-| Named volume (`dbdata:/data`)            | Yes       | Created by compose for this environment, labelled by **checkship**                         |
-| Bind mount (`./cache:/cache`)            | No        | A folder on the server, not a Docker volume. Declare a named volume to include it          |
-| Anonymous volume (`- /data`)             | No        | It has no name to restore it under. Give it a name in the compose file                     |
-| External volume (`external: true`)       | No        | Managed outside **checkship**                                                              |
+| Mount                              | Backed up | Why                                                                               |
+| ---------------------------------- | --------- | --------------------------------------------------------------------------------- |
+| Named volume (`dbdata:/data`)      | Yes       | Created by compose for this environment, labelled by **checkship**                |
+| Bind mount (`./cache:/cache`)      | No        | A folder on the server, not a Docker volume. Declare a named volume to include it |
+| Anonymous volume (`- /data`)       | No        | It has no name to restore it under. Give it a name in the compose file            |
+| External volume (`external: true`) | No        | Managed outside **checkship**                                                     |
 
 ::: tip
 Named volumes are also the only data **checkship** keeps when you redeploy, so moving bind mounts to named volumes is worth it even without backups.
@@ -37,10 +37,10 @@ Named volumes are also the only data **checkship** keeps when you redeploy, so m
 From the **Backups** tab of an application, **Back up now** opens a drawer:
 
 - **Environment**: production or staging.
-- **Volumes**: every named volume is ticked. Untick the ones you don't need.
+- **Volumes**: every named volume is ticked, each saying when it was last in a good backup and its size then. Untick the ones you don't need.
 - **Stop containers while copying**: on by default. The containers of the environment stop until the copy ends, then start again, so a database is copied in a consistent state. The environment is unavailable meanwhile. Turned off, containers keep running and a file that changes during the copy may be saved half-written, which can corrupt a database.
 
-The backup shows in the list as **Running**, then **Succeeded** with its size and where it is stored.
+The backup shows in the list as **Running**, then **Succeeded** with its size and where it is stored. Its details show its steps: requested, copied (how long it took and its size), then stored on the storage or kept only on its target, with what it holds per volume and every restore made from it.
 
 ### How the copy works {#how}
 
@@ -57,15 +57,28 @@ Nothing is written on the target's disk and no network is given to the helper. T
 Stopping containers gives a consistent copy of the files. If a database must stay up, or you need point-in-time recovery, also use its own tool (`pg_dump`, `mysqldump`, `mongodump`) on a schedule. A file copy of a running database is not guaranteed to restore.
 :::
 
+## Freshness {#freshness}
+
+The **Backups** page starts with its figures, then **Freshness**: one row per application environment with how old its last good backup is, its size and whether a copy is off the server (on the storage) or only on its target. The age of the newest backup you could restore is what tells you how much you would lose today, so the rows needing attention come first:
+
+| Tone      | Last good backup                                                   |
+| --------- | ------------------------------------------------------------------ |
+| Green     | Less than a day ago                                                |
+| No colour | Less than a week ago                                               |
+| Amber     | Older than a week                                                  |
+| Red       | Never: a deployed environment with named volumes and no backup yet |
+
+**checkship** has no backup schedule yet, so the tones are fixed. A row opens the application's **Backups** tab, where each volume says the same about itself.
+
 ## Where backups go {#storage}
 
 Choose it on **Backups › Storage**. Whatever you choose, the archive is first written to the data folder, and every backup records where its copies are:
 
-| Stored column        | Meaning                                                                                  |
-| -------------------- | ---------------------------------------------------------------------------------------- |
-| Here + storage       | In the data folder and in the storage                                                    |
-| Here                 | In the data folder only (no storage set)                                                 |
-| Storage only         | Uploaded, and the local file removed (see [keep a local copy](#keep-local))              |
+| Where it is stored   | Meaning (on each row's details line)                                                         |
+| -------------------- | -------------------------------------------------------------------------------------------- |
+| Here + storage       | In the data folder and in the storage                                                        |
+| Here                 | In the data folder only (no storage set)                                                     |
+| Storage only         | Uploaded, and the local file removed (see [keep a local copy](#keep-local))                  |
 | Here · upload failed | The storage was unreachable: the badge reads **Saved here only**, see [below](#storage-down) |
 
 ### checkship's data folder {#data-folder}
@@ -89,13 +102,13 @@ What **checkship** does on the chosen target:
 
 To reach it, **checkship** tries these addresses in order and keeps the first that answers:
 
-| Address                    | When it works                                                                                     |
-| -------------------------- | ------------------------------------------------------------------------------------------------- |
-| `checkship-storage:7070`   | **checkship** runs in a container exposed on that target: both share the target's network         |
-| `s3.<target host>`         | The target has a URL: its proxy routes `s3.` of its domain to the storage, over HTTPS if the target uses it |
-| `127.0.0.1:7070`           | A local target, with **checkship** running directly on the host                                     |
+| Address                  | When it works                                                                                               |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `checkship-storage:7070` | **checkship** runs in a container exposed on that target: both share the target's network                   |
+| `s3.<target host>`       | The target has a URL: its proxy routes `s3.` of its domain to the storage, over HTTPS if the target uses it |
+| `127.0.0.1:7070`         | A local target, with **checkship** running directly on the host                                             |
 
-The storage page shows its state (**Starting**, **Ready** or **Failed** with the reason), the address in use, the bucket and the access key. A failed setup can be started again by saving the page.
+The storage page starts with four figures: where copies go, its state (**Starting**, **Ready** or **Failed** with the reason), when the last copy left the server, and how many good backups are still only on their target. Below, the settings show the address in use, the bucket and the access key. A failed setup can be started again by saving the page.
 
 ::: tip Put it on another server
 On the server **checkship** runs on, the built-in storage protects your applications deployed elsewhere, but not **checkship** itself. Choose another target in **Runs on** so losing one server never loses both. When you move it, archives are copied to the new target first, each one checked for size, and the old storage is removed only once every archive arrived. The keys stay the same.
@@ -116,27 +129,27 @@ docker run --rm -v checkship-internal-storage-<target id>_data:/data:ro -v "$PWD
 
 Any server that speaks the S3 API works. **checkship** talks to it with [minio-go](https://github.com/minio/minio-go), which sends only the checksum headers a server asks for, so self-hosted servers that reject the newer AWS SDK defaults work too.
 
-| Field                 | What to put                                                                                                   |
-| --------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Endpoint              | Host and port, without scheme or bucket: `garage.example.com:3900`. A pasted URL loses its scheme and path     |
-| Region                | The server's region. Garage uses `garage` unless you set `s3_region`, most others accept `us-east-1`          |
-| Bucket                | Created if it does not exist                                                                                  |
-| Folder prefix         | Optional. Archives go under `<prefix>/<application id>/<backup id>.tar.gz`, so several tools can share a bucket |
-| Access key, secret key | A key allowed to read, write, list and delete in the bucket. Leave the secret empty to keep the saved one    |
-| Use HTTPS             | Off only for a server on a private network                                                                    |
-| Path-style addressing | `host/bucket/key` instead of `bucket.host/key`. Needed by most self-hosted servers                            |
+| Field                  | What to put                                                                                                     |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Endpoint               | Host and port, without scheme or bucket: `garage.example.com:3900`. A pasted URL loses its scheme and path      |
+| Region                 | The server's region. Garage uses `garage` unless you set `s3_region`, most others accept `us-east-1`            |
+| Bucket                 | Created if it does not exist                                                                                    |
+| Folder prefix          | Optional. Archives go under `<prefix>/<application id>/<backup id>.tar.gz`, so several tools can share a bucket |
+| Access key, secret key | A key allowed to read, write, list and delete in the bucket. Leave the secret empty to keep the saved one       |
+| Use HTTPS              | Off only for a server on a private network                                                                      |
+| Path-style addressing  | `host/bucket/key` instead of `bucket.host/key`. Needed by most self-hosted servers                              |
 
 The presets fill the endpoint and region for these servers:
 
-| Server        | License    | Example endpoint                       | Region           | Notes                                                    |
-| ------------- | ---------- | -------------------------------------- | ---------------- | -------------------------------------------------------- |
-| Garage        | AGPL-3.0   | `garage.example.com:3900`              | `garage`         | Light, built for small clusters. [Setup below](#garage)  |
-| SeaweedFS     | Apache-2.0 | `seaweed.example.com:8333`             | `us-east-1`      | [Setup below](#seaweedfs)                                |
-| RustFS        | Apache-2.0 | `rustfs.example.com:9000`              | `us-east-1`      | Use 1.0.0 or later: earlier releases had critical credential flaws |
-| Ceph RGW      | LGPL-2.1   | `rgw.example.com:7480`                 | zonegroup name   |                                                          |
-| AWS S3        | -          | `s3.eu-west-3.amazonaws.com`           | bucket region    | Path-style optional                                      |
-| Cloudflare R2 | -          | `<account>.r2.cloudflarestorage.com`   | `auto`           |                                                          |
-| Backblaze B2  | -          | `s3.eu-central-003.backblazeb2.com`    | from the endpoint |                                                         |
+| Server        | License    | Example endpoint                     | Region            | Notes                                                              |
+| ------------- | ---------- | ------------------------------------ | ----------------- | ------------------------------------------------------------------ |
+| Garage        | AGPL-3.0   | `garage.example.com:3900`            | `garage`          | Light, built for small clusters. [Setup below](#garage)            |
+| SeaweedFS     | Apache-2.0 | `seaweed.example.com:8333`           | `us-east-1`       | [Setup below](#seaweedfs)                                          |
+| RustFS        | Apache-2.0 | `rustfs.example.com:9000`            | `us-east-1`       | Use 1.0.0 or later: earlier releases had critical credential flaws |
+| Ceph RGW      | LGPL-2.1   | `rgw.example.com:7480`               | zonegroup name    |                                                                    |
+| AWS S3        | -          | `s3.eu-west-3.amazonaws.com`         | bucket region     | Path-style optional                                                |
+| Cloudflare R2 | -          | `<account>.r2.cloudflarestorage.com` | `auto`            |                                                                    |
+| Backblaze B2  | -          | `s3.eu-central-003.backblazeb2.com`  | from the endpoint |                                                                    |
 
 **Test connection** checks the settings without saving them: it creates the bucket if needed, writes a small object, reads it back and deletes it. **Save** runs the same check and refuses settings that fail it (`storage_unreachable`).
 
@@ -207,9 +220,14 @@ services:
     restart: unless-stopped
     command:
       [
-        "server", "-dir=/data", "-ip.bind=0.0.0.0",
-        "-master.volumeSizeLimitMB=1024", "-volume.max=20",
-        "-s3", "-s3.port=8333", "-s3.config=/etc/seaweedfs/s3.json"
+        "server",
+        "-dir=/data",
+        "-ip.bind=0.0.0.0",
+        "-master.volumeSizeLimitMB=1024",
+        "-volume.max=20",
+        "-s3",
+        "-s3.port=8333",
+        "-s3.config=/etc/seaweedfs/s3.json",
       ]
     ports:
       - "8333:8333"
@@ -246,7 +264,7 @@ With a storage set, **Keep a copy in checkship's data folder** is on by default:
 
 ### When the storage is down {#storage-down}
 
-A backup is never lost because the storage is unreachable. The archive stays in the data folder, the backup succeeds with the badge **Saved here only**, and its **Stored** column reads **Here · upload failed**.
+A backup is never lost because the storage is unreachable. The archive stays in the data folder, the backup succeeds with the badge **Saved here only**, and its row reads **Here · upload failed**.
 
 Once the storage is back, **Upload again** in the backup's menu copies it there (a background job, `deployment.command.store_backup`).
 
@@ -258,7 +276,7 @@ Once the storage is back, **Upload again** in the backup's menu copies it there 
 - **Volumes**: the volumes of the archive, each saying whether it replaces an existing volume or will be created by the restore.
 - **Back up the current data first**: on by default. The volumes about to be replaced are backed up first (trigger **Before restore**), so the restore can be undone with that backup.
 
-A dialog then names the volumes it replaces. When you confirm, a background job (`deployment.command.restore_volumes`):
+Before you confirm, the drawer lists **What will happen**, in the order below, following the volumes you tick; with **Back up the current data first** off, it warns that there is no way back. A dialog then names the volumes it replaces. When you confirm, a background job (`deployment.command.restore_volumes`):
 
 1. waits for any deployment of the destination environment to finish;
 2. reads the whole archive and compares its SHA-256 with the one recorded when the backup was made: a damaged archive is refused (`checksum_mismatch`) before anything changes;
@@ -328,45 +346,45 @@ Both are skipped when `BACKUPS_BEFORE_CLEANUP` is `false`, except a move you ask
 
 ## States {#states}
 
-| Badge           | Meaning                                                                            |
-| --------------- | ---------------------------------------------------------------------------------- |
-| Waiting         | Queued, for example behind a deployment of the same environment                    |
-| Running         | Copying. The **Size** column reads **Copying…**                                    |
-| Succeeded       | Done, with its size and where it is stored                                         |
-| Saved here only | Done, but the upload to the storage failed: **Upload again** once it is back       |
-| Failed          | Nothing saved. The **Size** column shows the error code; **Retry** runs it again   |
+| Badge           | Meaning                                                                      |
+| --------------- | ---------------------------------------------------------------------------- |
+| Waiting         | Queued, for example behind a deployment of the same environment              |
+| Running         | Copying. The row reads **Copying…**                                          |
+| Succeeded       | Done, with its size and where it is stored                                   |
+| Saved here only | Done, but the upload to the storage failed: **Upload again** once it is back |
+| Failed          | Nothing saved. The row shows the error code; **Retry** runs it again         |
 
 Backups wait for any running deployment of the same environment and run one at a time on their own [runner](/guide/configuration#runners), so a long copy never holds back deployments or cleanups.
 
 ## Settings {#settings}
 
-| yaml path / env name                                 | Description                                                                                       | Default                     |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------- |
-| backups.helper_image<br>BACKUPS_HELPER_IMAGE         | Image that mounts each volume during a copy. Any image with `sh` and `find` works                 | `busybox:1.37`              |
-| backups.storage_image<br>BACKUPS_STORAGE_IMAGE       | Image of the built-in storage                                                                     | `versity/versitygw:v1.11.0` |
-| backups.max_upload_size<br>BACKUPS_MAX_UPLOAD_SIZE   | Largest archive **Upload backup** accepts, with a unit: b, kb, mb, gb or tb (powers of 1024)      | `5gb`                       |
-| backups.before_cleanup<br>BACKUPS_BEFORE_CLEANUP     | Back up volumes before **checkship** removes them (application deleted, environment moved)        | `true`                      |
+| yaml path / env name                               | Description                                                                                  | Default                     |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------- |
+| backups.helper_image<br>BACKUPS_HELPER_IMAGE       | Image that mounts each volume during a copy. Any image with `sh` and `find` works            | `busybox:1.37`              |
+| backups.storage_image<br>BACKUPS_STORAGE_IMAGE     | Image of the built-in storage                                                                | `versity/versitygw:v1.11.0` |
+| backups.max_upload_size<br>BACKUPS_MAX_UPLOAD_SIZE | Largest archive **Upload backup** accepts, with a unit: b, kb, mb, gb or tb (powers of 1024) | `5gb`                       |
+| backups.before_cleanup<br>BACKUPS_BEFORE_CLEANUP   | Back up volumes before **checkship** removes them (application deleted, environment moved)   | `true`                      |
 
 The storage itself (mode, target, endpoint, keys) is set on **Backups › Storage**, which also lists the two images in use.
 
 ## Errors {#errors}
 
-| Code                          | Meaning and what to do                                                                                 |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `no_volumes`                  | The environment declares no named volumes, or was never deployed                                       |
-| `volume_not_found`            | A volume asked for is not in the environment or the archive                                           |
+| Code                          | Meaning and what to do                                                                                                                      |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `no_volumes`                  | The environment declares no named volumes, or was never deployed                                                                            |
+| `volume_not_found`            | A volume asked for is not in the environment or the archive                                                                                 |
 | `helper_image_pull_failed`    | The target could not pull the helper image: check its network and Docker Hub limits, or set `BACKUPS_HELPER_IMAGE` to an image it can reach |
-| `volume_copy_failed`          | Docker refused a copy: the target's log has the reason (disk full, volume driver error)               |
-| `target_connect_failed`       | The target could not be reached                                                                        |
-| `storage_unreachable`         | The storage refused the connection or the keys: check the endpoint, HTTPS, path-style, keys and bucket |
-| `storage_not_ready`           | The built-in storage is still starting, or failed: see **Backups › Storage**                          |
-| `storage_move_failed`         | Moving the built-in storage to another target could not copy every archive. The old storage is kept  |
-| `checksum_mismatch`           | The archive changed since the backup was made. It is not restored                                     |
-| `manifest_missing`            | Not a **checkship** backup                                                                            |
-| `archive_too_large`           | Over `BACKUPS_MAX_UPLOAD_SIZE`                                                                        |
-| `invalid_archive_entry`       | An entry would land outside its volume                                                                |
-| `backup_not_finished`         | The backup is still running: wait before deleting it                                                  |
-| `target_hosts_backup_storage` | The target runs the built-in storage: move it before deleting the target                              |
+| `volume_copy_failed`          | Docker refused a copy: the target's log has the reason (disk full, volume driver error)                                                     |
+| `target_connect_failed`       | The target could not be reached                                                                                                             |
+| `storage_unreachable`         | The storage refused the connection or the keys: check the endpoint, HTTPS, path-style, keys and bucket                                      |
+| `storage_not_ready`           | The built-in storage is still starting, or failed: see **Backups › Storage**                                                                |
+| `storage_move_failed`         | Moving the built-in storage to another target could not copy every archive. The old storage is kept                                         |
+| `checksum_mismatch`           | The archive changed since the backup was made. It is not restored                                                                           |
+| `manifest_missing`            | Not a **checkship** backup                                                                                                                  |
+| `archive_too_large`           | Over `BACKUPS_MAX_UPLOAD_SIZE`                                                                                                              |
+| `invalid_archive_entry`       | An entry would land outside its volume                                                                                                      |
+| `backup_not_finished`         | The backup is still running: wait before deleting it                                                                                        |
+| `target_hosts_backup_storage` | The target runs the built-in storage: move it before deleting the target                                                                    |
 
 ## API {#api}
 

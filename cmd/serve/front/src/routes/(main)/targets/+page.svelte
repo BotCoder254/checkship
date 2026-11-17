@@ -20,6 +20,7 @@
 	import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
 	import { toast } from 'svelte-sonner';
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
+	import TargetsInsights from './targets-insights.svelte';
 	import EmptyState from '#lib/components/empty-state.svelte';
 	import docs from '#lib/docs.ts';
 	import Icon from '#lib/components/icon.svelte';
@@ -173,7 +174,8 @@
 </PageHeader>
 
 {#if $targets && $targets.length > 0}
-	<div class="flex flex-col gap-3">
+	<TargetsInsights targets={$targets} apps={$apps} />
+	<div class="mt-12 flex flex-col gap-3">
 		<div class="flex flex-wrap items-center justify-between gap-2">
 			<div class="flex flex-wrap items-center gap-2">
 				<div class="relative w-72 max-w-full">

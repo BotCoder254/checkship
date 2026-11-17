@@ -14,26 +14,24 @@
 	import Add01Icon from '@hugeicons/core-free-icons/Add01Icon';
 	import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
 	import CancelCircleIcon from '@hugeicons/core-free-icons/CancelCircleIcon';
-	import ChartHistogramIcon from '@hugeicons/core-free-icons/ChartHistogramIcon';
-	import PieChartIcon from '@hugeicons/core-free-icons/PieChartIcon';
 	import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
-	import Timer02Icon from '@hugeicons/core-free-icons/Timer02Icon';
 	import WifiDisconnected01Icon from '@hugeicons/core-free-icons/WifiDisconnected01Icon';
 	import { onMount, untrack } from 'svelte';
+	import CalendarHeatmap from '#lib/components/charts/calendar-heatmap.svelte';
+	import ShareBar, { type ShareItem } from '#lib/components/charts/share-bar.svelte';
 	import ActivityFeed from '#lib/components/dashboard/activity-feed.svelte';
+	import DeployCharts from '#lib/components/dashboard/deploy-charts.svelte';
 	import AppsTile from '#lib/components/dashboard/apps-tile.svelte';
 	import AttentionTile from '#lib/components/dashboard/attention-tile.svelte';
-	import DeploysChart from '#lib/components/dashboard/deploys-chart.svelte';
-	import DurationChart from '#lib/components/dashboard/duration-chart.svelte';
 	import FailuresDrawer from '#lib/components/dashboard/failures-drawer.svelte';
 	import InfraTile from '#lib/components/dashboard/infra-tile.svelte';
-	import ResultsDonut from '#lib/components/dashboard/results-donut.svelte';
 	import StatsStrip from '#lib/components/dashboard/stats-strip.svelte';
 	import Tile from '#lib/components/dashboard/tile.svelte';
 	import Icon from '#lib/components/icon.svelte';
 	import Illustration from '#lib/components/illustration.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
 	import SectionHeading from '#lib/components/section-heading.svelte';
+	import Segmented from '#lib/components/segmented.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { connectLive, liveChanges, liveStatus } from '#lib/live.ts';
@@ -102,10 +100,11 @@
 		});
 	});
 
-	const ranges: { value: DashboardRange; label: string }[] = [
-		{ value: 7, label: l.translate('dashboard.range', [7]) },
-		{ value: 30, label: l.translate('dashboard.range', [30]) },
-		{ value: 90, label: l.translate('dashboard.range', [90]) }
+	type RangeKey = '7' | '30' | '90';
+	const ranges: { value: RangeKey; label: string }[] = [
+		{ value: '7', label: l.translate('charts.days', [7]) },
+		{ value: '30', label: l.translate('charts.days', [30]) },
+		{ value: '90', label: l.translate('charts.days', [90]) }
 	];
 	const environments: { value: '' | Environment; label: string }[] = [
 		{ value: '', label: l.translate('dashboard.environment.all') },
@@ -116,7 +115,56 @@
 	const firstRun = $derived($apps !== undefined && $apps.length === 0);
 	const activeTargets = $derived(($targets ?? []).filter((t) => !t.cleanup_requested_at).length);
 
-	const series = $derived(summary?.series ?? []);
+	// The calendar always looks back 13 weeks: the 90-day summary (the same query when the range is 90).
+	const calendarFilters = $derived<DashboardFilters>({
+		range: 90,
+		environment: filters.environment
+	});
+	const calendarQuery = $derived(dashboard.querySummary(calendarFilters));
+	const calendarData = $derived(calendarQuery.data);
+	const calendarError = $derived(calendarQuery.error);
+	const calendar = $derived($calendarData);
+
+	const percent = (part: number, whole: number) =>
+		`${whole ? Math.round((part / whole) * 100) : 0}%`;
+
+	const environmentShare = $derived.by((): ShareItem[] => {
+		const stats = (summary?.by_environment ?? []).filter((e) => e.deployments > 0);
+		const total = stats.reduce((sum, e) => sum + e.deployments, 0);
+		return stats.map((e) => ({
+			key: e.environment,
+			label: l.translate(`deploy.environment.${e.environment}`),
+			value: e.deployments,
+			color:
+				e.environment === 'production'
+					? 'var(--accent)'
+					: 'color-mix(in oklab, var(--accent) 50%, var(--ink))',
+			cells: [
+				String(e.deployments),
+				percent(e.deployments, total),
+				l.translate('dashboard.env.success', [percent(e.succeeded, e.succeeded + e.failed)])
+			]
+		}));
+	});
+
+	const errorShade = [
+		'var(--danger)',
+		'color-mix(in oklab, var(--danger) 65%, var(--surface))',
+		'color-mix(in oklab, var(--danger) 40%, var(--surface))',
+		'var(--faint)'
+	];
+	const errorShare = $derived.by((): ShareItem[] => {
+		const errors = summary?.errors ?? [];
+		const total = errors.reduce((sum, e) => sum + e.count, 0);
+		return errors.map((e, i) => ({
+			key: e.code,
+			label: e.code,
+			mono: true,
+			value: e.count,
+			color: errorShade[Math.min(i, errorShade.length - 1)],
+			cells: [String(e.count), percent(e.count, total)]
+		}));
+	});
 	const kpiLoading = $derived(!summary && !$summaryError);
 	const retrySummary = () => dashboard.fetchSummary(filters, { cache: 'no-store' }).catch(() => {});
 </script>
@@ -140,23 +188,12 @@
 				{l.translate('dashboard.offline')}
 			{/if}
 		</span>
-		<Select.Root
-			type="single"
-			value={String(range)}
-			onValueChange={(value) => (range = Number(value) as DashboardRange)}
-		>
-			<Select.Trigger class="w-38" aria-label={l.translate('dashboard.range.label')}>
-				{ranges.find((r) => r.value === range)?.label}
-			</Select.Trigger>
-			<Select.Content>
-				{#each ranges as r (r.value)}
-					<Select.Item value={String(r.value)} label={r.label}>
-						<Icon icon={Calendar03Icon} class="text-muted-foreground" />
-						{r.label}
-					</Select.Item>
-				{/each}
-			</Select.Content>
-		</Select.Root>
+		<span id="range-label" class="sr-only">{l.translate('dashboard.range.label')}</span>
+		<Segmented
+			labelledby="range-label"
+			items={ranges}
+			bind:value={() => String(range) as RangeKey, (v) => (range = Number(v) as DashboardRange)}
+		/>
 		<Select.Root
 			type="single"
 			value={environment}
@@ -228,160 +265,150 @@
 		</ol>
 	</section>
 {:else}
-	<div class="grid grid-flow-row-dense grid-cols-1 gap-x-10 gap-y-10 md:grid-cols-2 xl:grid-cols-4">
-		<StatsStrip
+	<div class="flex flex-col gap-12">
+		<StatsStrip {summary} {range} error={$summaryError} onretry={retrySummary} />
+
+		<!-- The two charts, side by side from lg (owner, 2026-11-17). -->
+		<DeployCharts
 			{summary}
 			{range}
 			error={$summaryError}
 			onretry={retrySummary}
-			class="md:col-span-2 xl:col-span-4"
+			onfailures={() => (failuresOpen = true)}
+			onrange={(r) => (range = r)}
 		/>
 
-		<Tile
-			title={l.translate('dashboard.deploys.title')}
-			icon={ChartHistogramIcon}
-			class="md:col-span-2 xl:row-span-2"
-			loading={kpiLoading}
-			error={summary ? undefined : $summaryError}
-			onretry={retrySummary}
-		>
-			{#snippet actions()}
-				<ul class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-					<li class="flex items-center gap-1.5">
-						<span class="size-2 rounded-full bg-success"></span>{l.translate(
-							'dashboard.series.succeeded'
-						)}
-					</li>
-					<li class="flex items-center gap-1.5">
-						<span class="size-2 rounded-full bg-danger"></span>{l.translate(
-							'dashboard.series.failed'
-						)}
-					</li>
-					<li class="flex items-center gap-1.5">
-						<span class="size-2 rounded-full bg-faint"></span>{l.translate(
-							'dashboard.series.other'
-						)}
-					</li>
-				</ul>
-			{/snippet}
-			{#if summary && summary.current.deployments > 0}
-				<DeploysChart days={series} onselect={(day) => day.failed && (failuresOpen = true)} />
-				<p class="text-xs text-muted-foreground">{l.translate('dashboard.deploys.hint')}</p>
-			{:else}
-				<EmptyState
-					illustration="chart"
-					size="section"
-					level={3}
-					class="flex-1 justify-center"
-					title={l.translate('dashboard.empty.range.title', [range])}
-				>
-					{#snippet action()}
-						{#if range !== 90}
-							<Button variant="outline" onclick={() => (range = range === 7 ? 30 : 90)}>
-								{l.translate('dashboard.range', [range === 7 ? 30 : 90])}
-							</Button>
-						{/if}
-					{/snippet}
-				</EmptyState>
-			{/if}
-		</Tile>
-
-		<AttentionTile
-			apps={$apps}
-			targets={$targets}
-			failingJobs={$failedJobs?.total}
-			class="md:col-span-2"
-		/>
-		<InfraTile
-			targets={$targets}
-			jobs={{
-				running: $runningJobs?.total,
-				pending: $pendingJobs?.total,
-				failed: $failedJobs?.total
-			}}
-			class="md:col-span-2"
-		/>
-
-		<ActivityFeed
-			environment={filters.environment}
-			{refresh}
-			live={$liveStatus === 'live'}
-			{appName}
-			class="md:col-span-2 xl:row-span-2"
-		/>
-		<AppsTile {filters} {refresh} class="md:col-span-2 xl:row-span-2" />
-
-		<Tile
-			title={l.translate('dashboard.duration')}
-			icon={Timer02Icon}
-			class="md:col-span-2"
-			loading={kpiLoading}
-			error={summary ? undefined : $summaryError}
-			onretry={retrySummary}
-		>
-			{#snippet actions()}
-				<ul class="flex gap-4 text-xs text-muted-foreground">
-					<li class="flex items-center gap-1.5">
-						<span class="size-2 rounded-full bg-primary"></span>{l.translate(
-							'dashboard.duration.median'
-						)}
-					</li>
-					<li class="flex items-center gap-1.5">
-						<span class="size-2 rounded-full bg-warning"></span>{l.translate(
-							'dashboard.duration.slowest'
-						)}
-					</li>
-				</ul>
-			{/snippet}
-			<DurationChart days={series} />
-		</Tile>
-
-		<Tile
-			title={l.translate('dashboard.environments')}
-			icon={PieChartIcon}
-			loading={kpiLoading}
-			error={summary ? undefined : $summaryError}
-			onretry={retrySummary}
-		>
-			<ResultsDonut stats={summary?.by_environment ?? []} />
-		</Tile>
-
-		<Tile
-			title={l.translate('dashboard.failures')}
-			icon={CancelCircleIcon}
-			loading={kpiLoading}
-			error={summary ? undefined : $summaryError}
-			onretry={retrySummary}
-		>
-			<div class="flex items-baseline gap-2">
-				<strong class="text-3xl/9 font-semibold tabular-nums">{summary?.current.failed ?? 0}</strong
-				>
-				<span class="text-label text-muted-foreground"
-					>{l.translate('dashboard.failures.in', [range])}</span
-				>
-			</div>
-			{#if summary?.errors.length}
-				<ul class="flex flex-col gap-1.5 text-xs text-muted-foreground">
-					{#each summary.errors as e (e.code)}
-						<li class="flex justify-between gap-3">
-							<span class="truncate font-mono">{e.code}</span>
-							<b class="font-semibold text-ink tabular-nums">{e.count}</b>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-			<Button
-				variant="outline"
-				size="sm"
-				class="mt-auto w-full"
-				disabled={!summary?.current.failed}
-				onclick={() => (failuresOpen = true)}
+		<div class="grid gap-x-10 gap-y-12 md:grid-cols-2 xl:grid-cols-3">
+			<Tile
+				title={l.translate('dashboard.environments')}
+				icon={Layers01Icon}
+				loading={kpiLoading}
+				error={summary ? undefined : $summaryError}
+				onretry={retrySummary}
 			>
-				<Icon icon={ArrowRight01Icon} />
-				{l.translate('dashboard.failures.see')}
-			</Button>
-		</Tile>
+				{#snippet actions()}{l.translate('dashboard.env.note')}{/snippet}
+				{#if environmentShare.length}
+					<ShareBar
+						items={environmentShare}
+						headers={[
+							l.translate('column.environment'),
+							l.translate('dashboard.kpi.deployments'),
+							l.translate('charts.share'),
+							l.translate('dashboard.kpi.success')
+						]}
+						label={environmentShare.map((i) => `${i.label} ${i.value}`).join(', ')}
+					/>
+				{:else}
+					{@render emptyRange()}
+				{/if}
+			</Tile>
+
+			<Tile
+				title={l.translate('dashboard.errors.title')}
+				icon={CancelCircleIcon}
+				loading={kpiLoading}
+				error={summary ? undefined : $summaryError}
+				onretry={retrySummary}
+			>
+				{#snippet actions()}
+					{#if summary?.current.failed}{l.translate('dashboard.errors.note', [
+							summary.current.failed
+						])}{/if}
+				{/snippet}
+				{#if summary?.current.failed}
+					<ShareBar
+						items={errorShare}
+						headers={[
+							l.translate('dashboard.errors.code'),
+							l.translate('dashboard.series.failed'),
+							l.translate('charts.share')
+						]}
+						label={errorShare.map((i) => `${i.label} ${i.value}`).join(', ')}
+					/>
+					<Button
+						variant="outline"
+						size="sm"
+						class="self-start"
+						onclick={() => (failuresOpen = true)}
+					>
+						<Icon icon={ArrowRight01Icon} />
+						{l.translate('dashboard.failures.see')}
+					</Button>
+				{:else}
+					<EmptyState
+						illustration="allClear"
+						size="compact"
+						level={3}
+						class="flex-1 justify-center"
+						title={l.translate('dashboard.failures.none.title')}
+						description={l.translate('dashboard.failures.none')}
+					/>
+				{/if}
+			</Tile>
+
+			<Tile
+				title={l.translate('dashboard.calendar')}
+				icon={Calendar03Icon}
+				class="md:col-span-2 xl:col-span-1"
+				loading={!calendar && !$calendarError}
+				error={calendar ? undefined : $calendarError}
+				onretry={() =>
+					dashboard.fetchSummary(calendarFilters, { cache: 'no-store' }).catch(() => {})}
+			>
+				{#snippet actions()}{l.translate('dashboard.calendar.note')}{/snippet}
+				{#if calendar}
+					<CalendarHeatmap
+						days={calendar.series.map((d) => ({
+							date: d.date,
+							value: d.succeeded + d.failed + d.other
+						}))}
+						label={l.translate('dashboard.calendar.label')}
+						count={(n) => l.translate('charts.deployments', [n])}
+					/>
+				{/if}
+			</Tile>
+		</div>
+
+		<div class="grid gap-x-10 gap-y-12 md:grid-cols-2">
+			<AttentionTile apps={$apps} targets={$targets} failingJobs={$failedJobs?.total} />
+			<InfraTile
+				targets={$targets}
+				jobs={{
+					running: $runningJobs?.total,
+					pending: $pendingJobs?.total,
+					failed: $failedJobs?.total
+				}}
+			/>
+		</div>
+
+		<div class="grid gap-x-10 gap-y-12 lg:grid-cols-2">
+			<ActivityFeed
+				environment={filters.environment}
+				{refresh}
+				live={$liveStatus === 'live'}
+				{appName}
+			/>
+			<AppsTile {filters} {refresh} />
+		</div>
 	</div>
 {/if}
+
+{#snippet emptyRange()}
+	<EmptyState
+		illustration="chart"
+		size="compact"
+		level={3}
+		class="flex-1 justify-center"
+		title={l.translate('dashboard.empty.range.title', [range])}
+	>
+		{#snippet action()}
+			{#if range !== 90}
+				<Button variant="outline" size="sm" onclick={() => (range = range === 7 ? 30 : 90)}>
+					{l.translate('dashboard.range', [range === 7 ? 30 : 90])}
+				</Button>
+			{/if}
+		{/snippet}
+	</EmptyState>
+{/snippet}
 
 <FailuresDrawer bind:open={failuresOpen} {filters} {appName} />

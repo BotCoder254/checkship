@@ -1,6 +1,8 @@
 <!--
-	Deployment (DESIGN.md §5, §11.5): breadcrumb title, state in the status line, Promote and
-	Redeploy behind a confirmation dialog, then Source, Services and Logs as sections (headings and
+	Deployment (DESIGN.md §11.7 Deployment): breadcrumb title, state in the status line, Promote and
+	Redeploy behind a confirmation dialog, then what happened in order (a timeline: queued, started,
+	finished, with the wait and the run time), the error first when it failed, then Source, Services
+	and Logs as sections (headings and
 	space, no lines). Polls while the deployment runs or its target is being configured.
 -->
 <script lang="ts">
@@ -13,6 +15,8 @@
 	import { goto } from '$app/navigation';
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
 	import Icon from '#lib/components/icon.svelte';
+	import Notice from '#lib/components/notice.svelte';
+	import DeploymentTimeline from './deployment-timeline.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
 	import StatusBadge from '#lib/components/status-badge.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
@@ -125,9 +129,6 @@
 				deployment.target.name ?? l.translate('deployment.target.deleted')
 			])} · {timing()}
 		</span>
-		{#if deployment.state.error_code}
-			<span class="font-mono text-xs">{deployment.state.error_code}</span>
-		{/if}
 	{/snippet}
 </PageHeader>
 
@@ -147,6 +148,15 @@
 				</a>
 			</Alert.Description>
 		</Alert.Root>
+	{/if}
+
+	<DeploymentTimeline requestedAt={deployment.requested_at} state={deployment.state} />
+
+	{#if deployment.state.error_code}
+		<Notice tone="danger" role="alert">
+			<strong class="font-mono font-semibold">{deployment.state.error_code}</strong>
+			<p class="text-muted-foreground">{l.translate('deployment.failed.help')}</p>
+		</Notice>
 	{/if}
 
 	<div class="grid gap-9 md:grid-cols-2">

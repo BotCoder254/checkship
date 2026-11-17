@@ -1,7 +1,8 @@
 <!--
-	Target settings (DESIGN.md §11.8). Delete follows the server: refused while environments deploy
-	to the target (the dialog lists them, each linking to its settings) or while it configures;
-	otherwise it asks for the name. The header is the one Overview has (target-header.svelte).
+	Target settings (DESIGN.md §11.8): an "On this page" index from xl and a Danger zone at the end.
+	Delete follows the server: refused while environments deploy to the target (the Danger zone says
+	so first, the dialog lists them, each linking to its settings) or while it configures; otherwise
+	it asks for the name. The header is the one Overview has (target-header.svelte).
 -->
 <script lang="ts">
 	import DashboardSquare01Icon from '@hugeicons/core-free-icons/DashboardSquare01Icon';
@@ -18,6 +19,9 @@
 	import TimelineList from '#lib/components/timeline/timeline-list.svelte';
 	import TimelineRow from '#lib/components/timeline/timeline-row.svelte';
 	import Icon from '#lib/components/icon.svelte';
+	import SectionIndex from '#lib/components/section-index.svelte';
+	import SettingRow from '#lib/components/setting-row.svelte';
+	import SettingsSection from '#lib/components/settings-section.svelte';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import l from '#lib/localization/index.ts';
@@ -52,31 +56,66 @@
 
 <TargetHeader {target} tab="settings" />
 
-<TargetForm
-	embedded
-	initialData={data.target}
-	handler={submit}
-	disabled={!!target.cleanup_requested_at}
->
-	{#snippet actions(submitting)}
-		<!-- While it is being deleted, the header says so and there is nothing to do here. -->
+<div class="grid gap-10 xl:grid-cols-[180px_minmax(0,1fr)]">
+	<SectionIndex
+		items={[
+			{ id: 'settings-general', label: l.translate('settings.general') },
+			{ id: 'settings-connection', label: l.translate('targets.connection') },
+			{ id: 'settings-exposure', label: l.translate('targets.exposure') },
+			...(target.cleanup_requested_at
+				? []
+				: [{ id: 'settings-danger', label: l.translate('settings.danger'), danger: true }])
+		]}
+	/>
+	<div class="flex min-w-0 flex-col gap-12">
+		<TargetForm
+			embedded
+			initialData={data.target}
+			handler={submit}
+			disabled={!!target.cleanup_requested_at}
+		>
+			{#snippet actions(submitting)}
+				<!-- While it is being deleted, the header says so and there is nothing to do here. -->
+				{#if !target.cleanup_requested_at}
+					<Button type="submit" loading={submitting}>
+						<Icon icon={Tick02Icon} />
+						{l.translate('save')}
+					</Button>
+				{/if}
+			{/snippet}
+		</TargetForm>
 		{#if !target.cleanup_requested_at}
-			<Button
-				variant="destructive"
-				disabled={configuring}
-				title={configuring ? l.translate('targets.delete.configuring') : undefined}
-				onclick={askDelete}
+			<SettingsSection
+				id="settings-danger"
+				title={l.translate('settings.danger')}
+				description={l.translate('targets.danger.description')}
 			>
-				<Icon icon={Delete02Icon} />
-				{l.translate('target.delete')}
-			</Button>
-			<Button type="submit" loading={submitting}>
-				<Icon icon={Tick02Icon} />
-				{l.translate('save')}
-			</Button>
+				<SettingRow
+					for="delete-target"
+					label={l.translate('target.delete')}
+					description={configuring
+						? l.translate('targets.delete.configuring')
+						: uses.length
+							? l.translate('targets.danger.in_use', [
+									uses.length,
+									[...new Set(uses.map((u) => u.app.name))].join(', ')
+								])
+							: l.translate('targets.danger.free')}
+				>
+					<Button
+						id="delete-target"
+						variant="destructive"
+						disabled={configuring}
+						onclick={askDelete}
+					>
+						<Icon icon={Delete02Icon} />
+						{l.translate('target.delete')}
+					</Button>
+				</SettingRow>
+			</SettingsSection>
 		{/if}
-	{/snippet}
-</TargetForm>
+	</div>
+</div>
 
 <ConfirmDialog
 	bind:open={deleteOpen}

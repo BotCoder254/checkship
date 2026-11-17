@@ -1,31 +1,19 @@
 <!--
-	Stats strip (DESIGN.md §11.10): the period's four figures in one row across the grid, written
-	on the page with no band or cards (§1 Cardless). Segments are separated by space, never by lines (no dividers). Each segment: a
-	label with a small icon, the figure, its change against the previous period (green when it is
-	good news, the arrow gives the direction), the previous value in words and a sparkline.
-	Four across from xl, two by two below; phones drop the previous-value line.
+	The Overview's four figures (DESIGN.md §11.10 Figures): Deployments, Success rate, Median deploy
+	time and Time to recover, each a big number with one line comparing it with the previous period
+	of the same length in words. In one row on the page from xl, two by two below; no band, no cards,
+	no sparklines (the charts under them show the trend). Skeletons shaped like the figures while
+	loading; a failed load says so and offers Try again.
 -->
 <script lang="ts">
 	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
-	import ArrowDownRight01Icon from '@hugeicons/core-free-icons/ArrowDownRight01Icon';
-	import ArrowUpRight01Icon from '@hugeicons/core-free-icons/ArrowUpRight01Icon';
-	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
 	import RefreshIcon from '@hugeicons/core-free-icons/RefreshIcon';
-	import Rocket01Icon from '@hugeicons/core-free-icons/Rocket01Icon';
-	import Timer02Icon from '@hugeicons/core-free-icons/Timer02Icon';
-	import Sparkline from '#lib/components/dashboard/sparkline.svelte';
-	import Icon, { type IconData } from '#lib/components/icon.svelte';
+	import Metric from '#lib/components/charts/metric.svelte';
+	import Icon from '#lib/components/icon.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
-	import {
-		countTrend,
-		durationTrend,
-		formatRate,
-		formatSeconds,
-		rateTrend,
-		splitSeconds,
-		type Trend
-	} from '#lib/dashboard.ts';
+	import { countChange, durationChange, rateChange } from '#lib/charts.ts';
+	import { formatRate, splitSeconds } from '#lib/dashboard.ts';
 	import l from '#lib/localization/index.ts';
 	import type { Summary } from '#lib/resources/dashboard.ts';
 	import { cn } from '#lib/utils.js';
@@ -35,102 +23,56 @@
 		range: number;
 		error?: unknown;
 		onretry?: () => void;
+		/** The region's name (an application's page names it after the app). */
+		label?: string;
 		class?: string;
 	};
 
-	let { summary, range, error, onretry, class: className }: Props = $props();
+	let { summary, range, error, onretry, label, class: className }: Props = $props();
 
-	type Segment = {
-		key: string;
-		label: string;
-		icon: IconData;
-		value: string;
-		unit: string;
-		trend: Trend | null;
-		previous: string;
-		spark: (number | null)[];
-		tone: 'accent' | 'success' | 'warning' | 'danger';
-	};
-
-	const segments = $derived.by((): Segment[] => {
+	const figures = $derived.by(() => {
 		if (!summary) return [];
-		const { current, previous, series } = summary;
-		const hasPrevious = previous.deployments > 0;
-		const none = l.translate('dashboard.strip.first');
+		const { current, previous } = summary;
 		const [median, medianUnit] = splitSeconds(current.median_duration);
 		const [recover, recoverUnit] = splitSeconds(current.median_recovery);
-		const environment = l.translate(`deploy.environment.${summary.recovery.environment}`);
-
 		return [
 			{
 				key: 'deployments',
 				label: l.translate('dashboard.kpi.deployments'),
-				icon: Rocket01Icon,
 				value: String(current.deployments),
 				unit: '',
-				trend: countTrend(current.deployments, previous.deployments),
-				previous: hasPrevious
-					? l.translate('dashboard.strip.previous_count', [previous.deployments, range])
-					: none,
-				spark: series.map((d) => d.succeeded + d.failed + d.other),
-				tone: 'accent'
+				change: countChange(current.deployments, previous.deployments, range)
 			},
 			{
 				key: 'success',
 				label: l.translate('dashboard.kpi.success'),
-				icon: CheckmarkCircle02Icon,
 				value: formatRate(current.success_rate),
 				unit: current.success_rate != null ? '%' : '',
-				trend: rateTrend(current.success_rate, previous.success_rate),
-				previous:
-					previous.success_rate != null
-						? l.translate('dashboard.strip.before', [`${formatRate(previous.success_rate)}%`])
-						: none,
-				spark: series.map((d) =>
-					d.succeeded + d.failed ? d.succeeded / (d.succeeded + d.failed) : null
-				),
-				tone: 'success'
+				change: rateChange(current.success_rate, previous.success_rate, range)
 			},
 			{
 				key: 'duration',
 				label: l.translate('dashboard.kpi.duration'),
-				icon: Timer02Icon,
 				value: median,
 				unit: medianUnit,
-				trend: durationTrend(current.median_duration, previous.median_duration),
-				previous:
-					previous.median_duration != null
-						? l.translate('dashboard.strip.before', [formatSeconds(previous.median_duration)])
-						: none,
-				spark: series.map((d) => d.median_duration),
-				tone: 'warning'
+				change: durationChange(current.median_duration, previous.median_duration, range)
 			},
 			{
 				key: 'recover',
 				label: l.translate('dashboard.kpi.recover'),
-				icon: RefreshIcon,
 				value: recover,
 				unit: recoverUnit,
-				trend: durationTrend(current.median_recovery, previous.median_recovery),
-				previous: current.recoveries
-					? previous.median_recovery != null
-						? l.translate('dashboard.strip.recover', [
-								formatSeconds(previous.median_recovery),
-								current.recoveries,
-								environment
-							])
-						: l.translate('dashboard.strip.recoveries', [current.recoveries, environment])
-					: l.translate('dashboard.kpi.recover.none'),
-				spark: series.map((d) => d.failed),
-				tone: 'danger'
+				change: current.recoveries
+					? durationChange(current.median_recovery, previous.median_recovery, range)
+					: l.translate('dashboard.kpi.recover.none')
 			}
 		];
 	});
 </script>
 
 <section
-	aria-label={l.translate('dashboard.strip.label', [range])}
-	class={cn('grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-x-10 sm:gap-y-6 xl:grid-cols-4', className)}
+	aria-label={label ?? l.translate('dashboard.strip.label', [range])}
+	class={cn('grid grid-cols-2 gap-x-6 gap-y-6 sm:gap-x-10 xl:grid-cols-4', className)}
 >
 	{#if error && !summary}
 		<div class="col-span-full flex flex-wrap items-center gap-3 py-2">
@@ -147,51 +89,15 @@
 		</div>
 	{:else if !summary}
 		{#each [0, 1, 2, 3] as i (i)}
-			<div class="flex flex-col gap-2.5" aria-busy="true">
-				<Skeleton class="h-3 w-1/2 bg-raised" />
-				<Skeleton class="h-7.5 w-3/4 bg-raised" />
-				<Skeleton class="h-7 w-full bg-raised" />
+			<div class="flex flex-col gap-2" aria-busy="true">
+				<Skeleton class="h-3.5 w-1/2 bg-raised" />
+				<Skeleton class="h-9 w-2/5 bg-raised" />
+				<Skeleton class="h-3.5 w-4/5 bg-raised" />
 			</div>
 		{/each}
 	{:else}
-		{#each segments as s (s.key)}
-			<div
-				role="group"
-				aria-labelledby="stat-{s.key}"
-				class="flex min-w-0 flex-col gap-1.5 sm:gap-2"
-			>
-				<span
-					id="stat-{s.key}"
-					class="flex items-center gap-1.75 text-xs text-muted-foreground sm:text-label"
-				>
-					<Icon icon={s.icon} class="hidden size-3.75 sm:block" />
-					{s.label}
-				</span>
-				<span class="flex flex-wrap items-baseline gap-x-2.5 gap-y-1.5">
-					<strong class="text-2xl/none font-semibold tracking-tight tabular-nums sm:text-3xl/none">
-						{s.value}{#if s.unit}<span
-								class="ml-0.5 text-label font-medium text-muted-foreground sm:text-base"
-								>{s.unit}</span
-							>{/if}
-					</strong>
-					{#if s.trend}
-						<span
-							class={cn(
-								'inline-flex h-5.5 items-center gap-1 rounded-sm px-1.5 text-xs font-semibold',
-								s.trend.good ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'
-							)}
-						>
-							<Icon
-								icon={s.trend.up ? ArrowUpRight01Icon : ArrowDownRight01Icon}
-								class="size-3.5"
-							/>
-							{s.trend.text}
-						</span>
-					{/if}
-				</span>
-				<span class="hidden truncate text-xs text-muted-foreground sm:block">{s.previous}</span>
-				<div class="mt-0.5 h-7 sm:h-8"><Sparkline values={s.spark} tone={s.tone} /></div>
-			</div>
+		{#each figures as f (f.key)}
+			<Metric label={f.label} value={f.value} unit={f.unit} change={f.change} />
 		{/each}
 	{/if}
 </section>

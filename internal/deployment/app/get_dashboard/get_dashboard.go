@@ -50,6 +50,9 @@ type (
 	SummaryQuery struct {
 		bus.Query[Summary]
 		Filters
+
+		App    monad.Maybe[string] `json:"-"` // one application's deployments only (its page)
+		Target monad.Maybe[string] `json:"-"` // deployments to one target only (its page)
 	}
 
 	AppsQuery struct {

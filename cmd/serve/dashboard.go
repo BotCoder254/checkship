@@ -45,6 +45,17 @@ func environmentParam(value string) (m monad.Maybe[string]) {
 	return m
 }
 
+// An application or target id (a ksuid: 27 letters and digits); anything else means all of them.
+func idParam(value string) (m monad.Maybe[string]) {
+	value = strings.TrimSpace(value)
+	if len(value) == 27 && strings.IndexFunc(value, func(r rune) bool {
+		return !(r >= '0' && r <= '9' || r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z')
+	}) == -1 {
+		m.Set(value)
+	}
+	return m
+}
+
 func atoi(value string) int {
 	n, err := strconv.Atoi(strings.TrimSpace(value))
 	if err != nil {
@@ -64,6 +75,8 @@ func (s *server) dashboardSummaryHandler() gin.HandlerFunc {
 	return httputils.Send(s, func(ctx *gin.Context) error {
 		summary, err := bus.Send(s.bus, ctx.Request.Context(), get_dashboard.SummaryQuery{
 			Filters: dashboardFilters(ctx),
+			App:     idParam(ctx.Query("app")),
+			Target:  idParam(ctx.Query("target")),
 		})
 
 		if err != nil {

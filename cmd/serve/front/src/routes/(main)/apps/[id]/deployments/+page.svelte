@@ -51,6 +51,7 @@
 		type Deployment,
 		type QueryDeploymentsFilters
 	} from '#lib/resources/deployments.ts';
+	import DeployStrip from '#lib/components/deploy-strip.svelte';
 	import AppWorkspace, { type AppActions } from '../app-workspace.svelte';
 
 	let { data } = $props();
@@ -196,6 +197,13 @@
 			</div>
 
 			{#if rows.length > 0}
+				<!-- The pattern of what is shown, at a glance (DESIGN.md §11.7). -->
+				<DeployStrip
+					appId={app.id}
+					deployments={rows}
+					environment={environment === 'all' ? undefined : environment}
+					onopen={(n) => workspace.openPreview(n)}
+				/>
 				<div class="flex flex-col gap-4">
 					{#each groups as group (group.key)}
 						<TimelineGroup label={group.label} count={group.items.length}>

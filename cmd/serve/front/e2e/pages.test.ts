@@ -195,6 +195,11 @@ test.describe('desktop', () => {
 		const tabsTop = (await tabs.boundingBox())!.y;
 		await page.goto(`/apps/${app}/`);
 		expect((await tabs.boundingBox())!.y).toBe(tabsTop);
+		// The overview: this application's figures (the summary filtered by app) and each
+		// environment's last deploys as a strip.
+		await expect(
+			page.getByRole('region', { name: 'This application, last 30 days' })
+		).toBeVisible();
 		await page.goto(`/apps/${app}/edit/`);
 
 		// Section title on the left, fields on the right.
@@ -217,6 +222,10 @@ test.describe('desktop', () => {
 		const saved = await (await page.request.get(`/api/v1/apps/${app}`)).json();
 		expect(saved.production.vars).toEqual({ app: { LOG_LEVEL: 'debug' } });
 		await shot(page, 'settings');
+
+		// An "On this page" index on wide screens; Delete lives in its own Danger zone section.
+		await expect(page.getByRole('navigation', { name: 'On this page' })).toBeVisible();
+		await expect(page.getByRole('heading', { level: 2, name: 'Danger zone' })).toBeVisible();
 
 		await page.getByRole('button', { name: 'Delete application' }).click();
 		const dialog = page.getByRole('alertdialog');
@@ -309,6 +318,11 @@ test.describe('desktop', () => {
 		await signIn(page, '/jobs/');
 		await expect(page.getByRole('heading', { level: 1, name: 'Jobs' })).toBeVisible();
 		await expect(page.getByText('Live · updates every 5 s')).toBeVisible();
+		// The queue now: four figures, the oldest wait among them (DESIGN.md §11.9).
+		const figures = page.getByRole('region', { name: 'The queue now' });
+		for (const name of ['Running', 'Waiting', 'Retrying', 'Oldest wait']) {
+			await expect(figures.getByRole('group', { name })).toBeVisible();
+		}
 		await page.getByRole('button', { name: 'Pause updates' }).click();
 		await expect(page.getByText('Updates paused')).toBeVisible();
 		await page.getByRole('button', { name: 'Resume updates' }).click();
@@ -423,19 +437,41 @@ test.describe('desktop', () => {
 
 		await page.goto('/');
 		await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible();
-		// The key figures are one strip (a region), not four cards; each figure is a named group.
+		// The key figures are one strip (a region), not four cards; each figure is a named group
+		// whose comparison is written in words (DESIGN.md §11.10 Figures).
 		const strip = page.getByRole('region', { name: /Key figures, last 30 days/ });
-		for (const title of ['Deployments', 'Success rate', 'Median duration', 'Time to recover']) {
+		for (const title of ['Deployments', 'Success rate', 'Median deploy time', 'Time to recover']) {
 			await expect(strip.getByRole('group', { name: title })).toBeVisible();
 		}
+		await expect(strip.getByText(/previous 30 days|No failure to recover/).first()).toBeVisible();
+
+		// The two charts sit side by side; each is one tab stop read with the arrow keys, with its
+		// numbers in a hidden table, drawn by checkship (no chart library).
+		const deploys = page.getByRole('group', { name: /^Deployments per day for the last 30 days/ });
+		const time = page.getByRole('group', { name: /^Deploy time per day for the last 30 days/ });
+		await expect(deploys).toBeVisible();
+		await expect(time).toBeVisible();
+		const [left, right] = [await deploys.boundingBox(), await time.boundingBox()];
+		expect(right!.x).toBeGreaterThan(left!.x + left!.width);
+		expect(Math.abs(right!.y - left!.y)).toBeLessThan(40);
+		await deploys.focus();
+		await page.keyboard.press('ArrowLeft');
+		await expect(deploys.getByRole('status')).toContainText('Total');
+		await expect(
+			page.locator('table.sr-only caption', { hasText: 'Deployments per day' })
+		).toHaveCount(1);
+		await expect(page.locator('.layerchart, [data-chart]')).toHaveCount(0);
+		await expect(page.getByRole('img', { name: /last 13 weeks\. Current run/ })).toBeVisible();
 		await expect(page.getByText('Live', { exact: true }).first()).toBeVisible();
 
 		// Changing the period asks the server for it.
 		const summary = page.waitForRequest(
 			(r) => r.url().includes('/dashboard/summary?') && r.url().includes('range=7')
 		);
-		await page.getByRole('combobox', { name: 'Period' }).click();
-		await page.getByRole('option', { name: 'Last 7 days' }).click();
+		await page
+			.getByRole('radiogroup', { name: 'Period' })
+			.getByRole('radio', { name: '7 days' })
+			.click();
 		await summary;
 
 		// A deployment queued elsewhere shows up without reloading the page.

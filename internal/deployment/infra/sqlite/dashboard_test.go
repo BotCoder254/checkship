@@ -81,6 +81,36 @@ func Test_Dashboard(t *testing.T) {
 		assert.Equal(t, "staging", s.Recovery.Environment)
 	})
 
+	t.Run("summary filters by application", func(t *testing.T) {
+		s, err := gateway.GetDashboardSummary(ctx.Context, get_dashboard.SummaryQuery{
+			Filters: get_dashboard.Filters{Days: 30, Until: now.Add(time.Second)},
+			App:     monad.Value(string(blog.ID())),
+		})
+
+		assert.Nil(t, err)
+		assert.Equal(t, 1, s.Current.Deployments)
+		assert.Equal(t, 0, s.Current.Failed)
+		assert.Equal(t, 1, s.Previous.Deployments)
+	})
+
+	t.Run("summary filters by target", func(t *testing.T) {
+		s, err := gateway.GetDashboardSummary(ctx.Context, get_dashboard.SummaryQuery{
+			Filters: get_dashboard.Filters{Days: 30, Until: now.Add(time.Second)},
+			Target:  monad.Value(string(target.ID())),
+		})
+
+		assert.Nil(t, err)
+		assert.Equal(t, 11, s.Current.Deployments)
+
+		none, err := gateway.GetDashboardSummary(ctx.Context, get_dashboard.SummaryQuery{
+			Filters: get_dashboard.Filters{Days: 30, Until: now.Add(time.Second)},
+			Target:  monad.Value("another-target"),
+		})
+
+		assert.Nil(t, err)
+		assert.Equal(t, 0, none.Current.Deployments)
+	})
+
 	t.Run("apps are ranked and paginated", func(t *testing.T) {
 		page, err := gateway.GetDashboardApps(ctx.Context, get_dashboard.AppsQuery{
 			Filters: get_dashboard.Filters{Days: 7, Until: now.Add(time.Second)},

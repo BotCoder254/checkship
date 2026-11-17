@@ -4,6 +4,9 @@
 	import { goto } from '$app/navigation';
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
 	import Icon from '#lib/components/icon.svelte';
+	import SectionIndex from '#lib/components/section-index.svelte';
+	import SettingRow from '#lib/components/setting-row.svelte';
+	import SettingsSection from '#lib/components/settings-section.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Switch } from '#lib/components/ui/switch/index.js';
 	import l from '#lib/localization/index.ts';
@@ -39,26 +42,54 @@
 </script>
 
 <AppWorkspace {app} apiKey={data.user.api_key} tab="settings">
-	<AppForm
-		embedded
-		targets={data.targets}
-		initialData={data.app}
-		handler={submit}
-		disabled={deleting || !!data.app.cleanup_requested_at}
-	>
-		{#snippet actions(submitting)}
+	<div class="grid gap-10 xl:grid-cols-[180px_minmax(0,1fr)]">
+		<SectionIndex
+			items={[
+				{ id: 'settings-general', label: l.translate('settings.general') },
+				{ id: 'settings-source', label: l.translate('app.vcs') },
+				{ id: 'settings-environments', label: l.translate('settings.environments') },
+				...(data.app.cleanup_requested_at
+					? []
+					: [{ id: 'settings-danger', label: l.translate('settings.danger'), danger: true }])
+			]}
+		/>
+		<div class="flex min-w-0 flex-col gap-12">
+			<AppForm
+				embedded
+				targets={data.targets}
+				initialData={data.app}
+				handler={submit}
+				disabled={deleting || !!data.app.cleanup_requested_at}
+			>
+				{#snippet actions(submitting)}
+					{#if !data.app.cleanup_requested_at}
+						<Button type="submit" loading={submitting}>
+							<Icon icon={Tick02Icon} />
+							{l.translate('save')}
+						</Button>
+					{/if}
+				{/snippet}
+			</AppForm>
 			{#if !data.app.cleanup_requested_at}
-				<Button variant="destructive" onclick={() => (deleteOpen = true)} disabled={submitting}>
-					<Icon icon={Delete02Icon} />
-					{l.translate('app.delete')}
-				</Button>
-				<Button type="submit" loading={submitting}>
-					<Icon icon={Tick02Icon} />
-					{l.translate('save')}
-				</Button>
+				<SettingsSection
+					id="settings-danger"
+					title={l.translate('settings.danger')}
+					description={l.translate('settings.danger.description')}
+				>
+					<SettingRow
+						for="delete-app"
+						label={l.translate('app.delete')}
+						description={l.translate('settings.danger.delete')}
+					>
+						<Button id="delete-app" variant="destructive" onclick={() => (deleteOpen = true)}>
+							<Icon icon={Delete02Icon} />
+							{l.translate('app.delete')}
+						</Button>
+					</SettingRow>
+				</SettingsSection>
 			{/if}
-		{/snippet}
-	</AppForm>
+		</div>
+	</div>
 </AppWorkspace>
 
 <ConfirmDialog

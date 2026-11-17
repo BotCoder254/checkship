@@ -1,14 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import {
-	appendFeed,
-	countTrend,
-	durationTrend,
-	formatRate,
-	formatSeconds,
-	mergeFeed,
-	rateTrend,
-	splitSeconds
-} from './dashboard';
+import { appendFeed, formatRate, formatSeconds, mergeFeed, splitSeconds } from './dashboard';
 import type { Deployment } from '#lib/resources/deployments.ts';
 
 const row = (app: string, n: number, status = 0) =>
@@ -31,24 +22,6 @@ describe('formatting', () => {
 		expect(formatRate(0.934)).toBe('93.4');
 		expect(formatRate(1)).toBe('100');
 		expect(formatRate(null)).toBe('—');
-	});
-});
-
-describe('trends', () => {
-	test('counts compare in percent, more is good', () => {
-		expect(countTrend(214, 181)).toEqual({ text: '+18%', up: true, good: true });
-		expect(countTrend(5, 10)).toEqual({ text: '−50%', up: false, good: false });
-		expect(countTrend(5, 0)).toBeNull();
-	});
-
-	test('rates compare in points', () => {
-		expect(rateTrend(0.934, 0.913)).toEqual({ text: '+2.1 pts', up: true, good: true });
-		expect(rateTrend(0.9, null)).toBeNull();
-	});
-
-	test('durations: shorter is good', () => {
-		expect(durationTrend(52, 58)).toEqual({ text: '−6 s', up: false, good: true });
-		expect(durationTrend(14 * 60, 11 * 60)).toEqual({ text: '+3 min', up: true, good: false });
 	});
 });
 

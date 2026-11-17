@@ -5,6 +5,7 @@ import (
 
 	"github.com/checkship-deploy/checkship/internal/deployment/app/get_app_deployments"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/get_dashboard"
+	"github.com/checkship-deploy/checkship/pkg/monad"
 	"github.com/checkship-deploy/checkship/pkg/storage"
 	"github.com/checkship-deploy/checkship/pkg/storage/sqlite/builder"
 )
@@ -17,7 +18,7 @@ func (s *gateway) GetDashboardSummary(ctx context.Context, q get_dashboard.Summa
 	f := q.Filters.Normalized()
 	previousFrom, _, until := f.Bounds()
 
-	rows, err := s.dashboardRows(ctx, f, previousFrom, until)
+	rows, err := s.dashboardRows(ctx, f, q.App, q.Target, previousFrom, until)
 	if err != nil {
 		return get_dashboard.Summary{}, err
 	}
@@ -34,7 +35,7 @@ func (s *gateway) GetDashboardApps(ctx context.Context, q get_dashboard.AppsQuer
 	q.Filters = q.Filters.Normalized()
 	_, from, until := q.Filters.Bounds()
 
-	rows, err := s.dashboardRows(ctx, q.Filters, from, until)
+	rows, err := s.dashboardRows(ctx, q.Filters, monad.None[string](), monad.None[string](), from, until)
 	if err != nil {
 		return storage.Paginated[get_dashboard.AppStat]{}, err
 	}
@@ -115,7 +116,7 @@ func (s *gateway) GetDashboardActivity(ctx context.Context, q get_dashboard.Acti
 	return result, nil
 }
 
-func (s *gateway) dashboardRows(ctx context.Context, f get_dashboard.Filters, from, until any) ([]get_dashboard.Row, error) {
+func (s *gateway) dashboardRows(ctx context.Context, f get_dashboard.Filters, app, target monad.Maybe[string], from, until any) ([]get_dashboard.Row, error) {
 	return builder.
 		Query[get_dashboard.Row](`
 			SELECT
@@ -129,6 +130,8 @@ func (s *gateway) dashboardRows(ctx context.Context, f get_dashboard.Filters, fr
 			FROM deployments
 			WHERE deployments.requested_at >= ? AND deployments.requested_at <= ?`, from, until).
 		S(builder.MaybeValue(f.Environment, "AND deployments.config_environment = ?")).
+		S(builder.MaybeValue(app, "AND deployments.app_id = ?")).
+		S(builder.MaybeValue(target, "AND deployments.config_target = ?")).
 		F("ORDER BY deployments.requested_at LIMIT ?", maxDashboardRows).
 		All(s.db, ctx, func(scanner storage.Scanner) (r get_dashboard.Row, err error) {
 			err = scanner.Scan(

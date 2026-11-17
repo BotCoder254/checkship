@@ -9,6 +9,7 @@
 	import DatabaseIcon from '@hugeicons/core-free-icons/DatabaseIcon';
 	import Upload04Icon from '@hugeicons/core-free-icons/Upload04Icon';
 	import BackupDrawer from '#lib/components/backups/backup-drawer.svelte';
+	import BackupsInsights from '#lib/components/backups/backups-insights.svelte';
 	import BackupsList from '#lib/components/backups/backups-list.svelte';
 	import DetailsDrawer from '#lib/components/backups/details-drawer.svelte';
 	import RestoreDrawer from '#lib/components/backups/restore-drawer.svelte';
@@ -21,7 +22,8 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 	import TimelineList from '#lib/components/timeline/timeline-list.svelte';
-	import TimelineRow from '#lib/components/timeline/timeline-row.svelte';
+	import TimelineRow, { type TimelineTone } from '#lib/components/timeline/timeline-row.svelte';
+	import { volumeLine, type Freshness } from '#lib/backup-stats.ts';
 	import { formatBytes, messageOf } from '#lib/backup.ts';
 	import l from '#lib/localization/index.ts';
 	import appsService from '#lib/resources/apps.ts';
@@ -91,11 +93,27 @@
 		detailsOpen = true;
 	}
 
+	// When each volume was last in a good backup (DESIGN.md §11.10, per volume), toned like Freshness.
+	const volumeTone: Record<Freshness, TimelineTone> = {
+		fresh: 'success',
+		quiet: 'muted',
+		stale: 'warning',
+		never: 'danger'
+	};
+	const lastBackedUp = (last: { at: string; size: number } | undefined) =>
+		last
+			? l.translate('backups.volume.last', [l.relative(last.at), formatBytes(last.size)])
+			: l.translate('backups.volume.never');
+
 	const targetName = (id: string) => ($targets ?? []).find((t) => t.id === id)?.name ?? id;
 </script>
 
 <AppWorkspace {app} apiKey={data.user.api_key} tab="backups">
-	<div class="flex flex-col gap-9">
+	<div class="flex flex-col gap-12">
+		{#if backups?.length}
+			<!-- This application's figures and charts (DESIGN.md §11.10 Backups), last 30 days. -->
+			<BackupsInsights {backups} range={30} byApp={false} />
+		{/if}
 		<section class="flex flex-col gap-3" aria-labelledby="volumes-title">
 			<div class="flex flex-wrap items-end justify-between gap-3">
 				<div class="flex flex-col gap-1">
@@ -140,16 +158,28 @@
 				{@const where = volumes.target}
 				<TimelineList label={l.translate('backups.volumes.title')}>
 					{#each volumes.volumes as volume (volume.key)}
+						{@const last = volumeLine(backups ?? [], app.id, environment, volume.key, lastBackedUp)}
 						{@const parts = [
+							last.text,
 							volume.services.length
 								? l.translate('backups.volume.used_by', [volume.services.join(', ')])
 								: undefined,
 							targetName(where),
 							volume.docker_name
 						].filter((part): part is string => !!part)}
-						<TimelineRow icon={DatabaseIcon} label={[volume.key, ...parts].join(', ')}>
+						<TimelineRow
+							icon={DatabaseIcon}
+							tone={volumeTone[last.freshness]}
+							label={[volume.key, ...parts].join(', ')}
+						>
 							{#snippet title()}<span class="font-mono">{volume.key}</span>{/snippet}
-							{#snippet details()}{parts.join(' · ')}{/snippet}
+							{#snippet details()}<span
+									class={last.freshness === 'stale'
+										? 'text-warning'
+										: last.freshness === 'never'
+											? 'text-danger'
+											: undefined}>{parts.join(' · ')}</span
+								>{/snippet}
 						</TimelineRow>
 					{/each}
 				</TimelineList>
@@ -212,6 +242,7 @@
 	{environment}
 	storage={$storage}
 	{storageLabel}
+	backups={backups ?? []}
 />
 <UploadDrawer bind:open={uploadOpen} appId={app.id} />
 <RestoreDrawer bind:open={restoreOpen} backup={restoring} />

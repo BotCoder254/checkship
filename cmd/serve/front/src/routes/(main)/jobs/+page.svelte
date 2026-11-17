@@ -1,5 +1,6 @@
 <!--
-	Jobs v4 (DESIGN.md §11.9): the live queue, one row per job named for what it acts on ("welcome #5",
+	Jobs v4 (DESIGN.md §11.9): four figures and the queue by state (jobs-insights.svelte), then the
+	live queue, one row per job named for what it acts on ("welcome #5",
 	staging), grouped by state rather than by day (§5 Lists and tables): a queue drains in minutes,
 	and what matters is what is stuck. 10 at a time, Show more for the next. States come from the server: Running (retrieved), Failed, retrying (an error, next try
 	in N s), Waiting (behind a running job of its group, when it is on the page) and Pending. Cancel
@@ -27,6 +28,9 @@
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
 	import Drawer from '#lib/components/drawer.svelte';
 	import EmptyState from '#lib/components/empty-state.svelte';
+	import Notice from '#lib/components/notice.svelte';
+	import Steps, { type Step } from '#lib/components/steps.svelte';
+	import JobsInsights from './jobs-insights.svelte';
 	import Icon from '#lib/components/icon.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
 	import StatusBadge, { type BadgeState } from '#lib/components/status-badge.svelte';
@@ -162,6 +166,51 @@
 		pending: { icon: Clock01Icon, tone: 'muted', spin: false }
 	};
 
+	/** A job's steps (DESIGN.md §11.9): queued, then picked up, or the next try when it failed. */
+	function lifecycle(job: Job, state: JobState): Step[] {
+		const queued: Step = {
+			key: 'queued',
+			label: l.translate('jobs.step.queued'),
+			time: l.time(job.queued_at),
+			note: l.relative(job.queued_at),
+			state: 'done'
+		};
+		if (state === 'failed')
+			return [
+				queued,
+				{ key: 'failed', label: l.translate('jobs.step.failed'), state: 'failed' },
+				{
+					key: 'next',
+					label: l.translate('jobs.step.next'),
+					time: l.time(job.not_before),
+					note: l.translate('jobs.next_in', [secondsUntil(job.not_before, now)]),
+					state: 'current'
+				}
+			];
+		const later = new Date(job.not_before).getTime() > new Date(job.queued_at).getTime() + 1000;
+		return [
+			queued,
+			...(later
+				? [
+						{
+							key: 'from',
+							label: l.translate('jobs.step.from'),
+							time: l.time(job.not_before),
+							state: (now >= new Date(job.not_before).getTime()
+								? 'done'
+								: 'current') as Step['state']
+						}
+					]
+				: []),
+			{
+				key: 'picked',
+				label: l.translate(state === 'running' ? 'jobs.step.running' : 'jobs.step.picked'),
+				note: state === 'waiting' ? l.translate('jobs.step.behind') : undefined,
+				state: state === 'running' ? 'current' : 'todo'
+			}
+		];
+	}
+
 	function setStatus(value: string) {
 		stateFilter = value as '' | JobStatusFilter;
 		pages = 1;
@@ -215,7 +264,14 @@
 	{/snippet}
 </PageHeader>
 
-<div class="flex flex-col gap-3.5">
+<JobsInsights
+	{live}
+	{now}
+	{names}
+	waitingBehind={rows.filter((job) => jobState(job, rows).state === 'waiting').length}
+/>
+
+<div class="mt-12 flex flex-col gap-3.5">
 	<div class="flex flex-wrap items-center justify-between gap-2">
 		<div class="flex flex-wrap items-center gap-3">
 			<FilterMenu
@@ -365,15 +421,15 @@
 		</div>
 
 		{#if job.error_code}
-			<section class="flex flex-col gap-2">
-				<h3 class="text-xs font-semibold tracking-wide text-muted-foreground">
-					{l.translate('jobs.last_error')}
-				</h3>
+			<!-- The error first (DESIGN.md §11.9): what went wrong, then when it tries again. -->
+			<Notice tone="danger" role="alert">
 				<pre
-					class="max-h-48 overflow-auto rounded-md bg-danger-soft px-3 py-2.5 font-mono text-xs/[18px] whitespace-pre-wrap">{job.error_code}</pre>
-				<p class="text-xs text-muted-foreground">{l.translate('jobs.last_error.help')}</p>
-			</section>
+					class="max-h-48 overflow-auto font-mono text-xs/[18px] font-semibold break-words whitespace-pre-wrap">{job.error_code}</pre>
+				<p class="text-muted-foreground">{l.translate('jobs.last_error.help')}</p>
+			</Notice>
 		{/if}
+
+		<Steps label={l.translate('jobs.lifecycle')} steps={lifecycle(job, current.state)} />
 
 		<dl class="grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-label/5">
 			<dt class="text-muted-foreground">{l.translate('jobs.for')}</dt>

@@ -1,6 +1,8 @@
 <!--
 	Target overview (DESIGN.md §11.8): its state (and, when failed, the error with what to check and
-	Reconfigure), the connection and exposure as fact cards, then the applications that deploy to it.
+	Reconfigure), four figures and the two charts for what deployed to it (the dashboard summary
+	filtered by target), the connection and exposure facts, then the applications that deploy to it,
+	each with its last deploys.
 	The header is shared with Settings (target-header.svelte). Polls the targets list, so a
 	reconfiguration shows up without a reload.
 -->
@@ -31,6 +33,14 @@
 	import { deploymentTile } from '#lib/deployment-row.ts';
 	import { deploymentBadge, deploymentMoment } from '#lib/status.ts';
 	import { DOCKER_DEFAULT_PORT, DOCKER_DEFAULT_USER, isLocal, usesOf } from '#lib/target.ts';
+	import { goto } from '$app/navigation';
+	import Metric from '#lib/components/charts/metric.svelte';
+	import DeployCharts from '#lib/components/dashboard/deploy-charts.svelte';
+	import DeployStrip from '#lib/components/deploy-strip.svelte';
+	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
+	import { countChange, durationChange, rateChange } from '#lib/charts.ts';
+	import { formatRate, splitSeconds } from '#lib/dashboard.ts';
+	import dashboard from '#lib/resources/dashboard.ts';
 	import TargetHeader from './target-header.svelte';
 	import EmptyState from '#lib/components/empty-state.svelte';
 
@@ -48,6 +58,13 @@
 		uses ? [...new Map(uses.map((u) => [u.app.id, u.app])).values()] : undefined
 	);
 
+	// What deployed to this target: the dashboard summary filtered by target (DESIGN.md §11.8).
+	const summaryQuery = $derived(dashboard.querySummary({ range: 30, target: data.target.id }));
+	const summaryStore = $derived(summaryQuery.data);
+	const summaryError = $derived(summaryQuery.error);
+	const current = $derived($summaryStore);
+	const median = $derived(splitSeconds(current?.current.median_duration));
+
 	let reconfiguring = $state(false);
 	let header = $state<ReturnType<typeof TargetHeader>>();
 
@@ -62,7 +79,7 @@
 
 <TargetHeader bind:this={header} bind:reconfiguring {target} tab="overview" />
 
-<div class="flex flex-col gap-8">
+<div class="flex flex-col gap-12">
 	{#if deleting}
 		<Alert.Root variant="destructive">
 			<Icon icon={Loading03Icon} class="animate-spin" />
@@ -120,6 +137,61 @@
 			<Alert.Title class="font-semibold">{l.translate('target.configuring')}</Alert.Title>
 			<Alert.Description>{l.translate('targets.configuring.description')}</Alert.Description>
 		</Alert.Root>
+	{/if}
+
+	{#if !deleting}
+		<section
+			aria-label={l.translate('targets.overview.figures', [target.name])}
+			class="grid grid-cols-2 gap-6 sm:gap-x-10 xl:grid-cols-4"
+		>
+			{#if current}
+				<Metric
+					label={l.translate('dashboard.kpi.deployments')}
+					value={String(current.current.deployments)}
+					change={countChange(current.current.deployments, current.previous.deployments, 30)}
+				/>
+				<Metric
+					label={l.translate('dashboard.kpi.success')}
+					value={formatRate(current.current.success_rate)}
+					unit={current.current.success_rate != null ? '%' : ''}
+					change={rateChange(current.current.success_rate, current.previous.success_rate, 30)}
+				/>
+				<Metric
+					label={l.translate('dashboard.kpi.duration')}
+					value={median[0]}
+					unit={median[1]}
+					change={durationChange(
+						current.current.median_duration,
+						current.previous.median_duration,
+						30
+					)}
+				/>
+			{:else}
+				{#each [0, 1, 2] as i (i)}
+					<div class="flex flex-col gap-2" aria-busy="true">
+						<Skeleton class="h-3.5 w-1/2 bg-raised" />
+						<Skeleton class="h-9 w-2/5 bg-raised" />
+						<Skeleton class="h-3.5 w-4/5 bg-raised" />
+					</div>
+				{/each}
+			{/if}
+			<Metric
+				label={l.translate('targets.overview.apps')}
+				value={usedApps ? String(usedApps.length) : '—'}
+				change={uses ? l.translate('targets.overview.envs', [uses.length]) : undefined}
+			/>
+		</section>
+
+		<DeployCharts
+			summary={current}
+			range={30}
+			error={$summaryError}
+			onretry={() =>
+				dashboard
+					.fetchSummary({ range: 30, target: target.id }, { cache: 'no-store' })
+					.catch(() => {})}
+			target={target.name}
+		/>
 	{/if}
 
 	<div class="grid gap-10 lg:grid-cols-2">
@@ -242,6 +314,14 @@
 							{[latestText, latest ? l.relative(deploymentMoment(latest)) : undefined]
 								.filter(Boolean)
 								.join(' · ')}
+						{/snippet}
+						{#snippet extra()}
+							<DeployStrip
+								appId={app.id}
+								name={app.name}
+								environment={environments.length === 1 ? environments[0] : undefined}
+								onopen={(n) => goto(routes.deployment(app.id, n))}
+							/>
 						{/snippet}
 						{#snippet actions()}
 							<RowMenu label={l.translate('table.menu', [app.name])}>

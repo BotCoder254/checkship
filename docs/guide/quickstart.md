@@ -82,7 +82,7 @@ Congratulations 🎉, you have deployed your first application with **checkship*
 
 Before ending this quickstart, let's cleanup every resources we've just deployed.
 
-Go back to **the application page** and click the **Edit application** button. Now, click the **Delete application** button and confirm. If you have successful deployments on an environment, a cleanup will be executed to free up some space and delete everything related to the application.
+Go back to **the application page** and open its **Settings** tab. In **Danger zone**, at the end, click **Delete application** and confirm. If you have successful deployments on an environment, a cleanup will be executed to free up some space and delete everything related to the application.
 
 ::: danger
 Deleting a resource in **checkship** is always **permanent** and cannot be undone. If you want to make backups, you should do it **before**.
@@ -98,6 +98,6 @@ Cancelling a cleanup job will allow the application deletion in this case.
 
 After a few seconds, your application should be deleted.
 
-We'll do the same for our target. Go to **the target page**, click the **Delete target** button and confirm. The process is the same as for the application one.
+We'll do the same for our target. Go to **the target page**, open its **Settings** tab and click **Delete target** in **Danger zone**, then confirm. While an application still deploys to the target, **Danger zone** says which one, and the target can't be deleted yet. The process is the same as for the application one.
 
 And now we're done! Every resources have been properly cleaned up.

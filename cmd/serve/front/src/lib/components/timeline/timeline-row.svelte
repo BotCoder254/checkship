@@ -44,6 +44,8 @@
 		/** After the title: a badge, an environment chip. */
 		badge?: Snippet;
 		details?: Snippet;
+		/** Under the details line, clickable on its own (a deploy strip). */
+		extra?: Snippet;
 		actions?: Snippet;
 	};
 
@@ -62,6 +64,7 @@
 		title,
 		badge,
 		details,
+		extra,
 		actions
 	}: Props = $props();
 
@@ -137,6 +140,9 @@
 			<div class="flex min-w-0 items-center gap-x-1.5 text-xs text-muted-foreground tabular-nums">
 				<span class="min-w-0 truncate">{@render details()}</span>
 			</div>
+		{/if}
+		{#if extra}
+			<div class="relative z-10 mt-1.5 self-start">{@render extra()}</div>
 		{/if}
 	</div>
 

@@ -212,6 +212,7 @@
 		{/if}
 
 		<SettingsSection
+			id="settings-general"
 			title={l.translate('settings.general')}
 			description={initialData
 				? l.translate('settings.general.edit')
@@ -267,6 +268,7 @@
 		</SettingsSection>
 
 		<SettingsSection
+			id="settings-source"
 			title={l.translate('app.vcs')}
 			description={l.translate('settings.vcs.description')}
 		>
@@ -310,6 +312,7 @@
 		</SettingsSection>
 
 		<SettingsSection
+			id="settings-environments"
 			title={l.translate('settings.environments')}
 			description={l.translate('settings.environments.description')}
 		>
