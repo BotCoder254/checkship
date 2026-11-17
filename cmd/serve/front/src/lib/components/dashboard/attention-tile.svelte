@@ -109,18 +109,16 @@
 >
 	{#snippet actions()}
 		{#if items.length}
-			<span class="text-xs text-faint"
+			<span class="text-xs text-muted-foreground"
 				>{l.translate('dashboard.attention.count', [items.length])}</span
 			>
 		{/if}
 	{/snippet}
 
 	{#if items.length}
-		<ul class="flex flex-col gap-1.5">
+		<ul class="-mx-2 flex flex-col gap-0.5">
 			{#each items as item (item.key)}
-				<li
-					class="grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 rounded-md bg-surface py-2.5 pr-2.5 pl-3"
-				>
+				<li class="grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 rounded-md p-2">
 					<span
 						class={cn(
 							'flex size-8 items-center justify-center rounded-full',
@@ -133,7 +131,7 @@
 						<span class="text-sm font-medium sm:truncate">{item.title}</span>
 						{#if item.detail}
 							<span
-								class={cn('truncate text-[12.5px] text-muted-foreground', item.code && 'font-mono')}
+								class={cn('truncate text-xs text-muted-foreground', item.code && 'font-mono')}
 								title={item.detail}>{item.detail}</span
 							>
 						{/if}

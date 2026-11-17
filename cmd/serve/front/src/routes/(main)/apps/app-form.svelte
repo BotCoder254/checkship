@@ -1,7 +1,9 @@
 <!--
 	Application settings (DESIGN.md §11.6): two columns, the section title and one sentence on the
 	left, the fields on the right. Each environment is one row (target, Variables); its variables
-	open in a drawer. The page header is inside the form so its submit button submits.
+	open in a drawer. New application: the page header is inside the form so its submit button
+	submits. Settings (`embedded`): the application header and tabs come from AppWorkspace, so the
+	same header shows on every tab, and the actions sit at the end of the form instead.
 -->
 <script lang="ts">
 	import ServerStack01Icon from '@hugeicons/core-free-icons/ServerStack01Icon';
@@ -12,7 +14,9 @@
 	import type { Snippet } from 'svelte';
 	import FieldMessage from '#lib/components/field-message.svelte';
 	import Icon from '#lib/components/icon.svelte';
+	import SettingRow from '#lib/components/setting-row.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
+	import SettingsSection from '#lib/components/settings-section.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Collapsible from '#lib/components/ui/collapsible/index.js';
@@ -38,11 +42,12 @@
 	import EnvVarsDrawer from './env-vars-drawer.svelte';
 
 	type Props = {
-		title: string;
-		crumbs: { href: string; label: string }[];
+		/** Page header, when the form is its own page (New application). */
+		title?: string;
+		crumbs?: { href: string; label: string }[];
 		actions: Snippet<[boolean]>;
-		/** Shown under the header (the application tabs on Settings). */
-		tabs?: Snippet;
+		/** Inside the application workspace: no header; the actions close the form. */
+		embedded?: boolean;
 		targets: Target[];
 		disabled?: boolean;
 	} & (
@@ -176,13 +181,12 @@
 </script>
 
 <form class="flex flex-col" novalidate {onsubmit}>
-	<PageHeader title={props.title} crumbs={props.crumbs}>
-		{#snippet actions()}
-			{@render props.actions($loading)}
-		{/snippet}
-	</PageHeader>
-	{#if props.tabs}
-		<div class="mb-7">{@render props.tabs()}</div>
+	{#if !props.embedded}
+		<PageHeader title={props.title ?? ''} crumbs={props.crumbs}>
+			{#snippet actions()}
+				{@render props.actions($loading)}
+			{/snippet}
+		</PageHeader>
 	{/if}
 
 	<fieldset class="flex flex-col gap-10" disabled={props.disabled}>
@@ -207,123 +211,112 @@
 			</Alert.Root>
 		{/if}
 
-		<section class="grid gap-4 md:grid-cols-[260px_minmax(0,1fr)] md:gap-10">
+		<SettingsSection
+			title={l.translate('settings.general')}
+			description={initialData
+				? l.translate('settings.general.edit')
+				: l.translate('settings.general.new')}
+		>
 			<div class="flex flex-col gap-1.5">
-				<h2 class="text-base font-semibold">{l.translate('settings.general')}</h2>
-				<p class="text-[13px] text-muted-foreground">
-					{initialData ? l.translate('settings.general.edit') : l.translate('settings.general.new')}
-				</p>
+				<Label for="app-name">{l.translate('name')}</Label>
+				<Input
+					id="app-name"
+					bind:value={name}
+					readonly={!!initialData}
+					required
+					autofocus={!initialData}
+					class={cn(initialData && 'border-transparent bg-raised text-muted-foreground')}
+					aria-invalid={!!fieldError('name') || undefined}
+					aria-describedby="app-name-message"
+				/>
+				<FieldMessage id="app-name-message" error={fieldError('name')}>
+					{#snippet help()}
+						{#if !initialData}{l.translate('settings.name.help')}{/if}
+					{/snippet}
+				</FieldMessage>
 			</div>
-			<div class="flex flex-col gap-4">
+
+			{#if !initialData}
+				<Collapsible.Root bind:open={howOpen} class="flex flex-col gap-2.5">
+					<Collapsible.Trigger
+						class="-ml-2 flex h-8 items-center gap-2 self-start rounded-md px-2 text-sm font-semibold text-primary outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+					>
+						<Icon icon={Globe02Icon} class="size-4" />
+						{l.translate('app.how')}
+						<Icon
+							icon={ArrowDown01Icon}
+							class={cn('size-4 transition-transform', howOpen && 'rotate-180')}
+						/>
+					</Collapsible.Trigger>
+					<Collapsible.Content class="flex flex-col gap-2">
+						<p class="text-label">{l.translate('settings.how.intro')}</p>
+						<dl class="grid gap-x-4 gap-y-1.5 text-label sm:grid-cols-[max-content_minmax(0,1fr)]">
+							{#each environments as environment (environment)}
+								{@const urls = exposed(environment)}
+								<dt class="truncate font-mono">{urls.main}</dt>
+								<dd class="text-muted-foreground">
+									{l.translate(`settings.how.main.${environment}`)}
+								</dd>
+								<dt class="truncate font-mono">{urls.other}</dt>
+								<dd class="text-muted-foreground">{l.translate('settings.how.other')}</dd>
+							{/each}
+						</dl>
+					</Collapsible.Content>
+				</Collapsible.Root>
+			{/if}
+		</SettingsSection>
+
+		<SettingsSection
+			title={l.translate('app.vcs')}
+			description={l.translate('settings.vcs.description')}
+		>
+			<SettingRow
+				for="app-vcs"
+				label={l.translate('settings.vcs.use')}
+				description={l.translate('settings.vcs.use.help')}
+			>
+				<Switch id="app-vcs" bind:checked={useVersionControl} />
+			</SettingRow>
+
+			{#if useVersionControl}
 				<div class="flex flex-col gap-1.5">
-					<Label for="app-name">{l.translate('name')}</Label>
+					<Label for="app-vcs-url">{l.translate('settings.vcs.url')}</Label>
 					<Input
-						id="app-name"
-						bind:value={name}
-						readonly={!!initialData}
+						id="app-vcs-url"
+						type="url"
+						bind:value={url}
 						required
-						autofocus={!initialData}
-						class={cn(initialData && 'border-transparent bg-raised text-muted-foreground')}
-						aria-invalid={!!fieldError('name') || undefined}
-						aria-describedby="app-name-message"
+						class="font-mono text-label"
+						placeholder="https://github.com/acme/app"
+						aria-invalid={!!fieldError('version_control.url') || undefined}
+						aria-describedby="app-vcs-url-message"
 					/>
-					<FieldMessage id="app-name-message" error={fieldError('name')}>
-						{#snippet help()}
-							{#if !initialData}{l.translate('settings.name.help')}{/if}
-						{/snippet}
+					<FieldMessage id="app-vcs-url-message" error={fieldError('version_control.url')} />
+				</div>
+				<div class="flex flex-col gap-1.5">
+					<Label for="app-vcs-token">{l.translate('app.vcs.token')}</Label>
+					<Input
+						id="app-vcs-token"
+						type="password"
+						autocomplete="new-password"
+						bind:value={token}
+						aria-describedby="app-vcs-token-message"
+					/>
+					<FieldMessage id="app-vcs-token-message">
+						{#snippet help()}{l.translate('settings.vcs.token.help')}{/snippet}
 					</FieldMessage>
 				</div>
+			{/if}
+		</SettingsSection>
 
-				{#if !initialData}
-					<Collapsible.Root bind:open={howOpen} class="flex flex-col gap-2.5">
-						<Collapsible.Trigger
-							class="-ml-2 flex h-8 items-center gap-2 self-start rounded-md px-2 text-sm font-semibold text-primary outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-						>
-							<Icon icon={Globe02Icon} class="size-4" />
-							{l.translate('app.how')}
-							<Icon
-								icon={ArrowDown01Icon}
-								class={cn('size-4 transition-transform', howOpen && 'rotate-180')}
-							/>
-						</Collapsible.Trigger>
-						<Collapsible.Content class="flex flex-col gap-2 rounded-md bg-sunken px-3.5 py-3">
-							<p class="text-[13px]">{l.translate('settings.how.intro')}</p>
-							<dl
-								class="grid gap-x-4 gap-y-1.5 text-[13px] sm:grid-cols-[max-content_minmax(0,1fr)]"
-							>
-								{#each environments as environment (environment)}
-									{@const urls = exposed(environment)}
-									<dt class="truncate font-mono">{urls.main}</dt>
-									<dd class="text-muted-foreground">
-										{l.translate(`settings.how.main.${environment}`)}
-									</dd>
-									<dt class="truncate font-mono">{urls.other}</dt>
-									<dd class="text-muted-foreground">{l.translate('settings.how.other')}</dd>
-								{/each}
-							</dl>
-						</Collapsible.Content>
-					</Collapsible.Root>
-				{/if}
-			</div>
-		</section>
-
-		<section class="grid gap-4 md:grid-cols-[260px_minmax(0,1fr)] md:gap-10">
-			<div class="flex flex-col gap-1.5">
-				<h2 class="text-base font-semibold">{l.translate('app.vcs')}</h2>
-				<p class="text-[13px] text-muted-foreground">{l.translate('settings.vcs.description')}</p>
-			</div>
-			<div class="flex flex-col gap-4">
-				<div class="flex items-center justify-between gap-4 rounded-md bg-sunken px-4 py-3.5">
-					<div class="flex flex-col gap-0.5">
-						<Label for="app-vcs">{l.translate('settings.vcs.use')}</Label>
-						<p class="text-[13px] text-muted-foreground">{l.translate('settings.vcs.use.help')}</p>
-					</div>
-					<Switch id="app-vcs" bind:checked={useVersionControl} />
-				</div>
-
-				{#if useVersionControl}
-					<div class="flex flex-col gap-1.5">
-						<Label for="app-vcs-url">{l.translate('settings.vcs.url')}</Label>
-						<Input
-							id="app-vcs-url"
-							type="url"
-							bind:value={url}
-							required
-							class="font-mono text-[13px]"
-							placeholder="https://github.com/acme/app"
-							aria-invalid={!!fieldError('version_control.url') || undefined}
-							aria-describedby="app-vcs-url-message"
-						/>
-						<FieldMessage id="app-vcs-url-message" error={fieldError('version_control.url')} />
-					</div>
-					<div class="flex flex-col gap-1.5">
-						<Label for="app-vcs-token">{l.translate('app.vcs.token')}</Label>
-						<Input
-							id="app-vcs-token"
-							type="password"
-							autocomplete="new-password"
-							bind:value={token}
-							aria-describedby="app-vcs-token-message"
-						/>
-						<FieldMessage id="app-vcs-token-message">
-							{#snippet help()}{l.translate('settings.vcs.token.help')}{/snippet}
-						</FieldMessage>
-					</div>
-				{/if}
-			</div>
-		</section>
-
-		<section class="grid gap-4 md:grid-cols-[260px_minmax(0,1fr)] md:gap-10">
-			<div class="flex flex-col gap-1.5">
-				<h2 class="text-base font-semibold">{l.translate('settings.environments')}</h2>
-				<p class="text-[13px] text-muted-foreground">
-					{l.translate('settings.environments.description')}
-				</p>
-			</div>
+		<SettingsSection
+			title={l.translate('settings.environments')}
+			description={l.translate('settings.environments.description')}
+		>
 			<div class="flex flex-col gap-3">
 				{#each environments as environment (environment)}
 					<div
-						class="grid gap-3 rounded-md bg-sunken py-3.5 pr-3.5 pl-4 sm:grid-cols-[120px_minmax(0,1fr)_auto] sm:items-center sm:gap-4"
+						class="grid gap-3 py-2 sm:grid-cols-[120px_minmax(0,1fr)_auto] sm:items-center sm:gap-4"
 					>
 						<span class="flex flex-col gap-0.5">
 							<span id="app-{environment}-label" class="text-sm font-semibold">
@@ -382,24 +375,27 @@
 								>{l.translate('settings.target_changed.description')}</Alert.Description
 							>
 						</Alert.Root>
-						<div class="flex items-start gap-4 rounded-md bg-sunken px-3.5 py-3">
-							<span class="flex min-w-0 flex-1 flex-col gap-1">
-								<label for="move-volumes-{environment}" class="text-sm font-medium"
-									>{l.translate('settings.move_volumes')}</label
-								>
-								<span class="text-xs/[18px] text-muted-foreground">
-									{moveVolumes
-										? l.translate('settings.move_volumes.on')
-										: l.translate('settings.move_volumes.off')}
-								</span>
-							</span>
+						<SettingRow
+							for="move-volumes-{environment}"
+							label={l.translate('settings.move_volumes')}
+							description={moveVolumes
+								? l.translate('settings.move_volumes.on')
+								: l.translate('settings.move_volumes.off')}
+						>
 							<Switch id="move-volumes-{environment}" bind:checked={moveVolumes} />
-						</div>
+						</SettingRow>
 					{/if}
 				{/each}
 			</div>
-		</section>
+		</SettingsSection>
 	</fieldset>
+
+	{#if props.embedded}
+		<!-- Destructive action on the left, Save on the right, under the last section's fields. -->
+		<div class="mt-10 flex flex-wrap items-center justify-between gap-3 md:ml-[300px]">
+			{@render props.actions($loading)}
+		</div>
+	{/if}
 </form>
 
 <EnvVarsDrawer

@@ -1,5 +1,5 @@
 <!--
-	Not found and unexpected errors (DESIGN.md §11.5): the same empty-state block, with the way back.
+	Not found and unexpected errors (DESIGN.md §11.5): written on the page like an empty state (no box), with the way back.
 	404 names what was missing; anything else offers Try again and shows the code.
 -->
 <script lang="ts">
@@ -32,7 +32,7 @@
 
 <div
 	role={notFound ? undefined : 'alert'}
-	class="mt-6 flex flex-col items-center gap-3 rounded-md bg-sunken px-6 py-14 text-center"
+	class="mt-6 flex flex-col items-center gap-3 px-6 py-14 text-center"
 >
 	<span
 		class={cn(
@@ -53,7 +53,7 @@
 		</p>
 	</div>
 	{#if !notFound}
-		<p class="text-xs text-faint">
+		<p class="text-xs text-muted-foreground">
 			{l.translate('errors.code', [page.status])}{#if page.error?.message}
 				· <span class="font-mono">{page.error.message}</span>{/if}
 		</p>

@@ -670,16 +670,14 @@
 				</div>
 			</div>
 
-			<!-- One chip per container, kept current by the stream's state events. -->
+			<!-- One entry per container (dot, name, state; no chip box), kept current by the stream's state events. -->
 			{#if services.length > 0}
 				<ul
 					aria-label={l.translate('logs.containers')}
-					class="flex gap-2 max-md:-mx-1 max-md:overflow-x-auto max-md:px-1 md:flex-wrap"
+					class="flex gap-x-5 gap-y-1 max-md:-mx-1 max-md:overflow-x-auto max-md:px-1 md:flex-wrap"
 				>
 					{#each services as s (s.container)}
-						<li
-							class="flex min-h-10 items-center gap-2.5 rounded-md bg-sunken px-3 py-1.5 text-[13px] whitespace-nowrap"
-						>
+						<li class="flex min-h-8 items-center gap-2 text-label whitespace-nowrap">
 							<span class={cn('size-2 rounded-full bg-current', stateTone(s))}></span>
 							<strong class="font-semibold">{s.service}</strong>
 							<span class={cn('font-semibold', stateTone(s))}>{stateLabel(s)}</span>
@@ -711,7 +709,7 @@
 				{#if status === 'reconnecting'}
 					<div
 						role="status"
-						class="m-2.5 mb-0 flex items-center gap-2.5 rounded-md bg-warning-soft px-3 py-2.5 text-[13px]"
+						class="m-2.5 mb-0 flex items-center gap-2.5 rounded-md bg-warning-soft px-3 py-2.5 text-label"
 					>
 						<Icon icon={WifiDisconnected01Icon} class="size-4.5 text-warning" />
 						{l.translate('logs.reconnecting')}
@@ -739,7 +737,7 @@
 						role="list"
 						aria-label={l.translate('detail.tab.logs')}
 						tabindex={shown.length === 0 ? 0 : -1}
-						class="min-h-0 flex-1 overflow-auto px-2 py-2.5 font-mono text-[12.5px]/5"
+						class="min-h-0 flex-1 overflow-auto px-2 py-2.5 font-mono text-xs/5"
 					>
 						{#if dropped}
 							<p class="mb-1.5 px-3 font-sans text-xs text-muted-foreground">
@@ -759,13 +757,13 @@
 								class="group relative flex items-start gap-3 rounded-sm px-3 py-px outline-none [contain-intrinsic-size:auto_20px] [content-visibility:auto] hover:bg-raised focus-visible:bg-raised focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset max-md:flex-col max-md:gap-0 max-md:py-1.5"
 							>
 								{#if showTimes}
-									<span class="w-23 flex-none text-faint max-md:text-[11.5px]/4"
+									<span class="w-23 flex-none text-faint max-md:text-xs/4"
 										>{displayTime(line.time)}</span
 									>
 								{/if}
 								{#if showService}
 									<span
-										class="w-16 flex-none truncate text-muted-foreground max-md:absolute max-md:top-1.5 max-md:left-27 max-md:text-[11.5px]/4"
+										class="w-16 flex-none truncate text-muted-foreground max-md:absolute max-md:top-1.5 max-md:left-27 max-md:text-xs/4"
 										>{line.service}</span
 									>
 								{/if}
@@ -792,7 +790,7 @@
 									</span>
 									{#if line.stream === 'stderr'}
 										<span
-											class="mt-0.5 flex h-4 flex-none items-center rounded-sm bg-raised px-1.5 font-sans text-[10.5px] font-semibold text-muted-foreground group-hover:bg-line-strong"
+											class="mt-0.5 flex h-4 flex-none items-center rounded-sm bg-raised px-1.5 font-sans text-xs font-semibold text-muted-foreground group-hover:bg-line-strong"
 											>stderr</span
 										>
 									{/if}
@@ -831,11 +829,9 @@
 						{/if}
 
 						{#if allStopped && status === 'live'}
-							<div
-								class="mx-1 mt-3 flex flex-col items-center gap-2 rounded-md bg-raised p-3.5 text-center font-sans"
-							>
+							<div class="mx-1 mt-3 flex flex-col items-center gap-2 p-3.5 text-center font-sans">
 								<p class="text-sm font-semibold">{l.translate('logs.stopped.title')}</p>
-								<p class="text-[13px] text-muted-foreground">
+								<p class="text-label text-muted-foreground">
 									{l.translate('logs.stopped.description')}
 								</p>
 								<Button
@@ -851,10 +847,7 @@
 					</div>
 
 					{#if paused && newWhilePaused > 0}
-						<Button
-							class="absolute bottom-11 left-1/2 -translate-x-1/2 rounded-full shadow-lg"
-							onclick={follow}
-						>
+						<Button class="absolute bottom-11 left-1/2 -translate-x-1/2 shadow-lg" onclick={follow}>
 							<Icon icon={ArrowDown02Icon} />
 							{l.translate('logs.new_lines', [newWhilePaused])}
 						</Button>

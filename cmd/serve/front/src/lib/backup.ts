@@ -41,9 +41,9 @@ export function triggerLabel(trigger: Backup['trigger']): string {
 
 export function storedLabel(backup: Backup): { label: string; tone: string } {
 	if (backup.status === 'failed')
-		return { label: l.translate('backups.stored.nothing'), tone: 'text-faint' };
+		return { label: l.translate('backups.stored.nothing'), tone: 'text-muted-foreground' };
 	if (backup.status !== 'succeeded')
-		return { label: l.translate('backups.stored.not_yet'), tone: 'text-faint' };
+		return { label: l.translate('backups.stored.not_yet'), tone: 'text-muted-foreground' };
 	if (backup.store_error)
 		return { label: l.translate('backups.stored.upload_failed'), tone: 'text-warning' };
 	if (backup.local && backup.stored)

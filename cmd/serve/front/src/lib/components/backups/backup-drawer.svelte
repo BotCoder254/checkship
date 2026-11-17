@@ -128,19 +128,21 @@
 				<Skeleton class="h-14 w-full" />
 				<Skeleton class="h-14 w-full" />
 			{:else if volumes.length === 0}
-				<p class="rounded-md bg-sunken px-3.5 py-3 text-sm text-muted-foreground">
+				<p class="text-sm text-muted-foreground">
 					{l.translate('backups.drawer.no_volumes')}
 				</p>
 			{:else}
 				{#each volumes as volume (volume.key)}
-					<label class="flex cursor-pointer items-center gap-3 rounded-md bg-sunken px-3.5 py-3">
+					<label
+						class="-mx-2 flex min-h-12 cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-hover"
+					>
 						<Checkbox
 							checked={!unticked.includes(volume.key)}
 							onCheckedChange={(on) => toggle(volume.key, on === true)}
 							aria-label={volume.key}
 						/>
 						<span class="flex min-w-0 flex-col gap-0.5">
-							<span class="truncate font-mono text-[13px]">{volume.key}</span>
+							<span class="truncate font-mono text-label">{volume.key}</span>
 							<span class="text-xs text-muted-foreground">
 								{l.translate('backups.drawer.used_by', [volume.services.join(', ') || '—'])}
 							</span>
@@ -150,7 +152,7 @@
 			{/if}
 		</fieldset>
 
-		<div class="flex items-start gap-4 rounded-md bg-sunken px-3.5 py-3">
+		<div class="flex min-h-[54px] items-start gap-4 py-2">
 			<span class="flex min-w-0 flex-1 flex-col gap-1">
 				<label for="backup-stop" class="text-sm font-medium"
 					>{l.translate('backups.drawer.stop')}</label

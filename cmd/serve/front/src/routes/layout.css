@@ -1,19 +1,11 @@
 /*
- * checkship theme (DESIGN.md §3 palette, §13.3 token mapping).
- *
- * Layer order: the legacy layer holds the pre-migration global CSS (reset + src/assets/styles.css).
- * It sits above Tailwind's base, so old pages keep their look, and below components and
- * utilities, so the shadcn-svelte components are never overridden by it. Delete the legacy
- * imports once the last old component is gone (DESIGN.md §13.5 step 10).
+ * checkship theme (DESIGN.md §3 palette, §13.3 token mapping). Tailwind's preflight is the only
+ * reset; the pre-migration stylesheet and its reset are gone (DESIGN.md §13.5 step 10).
  */
-@layer theme, base, legacy, components, utilities;
-
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn-svelte/tailwind.css';
 @import '@fontsource-variable/inter';
-@import 'the-new-css-reset/css/reset.css' layer(legacy);
-@import '../assets/styles.css' layer(legacy);
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -49,6 +41,9 @@
 	/* Floating panels (menus, selects, dialogs) and the hover fill inside them. */
 	--overlay: var(--surface);
 	--hover: var(--canvas);
+	/* Hover on the frame (sidebar, title bar, mobile menu), which sits on canvas: the canvas-valued
+	   hover above would not show there in light mode. Same values, no new colour. */
+	--hover-frame: var(--line);
 
 	--radius: 6px;
 }
@@ -79,11 +74,17 @@
 	--brand: #7f95ff;
 	--overlay: var(--line);
 	--hover: var(--line-strong);
+	--hover-frame: var(--line-strong);
 }
 
 @theme inline {
 	--font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 	--font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+
+	/* Type scale (DESIGN.md §7): Tailwind's xs 12, sm 14, base 16, lg 18, xl 20, 3xl 30, plus one
+	   in-between step for descriptions, help text and table detail. No other sizes. */
+	--text-label: 0.8125rem;
+	--text-label--line-height: 1.25rem;
 
 	/* Our names as utilities: bg-canvas, text-ink, bg-accent-soft, text-success … */
 	--color-canvas: var(--canvas);
@@ -108,6 +109,7 @@
 	--color-raised: var(--raised);
 	--color-overlay: var(--overlay);
 	--color-hover: var(--hover);
+	--color-hover-frame: var(--hover-frame);
 
 	/*
 	 * shadcn's names, pointed at ours. Three names collide (accent, muted, border):
@@ -165,31 +167,7 @@
 	--radius-4xl: 6px;
 }
 
-/*
- * The legacy reset (`all: unset`, in the legacy layer) brings back the browser's medium,
- * text-coloured border, so a component that only sets a border style (border-dashed) would draw a
- * line. Restore Tailwind's default above it: no width, transparent. Border utilities still win.
- */
 @layer components {
-	/*
-	 * The legacy stylesheet paints <html> a fixed near-black (#010409) in every theme, which showed
-	 * past the shell when the document scrolled in light mode. The page ground is the canvas token.
-	 */
-	html {
-		background-color: var(--canvas);
-	}
-
-	*,
-	::before,
-	::after {
-		border: 0 solid transparent;
-	}
-
-	/* Inter everywhere, including dialogs and menus portalled outside the shell (DESIGN.md §7). */
-	body {
-		font-family: var(--font-sans);
-	}
-
 	/* Highlighted code (DESIGN.md §11.6): Shiki's css-variables theme, palette tokens only. */
 	:root {
 		--shiki-foreground: var(--ink);
@@ -224,10 +202,16 @@
 
 	html {
 		@apply bg-canvas font-sans text-ink;
+		/* Thin scrollbars drawn from tokens (inherited by every scroll area). A control, not a line. */
+		scrollbar-color: var(--line-strong) transparent;
 	}
 
 	::placeholder {
 		color: var(--muted);
+	}
+
+	::selection {
+		background-color: var(--accent-soft);
 	}
 
 	/* Fallback focus for plain elements: drawn inside, never an outer ring (DESIGN.md §11.5). */
@@ -243,5 +227,15 @@
 			animation-duration: 1ms !important;
 			transition-duration: 1ms !important;
 		}
+	}
+}
+
+/* A strip that scrolls sideways without drawing a scrollbar (phone tab strips): it still scrolls by
+   touch, trackpad and keyboard, and no bar reads as a line under it. */
+@utility no-scrollbar {
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
 	}
 }

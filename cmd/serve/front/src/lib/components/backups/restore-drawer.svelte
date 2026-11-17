@@ -96,9 +96,7 @@
 	description={l.translate('restore.description')}
 >
 	{#if backup}
-		<dl
-			class="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-md bg-sunken px-4 py-3.5 text-sm"
-		>
+		<dl class="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
 			<dt class="text-muted-foreground">{l.translate('backups.details.from')}</dt>
 			<dd class="truncate">{appName(backup)} · {backup.environment}</dd>
 			<dt class="text-muted-foreground">{l.translate('backups.details.created')}</dt>
@@ -107,7 +105,7 @@
 				<dt class="text-muted-foreground">{l.translate('backups.details.size')}</dt>
 				<dd>{formatBytes(backup.result.size)}</dd>
 				<dt class="text-muted-foreground">{l.translate('backups.details.checksum')}</dt>
-				<dd class="truncate font-mono text-[12.5px]" title={backup.result.sha256}>
+				<dd class="truncate font-mono text-xs" title={backup.result.sha256}>
 					{backup.result.sha256}
 				</dd>
 			{/if}
@@ -147,7 +145,9 @@
 			<legend class="pb-1.5 text-sm font-medium">{l.translate('restore.volumes')}</legend>
 			{#each keys as volume (volume.key)}
 				{@const existing = declared(volume.key)}
-				<label class="flex cursor-pointer items-center gap-3 rounded-md bg-sunken px-3.5 py-3">
+				<label
+					class="-mx-2 flex min-h-12 cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-hover"
+				>
 					<Checkbox
 						checked={!unticked.includes(volume.key)}
 						onCheckedChange={(on) => toggle(volume.key, on === true)}
@@ -155,7 +155,7 @@
 					/>
 					<span class="flex min-w-0 flex-col gap-0.5">
 						<span class="flex items-baseline gap-2">
-							<span class="truncate font-mono text-[13px]">{volume.key}</span>
+							<span class="truncate font-mono text-label">{volume.key}</span>
 							<span class="text-xs text-muted-foreground">{formatBytes(volume.size)}</span>
 						</span>
 						<span
@@ -176,7 +176,7 @@
 			{/each}
 		</fieldset>
 
-		<div class="flex items-start gap-4 rounded-md bg-sunken px-3.5 py-3">
+		<div class="flex min-h-[54px] items-start gap-4 py-2">
 			<span class="flex min-w-0 flex-1 flex-col gap-1">
 				<label for="restore-snapshot" class="text-sm font-medium"
 					>{l.translate('restore.snapshot')}</label

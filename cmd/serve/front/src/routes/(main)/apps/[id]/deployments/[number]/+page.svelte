@@ -151,7 +151,9 @@
 
 	<div class="grid gap-9 md:grid-cols-2">
 		<section class="flex flex-col gap-3">
-			<h2 class="text-base font-semibold">{l.translate('deployment.source')}</h2>
+			<h2 class="text-xs font-semibold tracking-wide text-muted-foreground">
+				{l.translate('deployment.source')}
+			</h2>
 			<dl class="grid grid-cols-[120px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
 				<dt class="text-muted-foreground">{l.translate('deployment.source.kind')}</dt>
 				<dd>{l.translate(`deployment.source.${deployment.source.discriminator}`)}</dd>
@@ -159,7 +161,7 @@
 					<dt class="text-muted-foreground">{l.translate('deployment.payload.vcs.branch')}</dt>
 					<dd>{deployment.source.data.branch}</dd>
 					<dt class="text-muted-foreground">{l.translate('deployment.payload.vcs.commit')}</dt>
-					<dd class="font-mono text-[13px]">{deployment.source.data.hash.slice(0, 7)}</dd>
+					<dd class="font-mono text-label">{deployment.source.data.hash.slice(0, 7)}</dd>
 				{/if}
 				<dt class="text-muted-foreground">{l.translate('deployment.queued_by')}</dt>
 				<dd class="truncate">{deployment.requested_by.email}</dd>
@@ -167,12 +169,14 @@
 		</section>
 
 		<section class="flex flex-col gap-3">
-			<h2 class="text-base font-semibold">{l.translate('deployment.services.title')}</h2>
+			<h2 class="text-xs font-semibold tracking-wide text-muted-foreground">
+				{l.translate('deployment.services.title')}
+			</h2>
 			{#if services.length > 0}
 				<ul class="flex flex-col gap-1.5">
 					{#each services as service (service.name)}
 						{@const urls = service.entrypoints.filter((e) => e.url).map((e) => e.url!)}
-						<li class="flex flex-col gap-1 rounded-md bg-sunken px-3.5 py-2.5 text-sm">
+						<li class="flex flex-col gap-1 py-1.5 text-sm">
 							<span class="flex items-center justify-between gap-3">
 								<span class="font-semibold">{service.name}</span>
 								{#if urls.length === 0}
@@ -184,7 +188,7 @@
 									href={url}
 									target="_blank"
 									rel="noopener noreferrer"
-									class="truncate font-mono text-[13px] text-primary hover:underline"
+									class="truncate font-mono text-label text-primary hover:underline"
 								>
 									{url}
 								</a>
@@ -201,7 +205,9 @@
 
 	<section class="flex flex-col gap-3">
 		<div class="flex items-center justify-between gap-3">
-			<h2 class="text-base font-semibold">{l.translate('deployment.logs.title')}</h2>
+			<h2 class="text-xs font-semibold tracking-wide text-muted-foreground">
+				{l.translate('deployment.logs.title')}
+			</h2>
 			<Button variant="outline" size="sm" onclick={copyLogs} disabled={!logs}>
 				<Icon icon={Copy01Icon} />
 				{l.translate('copy')}

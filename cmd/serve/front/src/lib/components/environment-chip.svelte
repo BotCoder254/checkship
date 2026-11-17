@@ -9,7 +9,7 @@
 
 <span
 	class={cn(
-		'inline-block rounded-sm px-1.5 text-[11.5px]/5 font-semibold',
+		'inline-block rounded-sm px-1.5 text-xs/5 font-semibold',
 		environment === 'production'
 			? 'bg-accent-soft text-primary'
 			: 'bg-raised text-muted-foreground',

@@ -1,6 +1,6 @@
 <!--
-	A bento tile (DESIGN.md §11.10): one sunken block, title with an icon, optional actions on the
-	right. Width and height come from the caller's grid spans (`class`). States: loading keeps the
+	A bento section (DESIGN.md §11.10): no box (§1 Cardless), a SectionHeading with an icon and
+	optional actions on the right, then the content straight on the page. Width and height come from the caller's grid spans (`class`). States: loading keeps the
 	tile's size with skeletons, an error says so in the tile and offers Try again, so one failing
 	tile never blanks the page.
 -->
@@ -9,6 +9,7 @@
 	import RefreshIcon from '@hugeicons/core-free-icons/RefreshIcon';
 	import type { Snippet } from 'svelte';
 	import Icon, { type IconData } from '#lib/components/icon.svelte';
+	import SectionHeading from '#lib/components/section-heading.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 	import l from '#lib/localization/index.ts';
@@ -41,20 +42,14 @@
 	const headingId = $props.id();
 </script>
 
-<section
-	{id}
-	aria-labelledby={headingId}
-	class={cn('flex min-w-0 flex-col gap-3.5 rounded-lg bg-sunken p-5', className)}
->
-	<header class="flex min-h-7 flex-wrap items-center justify-between gap-x-3 gap-y-2">
-		<h2 id={headingId} class="flex items-center gap-2 text-sm font-semibold">
-			{#if icon}<Icon {icon} class="size-4 text-muted-foreground" />{/if}
-			{title}
-		</h2>
-		{#if actions}
-			<div class="flex flex-wrap items-center gap-1.5">{@render actions()}</div>
-		{/if}
-	</header>
+<section {id} aria-labelledby={headingId} class={cn('flex min-w-0 flex-col gap-3.5', className)}>
+	<SectionHeading id={headingId} class="min-h-8">
+		{#if icon}<Icon {icon} class="size-4" />{/if}
+		{title}
+		{#snippet aside()}
+			{#if actions}{@render actions()}{/if}
+		{/snippet}
+	</SectionHeading>
 
 	{#if error}
 		<div class="flex flex-1 flex-col items-start justify-center gap-2.5 py-4">
@@ -62,7 +57,7 @@
 				<Icon icon={Alert02Icon} class="size-4" />
 				{l.translate('dashboard.tile.error')}
 			</p>
-			<p class="text-[13px] text-muted-foreground">{l.translate('dashboard.tile.error.help')}</p>
+			<p class="text-label text-muted-foreground">{l.translate('dashboard.tile.error.help')}</p>
 			{#if onretry}
 				<Button variant="outline" size="sm" onclick={onretry}>
 					<Icon icon={RefreshIcon} />

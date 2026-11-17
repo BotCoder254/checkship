@@ -1,5 +1,6 @@
 <!--
-	Activity (DESIGN.md §11.10): deployments across every application, newest first. Older rows load
+	Activity (DESIGN.md §11.10): deployments across every application, newest first, grouped by day
+	(§5 Lists and tables). Older rows load
 	with a cursor (Load more), so rows queued meanwhile never shift or repeat a page. When the page
 	reports a change (`refresh` increments), the first page is fetched again and merged: new rows go
 	on top, known rows take their new state. If the top of the feed is out of view, a pill says how
@@ -7,34 +8,34 @@
 -->
 <script lang="ts">
 	import Activity01Icon from '@hugeicons/core-free-icons/Activity01Icon';
-	import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
-	import Clock01Icon from '@hugeicons/core-free-icons/Clock01Icon';
 	import CommandLineIcon from '@hugeicons/core-free-icons/CommandLineIcon';
 	import DashboardSquare01Icon from '@hugeicons/core-free-icons/DashboardSquare01Icon';
-	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
-	import Rocket01Icon from '@hugeicons/core-free-icons/Rocket01Icon';
-	import Timer02Icon from '@hugeicons/core-free-icons/Timer02Icon';
 	import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
 	import ArrowDown01Icon from '@hugeicons/core-free-icons/ArrowDown01Icon';
 	import ArrowUp01Icon from '@hugeicons/core-free-icons/ArrowUp01Icon';
 	import { untrack } from 'svelte';
 	import Tile from '#lib/components/dashboard/tile.svelte';
+	import TimelineGroup from '#lib/components/timeline/timeline-group.svelte';
+	import TimelineRow from '#lib/components/timeline/timeline-row.svelte';
+	import {
+		clock,
+		deploymentDuration,
+		deploymentLabel,
+		deploymentTile
+	} from '#lib/deployment-row.ts';
+	import { deploymentMoment } from '#lib/status.ts';
+	import { groupByDay } from '#lib/timeline.ts';
 	import Icon from '#lib/components/icon.svelte';
 	import EnvironmentChip from '#lib/components/environment-chip.svelte';
-	import StatusBadge from '#lib/components/status-badge.svelte';
 	import RowMenuGroup from '#lib/components/table/row-menu-group.svelte';
 	import RowMenuItem from '#lib/components/table/row-menu-item.svelte';
 	import RowMenu from '#lib/components/table/row-menu.svelte';
-	import * as Table from '#lib/components/ui/table/index.js';
-	import { ACTIONS_CELL, ACTIONS_HEAD, TableColumns } from '#lib/table-columns.svelte.ts';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { appendFeed, deploymentKey, mergeFeed } from '#lib/dashboard.ts';
 	import l from '#lib/localization/index.ts';
 	import routes from '#lib/path.ts';
 	import service from '#lib/resources/dashboard.ts';
 	import type { Deployment, Environment } from '#lib/resources/deployments.ts';
-	import { deploymentBadge, deploymentMoment } from '#lib/status.ts';
-	import { cn } from '#lib/utils.js';
 
 	type Props = {
 		environment?: Environment;
@@ -48,36 +49,6 @@
 	let { environment, refresh, live, appName, class: className }: Props = $props();
 
 	const PAGE = 8;
-
-	const columns = new TableColumns([
-		{
-			id: 'status',
-			label: l.translate('column.status'),
-			icon: CheckmarkCircle02Icon,
-			width: 'w-[24%]'
-		},
-		{
-			id: 'deployment',
-			label: l.translate('column.deployment'),
-			icon: Rocket01Icon,
-			width: 'w-[28%]'
-		},
-		{
-			id: 'environment',
-			label: l.translate('column.environment'),
-			icon: Layers01Icon,
-			width: 'w-[18%]',
-			priority: 2
-		},
-		{ id: 'started', label: l.translate('column.started'), icon: Clock01Icon, width: 'w-[16%]' },
-		{
-			id: 'duration',
-			label: l.translate('column.duration'),
-			icon: Timer02Icon,
-			width: 'w-[14%]',
-			priority: 3
-		}
-	]);
 
 	let rows = $state<Deployment[]>([]);
 	let cursor = $state<string | null>(null);
@@ -179,91 +150,71 @@
 
 	<div bind:this={top} class="-mb-3.5 h-px" aria-hidden="true"></div>
 	{#if unseen > 0}
-		<Button
-			size="sm"
-			class="sticky top-3 z-10 self-center rounded-full shadow-lg"
-			onclick={showNew}
-		>
+		<Button size="sm" class="sticky top-3 z-10 self-center shadow-lg" onclick={showNew}>
 			<Icon icon={ArrowUp01Icon} />
 			{l.translate('dashboard.activity.new', [unseen])}
 		</Button>
 	{/if}
 
 	{#if rows.length > 0}
-		<Table.Root aria-label={l.translate('dashboard.activity')}>
-			<Table.Header>
-				<Table.Row>
-					{#each columns.shown as column (column.id)}
-						<Table.Head class={columns.head(column.id)}>{column.label}</Table.Head>
+		<div class="flex flex-col gap-3" aria-live="polite" aria-relevant="additions">
+			{#each groupByDay(rows, deploymentMoment, l.locale()) as group (group.key)}
+				<TimelineGroup label={group.label} count={group.items.length} sticky={false}>
+					{#each group.items as d (deploymentKey(d))}
+						{@const tile = deploymentTile(d.state)}
+						{@const name = `${appName(d.app_id) ?? d.app_id} #${d.deployment_number}`}
+						{@const duration = deploymentDuration(d)}
+						<TimelineRow
+							icon={tile.icon}
+							tone={tile.tone}
+							spin={tile.spin}
+							label={deploymentLabel(d, appName(d.app_id))}
+							href={routes.deployment(d.app_id, d.deployment_number)}
+							highlight={fresh.has(deploymentKey(d))}
+						>
+							{#snippet title()}{name}{/snippet}
+							{#snippet badge()}<EnvironmentChip environment={d.environment} />{/snippet}
+							{#snippet details()}
+								{clock(deploymentMoment(d))}
+								{#if d.state.error_code}
+									· <span class="font-mono text-danger">{d.state.error_code}</span>
+								{/if}
+								{#if duration}· {duration}{/if}
+							{/snippet}
+							{#snippet actions()}
+								<RowMenu label={l.translate('table.menu', [name])}>
+									<RowMenuGroup>
+										<RowMenuItem
+											icon={ViewIcon}
+											href={routes.deployment(d.app_id, d.deployment_number)}
+										>
+											{l.translate('jobs.open.deployment')}
+										</RowMenuItem>
+										<RowMenuItem icon={DashboardSquare01Icon} href={routes.app(d.app_id)}>
+											{l.translate('jobs.open.app')}
+										</RowMenuItem>
+										<RowMenuItem
+											icon={CommandLineIcon}
+											href={routes.appLogs(d.app_id, d.environment)}
+										>
+											{l.translate('menu.logs')}
+										</RowMenuItem>
+									</RowMenuGroup>
+								</RowMenu>
+							{/snippet}
+						</TimelineRow>
 					{/each}
-					<Table.Head class={ACTIONS_HEAD}>{l.translate('column.actions')}</Table.Head>
-				</Table.Row>
-			</Table.Header>
-			<Table.Body aria-live="polite" aria-relevant="additions">
-				{#each rows as d (deploymentKey(d))}
-					{@const badge = deploymentBadge(d.state)}
-					{@const name = `${appName(d.app_id) ?? d.app_id} #${d.deployment_number}`}
-					<Table.Row
-						class={cn(
-							'relative *:transition-colors *:duration-700 motion-reduce:*:transition-none',
-							fresh.has(deploymentKey(d)) && '*:bg-accent-soft'
-						)}
-					>
-						<Table.Cell class={columns.cell('status')}>
-							<StatusBadge state={badge.state} label={badge.label} />
-						</Table.Cell>
-						<Table.Cell class={columns.cell('deployment')}>
-							<a
-								href={routes.deployment(d.app_id, d.deployment_number)}
-								title={name}
-								class="text-sm font-semibold outline-none after:absolute after:inset-0 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
-								>{name}</a
-							>
-						</Table.Cell>
-						<Table.Cell class={columns.cell('environment')}>
-							<EnvironmentChip environment={d.environment} />
-						</Table.Cell>
-						<Table.Cell class={columns.cell('started', 'text-muted-foreground tabular-nums')}>
-							{l.relative(deploymentMoment(d))}
-						</Table.Cell>
-						<Table.Cell class={columns.cell('duration', 'text-muted-foreground tabular-nums')}>
-							{d.state.started_at && d.state.finished_at
-								? l.duration(d.state.started_at, d.state.finished_at)
-								: '—'}
-						</Table.Cell>
-						<Table.Cell class={ACTIONS_CELL}>
-							<RowMenu label={l.translate('table.menu', [name])}>
-								<RowMenuGroup>
-									<RowMenuItem
-										icon={ViewIcon}
-										href={routes.deployment(d.app_id, d.deployment_number)}
-									>
-										{l.translate('jobs.open.deployment')}
-									</RowMenuItem>
-									<RowMenuItem icon={DashboardSquare01Icon} href={routes.app(d.app_id)}>
-										{l.translate('jobs.open.app')}
-									</RowMenuItem>
-									<RowMenuItem
-										icon={CommandLineIcon}
-										href={routes.appLogs(d.app_id, d.environment)}
-									>
-										{l.translate('menu.logs')}
-									</RowMenuItem>
-								</RowMenuGroup>
-							</RowMenu>
-						</Table.Cell>
-					</Table.Row>
-				{/each}
-			</Table.Body>
-		</Table.Root>
+				</TimelineGroup>
+			{/each}
+		</div>
 	{:else}
-		<p class="flex flex-1 items-center justify-center py-8 text-[13px] text-muted-foreground">
+		<p class="flex flex-1 items-center justify-center py-8 text-label text-muted-foreground">
 			{l.translate('dashboard.activity.empty')}
 		</p>
 	{/if}
 
 	{#if cursor}
-		<div class="mt-auto flex items-center justify-between gap-3 pt-1 text-[12.5px] text-faint">
+		<div class="mt-auto flex items-center justify-between gap-3 pt-1 text-xs text-muted-foreground">
 			<span>{l.translate('dashboard.activity.showing', [rows.length])}</span>
 			<Button variant="outline" size="sm" loading={loadingMore} onclick={loadMore}>
 				<Icon icon={ArrowDown01Icon} />

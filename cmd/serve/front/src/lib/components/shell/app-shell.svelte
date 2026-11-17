@@ -14,10 +14,12 @@
 	import type { Snippet } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { navigating } from '$app/state';
-	import Logo from '$assets/logo.svelte';
+	import Logo from '#lib/components/logo.svelte';
 	import Icon from '#lib/components/icon.svelte';
+	import IconButton, { iconButtonClass } from '#lib/components/icon-button.svelte';
 	import AccountMenu from '#lib/components/shell/account-menu.svelte';
 	import AppNav from '#lib/components/shell/app-nav.svelte';
+	import LanguageMenu from '#lib/components/shell/language-menu.svelte';
 	import * as Sheet from '#lib/components/ui/sheet/index.js';
 	import * as Tooltip from '#lib/components/ui/tooltip/index.js';
 	import l from '#lib/localization/index.ts';
@@ -52,53 +54,55 @@
 
 	<div
 		class={cn(
-			'grid h-svh grid-rows-[44px_minmax(0,1fr)] bg-canvas font-sans text-ink md:grid-cols-[56px_minmax(0,1fr)]',
+			'grid h-svh grid-rows-[56px_minmax(0,1fr)] bg-canvas font-sans text-ink transition-[grid-template-columns] duration-150 ease-out motion-reduce:transition-none md:grid-cols-[56px_minmax(0,1fr)]',
 			preferences.sidebarCollapsed
 				? 'lg:grid-cols-[56px_minmax(0,1fr)]'
 				: 'lg:grid-cols-[240px_minmax(0,1fr)]'
 		)}
 	>
 		<header
-			class="col-span-full flex items-center justify-between gap-3 pr-2 pl-1 md:pr-3 md:pl-2.5"
+			class="col-span-full flex items-center justify-between gap-3 pr-2.5 pl-1.5 md:pr-4 md:pl-2.5"
 		>
 			<div class="flex items-center gap-2 md:gap-3">
-				<button
-					type="button"
-					class="hidden size-9 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset lg:flex"
-					aria-label={l.translate(preferences.sidebarCollapsed ? 'nav.expand' : 'nav.collapse')}
+				<IconButton
+					tone="frame"
+					class="hidden lg:flex"
+					label={l.translate(preferences.sidebarCollapsed ? 'nav.expand' : 'nav.collapse')}
+					icon={SidebarLeftIcon}
 					aria-expanded={!preferences.sidebarCollapsed}
 					onclick={() => preferences.toggleSidebar()}
-				>
-					<Icon icon={SidebarLeftIcon} class="size-5" />
-				</button>
-				<button
-					type="button"
-					class="flex size-11 items-center justify-center rounded-md text-ink outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset md:size-9 md:text-muted-foreground lg:hidden"
-					aria-label={l.translate('nav.open_menu')}
+				/>
+				<IconButton
+					tone="frame"
+					touch
+					class="lg:hidden"
+					label={l.translate('nav.open_menu')}
+					icon={Menu01Icon}
 					aria-expanded={menuOpen}
 					onclick={() => (menuOpen = true)}
-				>
-					<Icon icon={Menu01Icon} class="size-5.5 md:size-5" />
-				</button>
+				/>
 				<a
 					href={routes.dashboard}
-					class="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+					class="flex h-11 items-center rounded-sm px-0.5 outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-9"
 					aria-label="checkship"
 				>
 					<Logo size={22} />
 				</a>
 			</div>
-			<AccountMenu {user} />
+			<div class="flex items-center gap-1.5 md:gap-2">
+				<LanguageMenu />
+				<AccountMenu {user} />
+			</div>
 		</header>
 
-		<aside class="hidden min-h-0 md:block">
+		<aside class="hidden min-h-0 overflow-hidden md:block">
 			<AppNav {collapsed} {version} />
 		</aside>
 
 		<!-- relative: absolutely positioned content (sr-only tables, popovers) stays inside the scroll
 			area instead of stretching the document past the window. -->
 		<main
-			class="relative min-h-0 min-w-0 overflow-y-auto rounded-t-md bg-surface md:rounded-tl-md md:rounded-tr-none"
+			class="relative min-h-0 min-w-0 [scrollbar-gutter:stable] overflow-y-auto rounded-t-md bg-surface md:rounded-tl-md md:rounded-tr-none"
 		>
 			<!-- Pages fill the whole workspace: no max width, no centring (owner, 2026-11-14). -->
 			<div class="w-full p-5 md:p-6 lg:p-10">
@@ -116,12 +120,20 @@
 			<div class="flex h-16 shrink-0 items-center justify-between pr-1.5 pl-5">
 				<Sheet.Title class="sr-only">{l.translate('nav.main')}</Sheet.Title>
 				<Logo size={28} />
-				<Sheet.Close
-					class="flex size-11 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-					aria-label={l.translate('nav.close_menu')}
-				>
-					<Icon icon={Cancel01Icon} class="size-5" />
-				</Sheet.Close>
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props: tooltipProps })}
+							<Sheet.Close
+								{...tooltipProps}
+								class={iconButtonClass({ tone: 'frame', touch: true })}
+							>
+								<Icon icon={Cancel01Icon} class="size-5" />
+								<span class="sr-only">{l.translate('nav.close_menu')}</span>
+							</Sheet.Close>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content side="bottom">{l.translate('nav.close_menu')}</Tooltip.Content>
+				</Tooltip.Root>
 			</div>
 			<div class="min-h-0 flex-1">
 				<AppNav {version} onnavigate={() => (menuOpen = false)} />

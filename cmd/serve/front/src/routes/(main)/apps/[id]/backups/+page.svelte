@@ -5,24 +5,22 @@
 	downloads, uploads again, retries or deletes.
 -->
 <script lang="ts">
-	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
 	import Archive02Icon from '@hugeicons/core-free-icons/Archive02Icon';
 	import DatabaseIcon from '@hugeicons/core-free-icons/DatabaseIcon';
-	import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
-	import ServerStack01Icon from '@hugeicons/core-free-icons/ServerStack01Icon';
-	import TextIcon from '@hugeicons/core-free-icons/TextIcon';
 	import Upload04Icon from '@hugeicons/core-free-icons/Upload04Icon';
 	import BackupDrawer from '#lib/components/backups/backup-drawer.svelte';
-	import BackupsTable from '#lib/components/backups/backups-table.svelte';
+	import BackupsList from '#lib/components/backups/backups-list.svelte';
 	import DetailsDrawer from '#lib/components/backups/details-drawer.svelte';
 	import RestoreDrawer from '#lib/components/backups/restore-drawer.svelte';
 	import UploadDrawer from '#lib/components/backups/upload-drawer.svelte';
 	import EmptyState from '#lib/components/empty-state.svelte';
+	import Notice from '#lib/components/notice.svelte';
 	import Icon from '#lib/components/icon.svelte';
 	import Segmented from '#lib/components/segmented.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
-	import * as Table from '#lib/components/ui/table/index.js';
+	import TimelineList from '#lib/components/timeline/timeline-list.svelte';
+	import TimelineRow from '#lib/components/timeline/timeline-row.svelte';
 	import { formatBytes, messageOf } from '#lib/backup.ts';
 	import l from '#lib/localization/index.ts';
 	import appsService from '#lib/resources/apps.ts';
@@ -30,7 +28,6 @@
 	import type { Environment } from '#lib/resources/deployments.ts';
 	import targetsService from '#lib/resources/targets.ts';
 	import { storageSummary } from '#lib/storage.ts';
-	import { TableColumns } from '#lib/table-columns.svelte.ts';
 	import AppWorkspace from '../app-workspace.svelte';
 
 	let { data } = $props();
@@ -73,37 +70,6 @@
 			});
 	});
 
-	const volumeColumns = new TableColumns([
-		{
-			id: 'key',
-			label: l.translate('column.volume'),
-			icon: DatabaseIcon,
-			width: 'w-[22%]',
-			locked: true
-		},
-		{
-			id: 'services',
-			label: l.translate('column.services'),
-			icon: Layers01Icon,
-			width: 'w-[22%]',
-			priority: 2
-		},
-		{
-			id: 'target',
-			label: l.translate('column.target'),
-			icon: ServerStack01Icon,
-			width: 'w-[18%]',
-			priority: 3
-		},
-		{
-			id: 'docker',
-			label: l.translate('column.docker_name'),
-			icon: TextIcon,
-			width: 'w-[38%]',
-			priority: 3
-		}
-	]);
-
 	const total = $derived((backups ?? []).reduce((sum, b) => sum + (b.result?.size ?? 0), 0));
 
 	let backupOpen = $state(false);
@@ -132,10 +98,10 @@
 		<section class="flex flex-col gap-3" aria-labelledby="volumes-title">
 			<div class="flex flex-wrap items-end justify-between gap-3">
 				<div class="flex flex-col gap-1">
-					<h2 id="volumes-title" class="text-base font-semibold">
+					<h2 id="volumes-title" class="text-xs font-semibold tracking-wide text-muted-foreground">
 						{l.translate('backups.volumes.title')}
 					</h2>
-					<p class="text-sm text-muted-foreground">
+					<p class="text-label text-muted-foreground">
 						{l.translate('backups.volumes.description')}
 					</p>
 				</div>
@@ -154,73 +120,61 @@
 			</div>
 
 			{#if volumesError}
-				<p role="alert" class="rounded-md bg-danger-soft px-3.5 py-3 text-sm text-ink">
-					{l.translate('backups.volumes.unreachable')}
-					{volumesError}
-				</p>
+				<Notice tone="danger" role="alert">
+					<p>{l.translate('backups.volumes.unreachable')} {volumesError}</p>
+				</Notice>
 			{:else if !volumes}
 				<Skeleton class="h-24 w-full" />
 			{:else if volumes.volumes.length === 0}
-				<p class="rounded-md bg-sunken px-3.5 py-3 text-sm text-muted-foreground">
-					{l.translate('backups.volumes.empty', [l.translate(`deploy.environment.${environment}`)])}
-				</p>
+				<Notice>
+					<p>
+						{l.translate('backups.volumes.empty', [
+							l.translate(`deploy.environment.${environment}`)
+						])}
+					</p>
+				</Notice>
 			{:else}
-				<Table.Root aria-label={l.translate('backups.volumes.title')}>
-					<Table.Header>
-						<Table.Row>
-							{#each volumeColumns.shown as column (column.id)}
-								<Table.Head class={volumeColumns.head(column.id)}>{column.label}</Table.Head>
-							{/each}
-						</Table.Row>
-					</Table.Header>
-					<Table.Body>
-						{#each volumes.volumes as volume (volume.key)}
-							<Table.Row>
-								<Table.Cell class={volumeColumns.cell('key', 'font-mono text-[13px] font-semibold')}
-									>{volume.key}</Table.Cell
-								>
-								<Table.Cell class={volumeColumns.cell('services', 'text-muted-foreground')}>
-									{volume.services.join(', ') || '—'}
-								</Table.Cell>
-								<Table.Cell class={volumeColumns.cell('target', 'text-muted-foreground')}>
-									{targetName(volumes.target)}
-								</Table.Cell>
-								<Table.Cell
-									class={volumeColumns.cell('docker', 'font-mono text-[12.5px] text-faint')}
-									title={volume.docker_name}>{volume.docker_name}</Table.Cell
-								>
-							</Table.Row>
-						{/each}
-					</Table.Body>
-				</Table.Root>
+				{@const where = volumes.target}
+				<TimelineList label={l.translate('backups.volumes.title')}>
+					{#each volumes.volumes as volume (volume.key)}
+						{@const parts = [
+							volume.services.length
+								? l.translate('backups.volume.used_by', [volume.services.join(', ')])
+								: undefined,
+							targetName(where),
+							volume.docker_name
+						].filter((part): part is string => !!part)}
+						<TimelineRow icon={DatabaseIcon} label={[volume.key, ...parts].join(', ')}>
+							{#snippet title()}<span class="font-mono">{volume.key}</span>{/snippet}
+							{#snippet details()}{parts.join(' · ')}{/snippet}
+						</TimelineRow>
+					{/each}
+				</TimelineList>
 			{/if}
 
 			{#each volumes?.skipped ?? [] as mount (mount.service + mount.target)}
-				<div class="grid grid-cols-[20px_minmax(0,1fr)] gap-3 rounded-lg bg-sunken px-4 py-3.5">
-					<Icon icon={Alert02Icon} class="size-4.5 text-warning" />
-					<p class="flex flex-col gap-1 text-[13px]/5 text-muted-foreground">
-						<span class="font-semibold text-ink">
-							{l.translate('backups.skipped.title', [mount.service, mount.source || mount.target])}
-						</span>
-						{l.translate(`backups.skipped.${mount.kind}`)}
-					</p>
-				</div>
+				<Notice tone="warning">
+					<strong class="font-semibold">
+						{l.translate('backups.skipped.title', [mount.service, mount.source || mount.target])}
+					</strong>
+					<p class="text-muted-foreground">{l.translate(`backups.skipped.${mount.kind}`)}</p>
+				</Notice>
 			{/each}
 		</section>
 
 		<section class="flex flex-col gap-3" aria-labelledby="backups-title">
 			<div class="flex flex-col gap-1">
-				<h2 id="backups-title" class="text-base font-semibold">
+				<h2 id="backups-title" class="text-xs font-semibold tracking-wide text-muted-foreground">
 					{l.translate('backups.list.title')}
 				</h2>
-				<p class="text-sm text-muted-foreground">
+				<p class="text-label text-muted-foreground">
 					{backups?.length
 						? l.translate('backups.summary', [backups.length, formatBytes(total)])
 						: l.translate('backups.list.description')}
 				</p>
 			</div>
 			{#if backups && backups.length > 0}
-				<BackupsTable
+				<BackupsList
 					{backups}
 					label={l.translate('backups.list.title')}
 					onrestore={openRestore}

@@ -51,12 +51,12 @@
 				class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"
 				aria-hidden="true"
 			>
-				<strong class="text-[22px]/7 font-semibold tabular-nums">{total}</strong>
-				<span class="text-[11px] text-faint">{l.translate('dashboard.deploys.unit')}</span>
+				<strong class="text-xl/7 font-semibold tabular-nums">{total}</strong>
+				<span class="text-xs text-muted-foreground">{l.translate('dashboard.deploys.unit')}</span>
 			</span>
 		</div>
 	{/if}
-	<ul class="flex flex-wrap justify-center gap-x-4 gap-y-1 text-[12.5px] text-muted-foreground">
+	<ul class="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
 		{#each stats as s (s.environment)}
 			<li class="flex items-center gap-1.5">
 				<span class="size-2 rounded-full" style="background: {colors[s.environment]}"></span>

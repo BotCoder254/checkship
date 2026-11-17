@@ -58,7 +58,7 @@
 	{#if deployment && badge}
 		<div class="flex flex-wrap items-center gap-2.5">
 			<StatusBadge state={badge.state} label={badge.label} />
-			<span class="text-[13px] text-muted-foreground">
+			<span class="text-label text-muted-foreground">
 				{#if deployment.state.started_at && deployment.state.finished_at}
 					{l.relative(deployment.state.finished_at)} · {l.translate('preview.took', [
 						l.duration(deployment.state.started_at, deployment.state.finished_at)
@@ -72,7 +72,7 @@
 		</div>
 
 		<dl
-			class="grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-2.5 rounded-md bg-sunken p-4 text-[13px]/5 [&_dt]:first-letter:uppercase"
+			class="grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-label/5 [&_dt]:first-letter:uppercase"
 		>
 			<dt class="text-muted-foreground">{l.translate('deployment.environment')}</dt>
 			<dd>
@@ -105,10 +105,12 @@
 
 		<section class="flex flex-col gap-2.5">
 			<div class="flex items-center justify-between gap-3">
-				<h3 class="text-sm font-semibold">{l.translate('preview.last_lines')}</h3>
+				<h3 class="text-xs font-semibold tracking-wide text-muted-foreground">
+					{l.translate('preview.last_lines')}
+				</h3>
 				<a
 					href={routes.deployment(app.id, number)}
-					class="flex items-center gap-1 rounded-sm text-[13px] font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+					class="flex items-center gap-1 rounded-sm text-label font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
 				>
 					{l.translate('preview.full_log')}
 					<Icon icon={ArrowUpRight01Icon} class="size-3.5" />

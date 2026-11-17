@@ -1,6 +1,6 @@
 <!--
 	Empty state (DESIGN.md §11.5): an icon, a title, one sentence on what will appear here, and one
-	action, the most likely next step.
+	action, the most likely next step. Written straight on the page, no box (§1 Cardless).
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
@@ -12,7 +12,7 @@
 	let { icon, title, description, action }: Props = $props();
 </script>
 
-<Empty.Root class="rounded-md bg-sunken py-12">
+<Empty.Root class="py-12">
 	<Empty.Header>
 		<Empty.Media variant="icon" class="size-12 rounded-md bg-raised text-primary">
 			<Icon {icon} class="size-6" />

@@ -103,7 +103,7 @@
 	{/if}
 
 	{#each draft as service, index (index)}
-		<div class="flex flex-col gap-2.5 rounded-md bg-sunken p-3.5">
+		<div class="flex flex-col gap-2.5">
 			<div class="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2.5">
 				<div class="flex flex-col gap-1.5">
 					<Label for="vars-name-{index}">{l.translate('vars.service')}</Label>

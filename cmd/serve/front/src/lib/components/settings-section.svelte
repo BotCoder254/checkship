@@ -25,7 +25,7 @@
 	<div class="flex flex-col gap-1.5">
 		<h2 class="text-base font-semibold">{title}</h2>
 		{#if description}
-			<p class="text-[13px] text-muted-foreground">{description}</p>
+			<p class="text-label text-muted-foreground">{description}</p>
 		{/if}
 	</div>
 	<div class="flex min-w-0 flex-col gap-4">

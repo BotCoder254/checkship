@@ -167,7 +167,7 @@
 						href={routes.app(app.id)}
 						onclick={onnavigate}
 						aria-current={path.startsWith(routes.app(app.id)) ? 'page' : undefined}
-						class="flex h-9 items-center gap-3 rounded-md px-3 text-sm text-ink outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset aria-[current=page]:font-semibold"
+						class="flex h-9 items-center gap-3 rounded-md px-3 text-sm text-ink outline-none hover:bg-hover-frame focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset aria-[current=page]:font-semibold"
 					>
 						<Icon icon={state.icon} class={cn('size-4', state.tone)} />
 						<span class="min-w-0 flex-1 truncate">{app.name}</span>

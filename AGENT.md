@@ -534,7 +534,13 @@ History notes: v1→v2 migration `1706004450_add_target` created a default targe
 
 - SPA: `+layout.ts` sets `ssr=false`, `prerender=false`, `trailingSlash='always'`. adapter-static `fallback: 'fallback.html'`.
   The Go side serves files from the embed FS and falls back to `fallback.html`.
-- Aliases: `$components` → `src/components`, `$assets` → `src/assets`, `$lib`.
+- Imports: subpath imports `#lib/*` → `src/lib/*` (package.json `imports`); there are no `config.alias` entries.
+- UI: Svelte 5 + SvelteKit 3, shadcn-svelte on Bits UI, Tailwind 4. `DESIGN.md` is the spec; the theme is `src/routes/layout.css`.
+- Lists: there are no tables. Every list is `#lib/components/timeline/` rows (`timeline-row.svelte`) in a
+  `timeline-group.svelte` (grouped by day or state, `lib/timeline.ts`) or a plain `timeline-list.svelte`; DESIGN.md §5 Lists.
+- Cardless (DESIGN.md §1): the workspace is the one container. No grey boxes around sections, notes or settings; use
+  `section-heading.svelte`, `notice.svelte` (tinted only for warning or danger) and `setting-row.svelte`. `bg-sunken` is
+  only for inputs, choice cards, the logs console, error text and row icon tiles.
 - **Data layer** `src/lib/fetcher`: `CacheFetchService`. `get` and `query` share a cache keyed by url+params, with 2s dedupe.
   `query` returns Svelte stores `{data, error, loading}` with optional polling (`refreshInterval`). Mutations
   (`post/patch/put/delete`) invalidate their url plus extra keys and call SvelteKit `invalidate`.
@@ -542,8 +548,8 @@ History notes: v1→v2 migration `1706004450_add_target` created a default targe
   jobs, sessions, users, healthcheck). Polling: 5s in general (`POLLING_INTERVAL_MS`), 2.5s for running deployments.
 - **Auth**: `(main)/+layout.ts` calls `GET /profile` (`auth.checkSession`). On failure it logs out and redirects to
   `/signin?redirectTo=...`. Login resets the fetch cache and redirects.
-- **Forms**: `components/form.svelte` + `lib/form.ts submitter()` provide the loading state, optional `confirm()` dialog and error
-  mapping (`BadRequestError.fields` from `validation_failed`).
+- **Forms**: `lib/form.ts submitter()` provides the loading state and the error mapping (`BadRequestError.fields` from
+  `validation_failed`); confirmations use `#lib/components/confirm-dialog.svelte`.
 - **i18n**: `lib/localization` (en, fr). Typed keys; error codes and job message names are translation keys. The locale is
   stored in `localStorage['locale']` and changing it reloads the page.
 - **cURL helper**: `lib/curl.ts` builds the CI command shown on the "New deployment" page.
@@ -553,9 +559,9 @@ History notes: v1→v2 migration `1706004450_add_target` created a default targe
   - `apps/[id]/deployments/new` (env, kind raw|archive|git, curl panel), `apps/[id]/deployments/[number]` (detail, logs console, redeploy, promote)
   - `targets`, `targets/new`, `targets/[id]/edit` (status panel, reconfigure, delete)
   - `registries`, `registries/new`, `registries/[id]/edit`
-  - `jobs` (table + cancel), `profile` (email, password, locale, API key)
-- **Design tokens** in `src/assets/styles.css` (dark-only UI): primary `--co-primary-4: #10b981` (emerald), `--co-primary-5: #34d399`,
-  backgrounds `#010409/#0d1117/#181c22`, spacing `--sp-*`, radius `--ra-*`, typography `--ty-*`, container width 56rem.
+  - `jobs` (list grouped by state + cancel), `profile` (email, password, locale, API key)
+- **Design tokens** in `src/routes/layout.css` (DESIGN.md §3 palette, light and dark): CSS variables mapped to Tailwind with
+  `@theme inline`. Tailwind's preflight is the only reset; the old `src/assets/styles.css` and `src/components/` are gone.
 - Tests: `vitest` on `lib` (fetcher cache, curl, select, localization).
 
 ---

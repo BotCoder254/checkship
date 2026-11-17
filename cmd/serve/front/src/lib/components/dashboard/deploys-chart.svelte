@@ -68,8 +68,8 @@
 			rule={false}
 			padding={{ left: 28, bottom: 22, top: 6 }}
 			props={{
-				xAxis: { format: label, ticks, tickLabelProps: { class: 'fill-faint text-[11px]' } },
-				yAxis: { ticks: 3, tickLabelProps: { class: 'fill-faint text-[11px]' } },
+				xAxis: { format: label, ticks, tickLabelProps: { class: 'fill-muted-foreground text-xs' } },
+				yAxis: { ticks: 3, tickLabelProps: { class: 'fill-muted-foreground text-xs' } },
 				bars: { stroke: 'none', radius: 2 }
 			}}
 			onBarClick={(_, detail) => onselect?.(detail.data as Day)}

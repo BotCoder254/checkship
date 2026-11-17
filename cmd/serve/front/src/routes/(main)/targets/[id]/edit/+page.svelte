@@ -1,9 +1,10 @@
 <!--
 	Target settings (DESIGN.md §11.8). Delete follows the server: refused while environments deploy
 	to the target (the dialog lists them, each linking to its settings) or while it configures;
-	otherwise it asks for the name.
+	otherwise it asks for the name. The header is the one Overview has (target-header.svelte).
 -->
 <script lang="ts">
+	import DashboardSquare01Icon from '@hugeicons/core-free-icons/DashboardSquare01Icon';
 	import Settings02Icon from '@hugeicons/core-free-icons/Settings02Icon';
 	import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
 	import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
@@ -14,10 +15,9 @@
 	import RowMenuGroup from '#lib/components/table/row-menu-group.svelte';
 	import RowMenuItem from '#lib/components/table/row-menu-item.svelte';
 	import RowMenu from '#lib/components/table/row-menu.svelte';
-	import * as Table from '#lib/components/ui/table/index.js';
-	import { ACTIONS_CELL, ACTIONS_HEAD } from '#lib/table-columns.svelte.ts';
+	import TimelineList from '#lib/components/timeline/timeline-list.svelte';
+	import TimelineRow from '#lib/components/timeline/timeline-row.svelte';
 	import Icon from '#lib/components/icon.svelte';
-	import StatusBadge from '#lib/components/status-badge.svelte';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import l from '#lib/localization/index.ts';
@@ -26,16 +26,18 @@
 	import service, { TargetStatus, type UpdateTarget } from '#lib/resources/targets.ts';
 	import { usesOf } from '#lib/target.ts';
 	import TargetForm from '../../target-form.svelte';
-	import TargetTabs from '../../target-tabs.svelte';
+	import TargetHeader from '../target-header.svelte';
 
 	let { data } = $props();
 
 	const { data: apps } = appsService.queryAll();
+	const { data: targets } = service.queryAll();
 
 	let deleteOpen = $state(false);
 	let blockedOpen = $state(false);
 
-	const target = $derived(data.target);
+	// The header polls like on Overview; the form keeps the values it was opened with.
+	const target = $derived($targets?.find((t) => t.id === data.target.id) ?? data.target);
 	const configuring = $derived(target.state.status === TargetStatus.Configuring);
 	const uses = $derived($apps ? usesOf($apps, target.id) : []);
 
@@ -48,23 +50,17 @@
 		service.update(target.id, d).then(() => goto(routes.target(target.id)));
 </script>
 
+<TargetHeader {target} tab="settings" />
+
 <TargetForm
-	title={l.translate('breadcrumb.settings')}
-	crumbs={[
-		{ href: routes.targets, label: l.translate('breadcrumb.targets') },
-		{ href: routes.target(target.id), label: target.name }
-	]}
-	initialData={target}
+	embedded
+	initialData={data.target}
 	handler={submit}
 	disabled={!!target.cleanup_requested_at}
 >
-	{#snippet tabs()}
-		<TargetTabs targetId={target.id} active="settings" />
-	{/snippet}
 	{#snippet actions(submitting)}
-		{#if target.cleanup_requested_at}
-			<StatusBadge state="deleting" label={l.translate('targets.state.deleting')} />
-		{:else}
+		<!-- While it is being deleted, the header says so and there is nothing to do here. -->
+		{#if !target.cleanup_requested_at}
 			<Button
 				variant="destructive"
 				disabled={configuring}
@@ -113,39 +109,30 @@
 				</AlertDialog.Description>
 			</AlertDialog.Header>
 		</div>
-		<Table.Root aria-label={l.translate('targets.apps')}>
-			<Table.Header>
-				<Table.Row>
-					<Table.Head class="w-[55%]">{l.translate('column.name')}</Table.Head>
-					<Table.Head class="w-[45%]">{l.translate('column.environment')}</Table.Head>
-					<Table.Head class={ACTIONS_HEAD}>{l.translate('column.actions')}</Table.Head>
-				</Table.Row>
-			</Table.Header>
-			<Table.Body>
-				{#each uses as use (`${use.app.id}-${use.environment}`)}
-					<Table.Row>
-						<Table.Cell class="text-sm font-semibold">
-							<a href={routes.editApp(use.app.id)} title={use.app.name} class="hover:underline"
-								>{use.app.name}</a
-							>
-						</Table.Cell>
-						<Table.Cell><EnvironmentChip environment={use.environment} /></Table.Cell>
-						<Table.Cell class={ACTIONS_CELL}>
-							<RowMenu label={l.translate('table.menu', [use.app.name])}>
-								<RowMenuGroup>
-									<RowMenuItem icon={Settings02Icon} href={routes.editApp(use.app.id)}>
-										{l.translate('app.settings')}
-									</RowMenuItem>
-									<RowMenuItem icon={ViewIcon} href={routes.app(use.app.id)}>
-										{l.translate('menu.open')}
-									</RowMenuItem>
-								</RowMenuGroup>
-							</RowMenu>
-						</Table.Cell>
-					</Table.Row>
-				{/each}
-			</Table.Body>
-		</Table.Root>
+		<TimelineList label={l.translate('targets.apps')}>
+			{#each uses as use (`${use.app.id}-${use.environment}`)}
+				<TimelineRow
+					icon={DashboardSquare01Icon}
+					label="{use.app.name}, {l.translate(`deploy.environment.${use.environment}`)}"
+					href={routes.editApp(use.app.id)}
+				>
+					{#snippet title()}{use.app.name}{/snippet}
+					{#snippet badge()}<EnvironmentChip environment={use.environment} />{/snippet}
+					{#snippet actions()}
+						<RowMenu label={l.translate('table.menu', [use.app.name])}>
+							<RowMenuGroup>
+								<RowMenuItem icon={Settings02Icon} href={routes.editApp(use.app.id)}>
+									{l.translate('app.settings')}
+								</RowMenuItem>
+								<RowMenuItem icon={ViewIcon} href={routes.app(use.app.id)}>
+									{l.translate('menu.open')}
+								</RowMenuItem>
+							</RowMenuGroup>
+						</RowMenu>
+					{/snippet}
+				</TimelineRow>
+			{/each}
+		</TimelineList>
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>{l.translate('close')}</AlertDialog.Cancel>
 			<Button variant="destructive" disabled>

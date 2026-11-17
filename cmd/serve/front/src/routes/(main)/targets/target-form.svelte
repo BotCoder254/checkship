@@ -5,7 +5,9 @@
 	- a remote target's host identifies it and can't change, so Settings shows it read-only;
 	- user defaults to docker and port to 22; the private key is optional and masked once saved;
 	- a URL means automatic exposure (root only, unique among targets), none means manual.
-	The page header is inside the form so its submit button submits.
+	New target: the page header is inside the form so its submit button submits. Settings
+	(`embedded`): the target header and tabs come from target-header.svelte, so the same header
+	shows on both tabs, and the actions sit at the end of the form instead.
 -->
 <script lang="ts">
 	import Alert02Icon from '@hugeicons/core-free-icons/Alert02Icon';
@@ -17,6 +19,7 @@
 	import DropZone from '#lib/components/drop-zone.svelte';
 	import FieldMessage from '#lib/components/field-message.svelte';
 	import Icon from '#lib/components/icon.svelte';
+	import SettingRow from '#lib/components/setting-row.svelte';
 	import PageHeader from '#lib/components/page-header.svelte';
 	import SettingsSection from '#lib/components/settings-section.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
@@ -30,12 +33,13 @@
 	import { cn } from '#lib/utils.js';
 
 	type Props = {
-		title: string;
-		crumbs: { href: string; label: string }[];
-		/** Header actions; gets whether the form is submitting. */
+		/** Page header, when the form is its own page (New target). */
+		title?: string;
+		crumbs?: { href: string; label: string }[];
+		/** Header actions, or the form's closing actions when embedded; gets whether it submits. */
 		actions: Snippet<[boolean]>;
-		/** Shown under the header (the target tabs in Settings). */
-		tabs?: Snippet;
+		/** Inside the target's tabs: no header; the actions close the form. */
+		embedded?: boolean;
 		disabled?: boolean;
 	} & (
 		| { initialData: Target; handler: (data: UpdateTarget) => Promise<unknown> }
@@ -114,13 +118,12 @@
 </script>
 
 <form class="flex flex-col" novalidate {onsubmit}>
-	<PageHeader title={props.title} crumbs={props.crumbs}>
-		{#snippet actions()}
-			{@render props.actions($loading)}
-		{/snippet}
-	</PageHeader>
-	{#if props.tabs}
-		<div class="-mt-3 mb-7">{@render props.tabs()}</div>
+	{#if !props.embedded}
+		<PageHeader title={props.title ?? ''} crumbs={props.crumbs}>
+			{#snippet actions()}
+				{@render props.actions($loading)}
+			{/snippet}
+		</PageHeader>
 	{/if}
 
 	<fieldset class="flex flex-col gap-10" disabled={props.disabled}>
@@ -191,7 +194,7 @@
 								<strong class="text-sm font-semibold">
 									{remote ? l.translate('targets.where.ssh') : l.translate('targets.where.local')}
 								</strong>
-								<span class="text-[12.5px]/[18px] text-muted-foreground">
+								<span class="text-xs/[18px] text-muted-foreground">
 									{remote
 										? l.translate('targets.where.ssh.help')
 										: unavailable
@@ -203,7 +206,7 @@
 					{/each}
 				</div>
 			{:else if !isRemote}
-				<p class="rounded-md bg-sunken px-4 py-3.5 text-sm">{l.translate('targets.kind.local')}</p>
+				<p class="text-sm text-muted-foreground">{l.translate('targets.kind.local')}</p>
 			{/if}
 
 			{#if isRemote}
@@ -216,7 +219,7 @@
 							required
 							readonly={!!initialData}
 							class={cn(
-								'font-mono text-[13px]',
+								'font-mono text-label',
 								initialData && 'border-transparent bg-raised text-muted-foreground'
 							)}
 							placeholder="server.example.com"
@@ -238,7 +241,7 @@
 							id="target-user"
 							bind:value={user}
 							placeholder={DOCKER_DEFAULT_USER}
-							class="font-mono text-[13px]"
+							class="font-mono text-label"
 							aria-invalid={!!fieldError('docker.user') || undefined}
 							aria-describedby="target-user-message"
 						/>
@@ -253,7 +256,7 @@
 							type="number"
 							bind:value={port}
 							placeholder={String(DOCKER_DEFAULT_PORT)}
-							class="font-mono text-[13px]"
+							class="font-mono text-label"
 							aria-invalid={!!fieldError('docker.port') || undefined}
 							aria-describedby="target-port-message"
 						/>
@@ -281,7 +284,7 @@
 						onfile={readKey}
 					/>
 					{#if keyFile}
-						<p class="text-[13px] text-muted-foreground">
+						<p class="text-label text-muted-foreground">
 							{l.translate('deploy.compose.loaded_from')}
 							<span class="font-mono text-ink">{keyFile}</span>
 						</p>
@@ -312,13 +315,13 @@
 				? l.translate('targets.section.exposure.edit')
 				: l.translate('targets.section.exposure')}
 		>
-			<div class="flex items-center gap-6 rounded-md bg-sunken px-4 py-3.5">
-				<div class="flex min-w-0 flex-1 flex-col gap-0.5">
-					<Label for="target-expose">{l.translate('target.automatic_proxy_configuration')}</Label>
-					<p class="text-[13px] text-muted-foreground">{l.translate('targets.expose.help')}</p>
-				</div>
+			<SettingRow
+				for="target-expose"
+				label={l.translate('target.automatic_proxy_configuration')}
+				description={l.translate('targets.expose.help')}
+			>
 				<Switch id="target-expose" bind:checked={exposeAutomatically} />
-			</div>
+			</SettingRow>
 
 			{#if exposeAutomatically}
 				<div class="flex flex-col gap-1.5">
@@ -329,7 +332,7 @@
 						bind:value={url}
 						required
 						placeholder="https://apps.example.com"
-						class="font-mono text-[13px]"
+						class="font-mono text-label"
 						aria-invalid={!!fieldError('url') || undefined}
 						aria-describedby="target-url-message"
 					/>
@@ -345,17 +348,19 @@
 					</FieldMessage>
 				</div>
 			{:else}
-				<p class="text-[13px] text-muted-foreground">{l.translate('targets.expose.manual')}</p>
+				<p class="text-label text-muted-foreground">{l.translate('targets.expose.manual')}</p>
 			{/if}
 		</SettingsSection>
 
 		{#if !initialData}
 			<div class="grid gap-4 md:grid-cols-[260px_minmax(0,1fr)] md:gap-10">
 				<span class="max-md:hidden"></span>
-				<div class="flex flex-col gap-2.5 rounded-lg bg-sunken p-4">
-					<strong class="text-sm font-semibold">{l.translate('targets.next.title')}</strong>
+				<div class="flex flex-col gap-2.5">
+					<h3 class="text-xs font-semibold tracking-wide text-muted-foreground">
+						{l.translate('targets.next.title')}
+					</h3>
 					{#each ['targets.next.1', 'targets.next.2', 'targets.next.3'] as const as step, i (step)}
-						<span class="grid grid-cols-[22px_minmax(0,1fr)] gap-2.5 text-[13px]/5">
+						<span class="grid grid-cols-[22px_minmax(0,1fr)] gap-2.5 text-label/5">
 							<span
 								class="flex size-5.5 items-center justify-center rounded-full bg-raised text-xs font-semibold"
 								>{i + 1}</span
@@ -367,4 +372,11 @@
 			</div>
 		{/if}
 	</fieldset>
+
+	{#if props.embedded}
+		<!-- Destructive action on the left, Save on the right, under the last section's fields. -->
+		<div class="mt-10 flex flex-wrap items-center justify-between gap-3 md:ml-[300px]">
+			{@render props.actions($loading)}
+		</div>
+	{/if}
 </form>

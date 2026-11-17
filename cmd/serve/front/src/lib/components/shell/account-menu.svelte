@@ -34,7 +34,7 @@
 		{/snippet}
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content align="end" sideOffset={6} class="w-66 p-1.5">
-		<div class="mb-1.5 flex items-center gap-3 rounded-sm bg-sunken px-2.5 pt-2.5 pb-3">
+		<div class="mb-1.5 flex items-center gap-3 px-2.5 pt-2.5 pb-3">
 			<span
 				aria-hidden="true"
 				class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-base font-semibold text-primary-foreground"

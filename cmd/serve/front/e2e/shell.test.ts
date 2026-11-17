@@ -42,7 +42,16 @@ test.describe('desktop shell', () => {
 		await signIn(page);
 
 		const header = page.locator('header').first();
-		expect((await header.boundingBox())!.height).toBe(44);
+		const headerBox = (await header.boundingBox())!;
+		expect(headerBox.height).toBe(56);
+
+		// The logo sits on the sidebar toggle's centre line, both clear of the window's top edge.
+		const toggle = (await page.getByRole('button', { name: 'Collapse sidebar' }).boundingBox())!;
+		const logo = (await page.getByRole('link', { name: 'checkship' }).first().boundingBox())!;
+		expect(Math.abs(logo.y + logo.height / 2 - (toggle.y + toggle.height / 2))).toBeLessThanOrEqual(
+			1
+		);
+		expect(toggle.y).toBeGreaterThanOrEqual(10);
 
 		const avatar = page.getByRole('button', { name: `Account: ${ADMIN.email}` });
 		await expect(avatar).toBeVisible();
@@ -50,13 +59,21 @@ test.describe('desktop shell', () => {
 		const avatarBox = (await avatar.boundingBox())!;
 		expect(avatarBox.width).toBe(36);
 		expect(avatarBox.x + avatarBox.width).toBeGreaterThan(1400);
+		// The avatar keeps at least 8px from the workspace panel below it.
+		const mainTop = (await page.locator('main').boundingBox())!.y;
+		expect(mainTop - (avatarBox.y + avatarBox.height)).toBeGreaterThanOrEqual(8);
+
+		// The language menu sits just left of the avatar.
+		const language = (await page.getByRole('button', { name: /^Language:/ }).boundingBox())!;
+		expect(language.x + language.width).toBeLessThanOrEqual(avatarBox.x);
+		expect(avatarBox.x - (language.x + language.width)).toBeLessThanOrEqual(12);
 
 		const aside = page.locator('aside');
 		expect((await aside.boundingBox())!.width).toBe(240);
 
 		// The nav starts 24px below the title bar, under a Workspace label.
 		const workspace = page.getByText('Workspace', { exact: true });
-		expect((await workspace.boundingBox())!.y).toBeGreaterThanOrEqual(44 + 24);
+		expect((await workspace.boundingBox())!.y).toBeGreaterThanOrEqual(56 + 24);
 
 		// Documentation and the theme switch sit at the bottom of the sidebar.
 		const theme = page.getByRole('radiogroup', { name: 'Theme' });
@@ -102,6 +119,25 @@ test.describe('desktop shell', () => {
 		await expect(page.locator('html')).not.toHaveClass(/dark/);
 	});
 
+	test('the language menu lists the languages and switches to one', async ({ page }) => {
+		await signIn(page);
+		await page.getByRole('button', { name: 'Language: English' }).click();
+
+		await expect(page.getByRole('menuitem', { name: /English/ })).toHaveAttribute(
+			'aria-current',
+			'true'
+		);
+		await shot(page, 'language-menu');
+
+		await page.getByRole('menuitem', { name: /Français/ }).click();
+		await expect(page.getByRole('button', { name: 'Langue : Français' })).toBeVisible();
+
+		// Back to English for the other tests
+		await page.getByRole('button', { name: 'Langue : Français' }).click();
+		await page.getByRole('menuitem', { name: /English/ }).click();
+		await expect(page.getByRole('button', { name: 'Language: English' })).toBeVisible();
+	});
+
 	test('the account menu opens from the avatar and signs out', async ({ page }) => {
 		await signIn(page);
 		await page.getByRole('button', { name: `Account: ${ADMIN.email}` }).click();
@@ -138,10 +174,13 @@ test.describe('pages', () => {
 		await expect(page.getByRole('heading', { level: 1, name: 'e2e-local' })).toBeVisible();
 		await page.goto('/targets/');
 
-		const row = page.getByRole('row').filter({ hasText: 'e2e-local' });
+		const row = page.getByRole('main').getByRole('listitem').filter({ hasText: 'e2e-local' });
 		await expect(row).toBeVisible();
 		await expect(row).toContainText('This machine · Docker engine');
-		await expectNoLines(page, 'tbody tr, tbody td');
+		await expectNoLines(page, 'main li');
+		// Every list is a list now (DESIGN.md §5 Lists): no tables, no Columns menu.
+		await expect(page.getByRole('main').getByRole('table')).toHaveCount(0);
+		await expect(page.getByRole('button', { name: 'Columns' })).toHaveCount(0);
 		await shot(page, 'targets');
 
 		// Delete is disabled while a target is configuring; wait until configuration has finished
@@ -179,7 +218,7 @@ test.describe('pages', () => {
 		const app = await created.json();
 
 		await page.goto('/apps/');
-		const row = page.getByRole('row').filter({ hasText: 'e2e-app' });
+		const row = page.getByRole('main').getByRole('listitem').filter({ hasText: 'e2e-app' });
 		await expect(row).toContainText('No deployment yet');
 		await expect(page.getByText('Recent', { exact: true })).toHaveCount(0);
 
@@ -209,8 +248,9 @@ test.describe('pages', () => {
 			).toHaveCount(1);
 		}
 
-		// Nothing to save until the email changes.
+		// Nothing to save until the email or the password is typed.
 		await expect(page.getByRole('button', { name: 'Save email' })).toBeDisabled();
+		await expect(page.getByRole('button', { name: 'Change password' })).toBeDisabled();
 
 		// The password is typed twice and checked here, without calling the API.
 		await page.getByLabel('New password').fill('one');

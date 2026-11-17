@@ -1,6 +1,6 @@
 <!--
-	Stats strip (DESIGN.md §11.10): the period's four figures in one sunken band across the grid,
-	not four cards. Segments are separated by space, never by lines (no dividers). Each segment: a
+	Stats strip (DESIGN.md §11.10): the period's four figures in one row across the grid, written
+	on the page with no band or cards (§1 Cardless). Segments are separated by space, never by lines (no dividers). Each segment: a
 	label with a small icon, the figure, its change against the previous period (green when it is
 	good news, the arrow gives the direction), the previous value in words and a sparkline.
 	Four across from xl, two by two below; phones drop the previous-value line.
@@ -130,10 +130,7 @@
 
 <section
 	aria-label={l.translate('dashboard.strip.label', [range])}
-	class={cn(
-		'grid grid-cols-2 gap-x-4 gap-y-5 rounded-lg bg-sunken p-4 sm:gap-x-10 sm:gap-y-6 sm:px-7 sm:py-5.5 xl:grid-cols-4',
-		className
-	)}
+	class={cn('grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-x-10 sm:gap-y-6 xl:grid-cols-4', className)}
 >
 	{#if error && !summary}
 		<div class="col-span-full flex flex-wrap items-center gap-3 py-2">
@@ -165,17 +162,15 @@
 			>
 				<span
 					id="stat-{s.key}"
-					class="flex items-center gap-1.75 text-[12.5px] text-muted-foreground sm:text-[13px]"
+					class="flex items-center gap-1.75 text-xs text-muted-foreground sm:text-label"
 				>
-					<Icon icon={s.icon} class="hidden size-3.75 text-faint sm:block" />
+					<Icon icon={s.icon} class="hidden size-3.75 sm:block" />
 					{s.label}
 				</span>
 				<span class="flex flex-wrap items-baseline gap-x-2.5 gap-y-1.5">
-					<strong
-						class="text-2xl/none font-semibold tracking-tight tabular-nums sm:text-[32px]/none"
-					>
+					<strong class="text-2xl/none font-semibold tracking-tight tabular-nums sm:text-3xl/none">
 						{s.value}{#if s.unit}<span
-								class="ml-0.5 text-[13px] font-medium text-muted-foreground sm:text-base"
+								class="ml-0.5 text-label font-medium text-muted-foreground sm:text-base"
 								>{s.unit}</span
 							>{/if}
 					</strong>
@@ -194,7 +189,7 @@
 						</span>
 					{/if}
 				</span>
-				<span class="hidden truncate text-xs text-faint sm:block">{s.previous}</span>
+				<span class="hidden truncate text-xs text-muted-foreground sm:block">{s.previous}</span>
 				<div class="mt-0.5 h-7 sm:h-8"><Sparkline values={s.spark} tone={s.tone} /></div>
 			</div>
 		{/each}
