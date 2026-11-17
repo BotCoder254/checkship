@@ -1,9 +1,65 @@
+/* checkship brand: the same accent as the dashboard (cmd/serve/front/src/routes/layout.css). */
 :root {
-    --vp-c-brand-1: #10b981;
-    --vp-c-brand-2: #34d399;
+  --vp-c-brand-1: #2f5bea;
+  --vp-c-brand-2: #2549c4;
+  --vp-c-brand-3: #2f5bea;
+  --vp-c-brand-soft: rgba(47, 91, 234, 0.14);
 
-    --vp-button-brand-bg: var(--vp-c-brand-1);
+  --vp-button-brand-text: #ffffff;
+  --vp-button-brand-hover-text: #ffffff;
+  --vp-button-brand-active-text: #ffffff;
 
-    /* checkship logo: 28px in the sidebar header (navigation bar) */
-    --vp-nav-logo-height: 28px;
+  /* checkship logo: 28px in the sidebar header (navigation bar) */
+  --vp-nav-logo-height: 28px;
+}
+
+.dark {
+  --vp-c-brand-1: #7f95ff;
+  --vp-c-brand-2: #98a9ff;
+  --vp-c-brand-3: #7f95ff;
+  --vp-c-brand-soft: rgba(127, 149, 255, 0.16);
+
+  --vp-button-brand-text: #0d1020;
+  --vp-button-brand-hover-text: #0d1020;
+  --vp-button-brand-active-text: #0d1020;
+}
+
+/* Screenshots of the dashboard: each comes in a light and a dark version, and the page shows the
+   one matching its theme. Write both images next to each other with the classes below. */
+.vp-doc .screenshot,
+.home-screenshot .screenshot {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 16px 0;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+}
+
+.screenshot.dark-only,
+.dark .screenshot.light-only {
+  display: none;
+}
+
+.dark .screenshot.dark-only {
+  display: block;
+}
+
+/* The home page shows the dashboard under the features. */
+.home-screenshot {
+  max-width: 1152px;
+  margin: 48px auto 0;
+  padding: 0 24px;
+}
+
+@media (min-width: 640px) {
+  .home-screenshot {
+    padding: 0 48px;
+  }
+}
+
+@media (min-width: 960px) {
+  .home-screenshot {
+    padding: 0 64px;
+  }
 }

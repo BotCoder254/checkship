@@ -205,7 +205,7 @@
 				<!-- A pipeline in the direction code moves (owner, 2026-11-17): staging, Promote, production
 				     side by side from xl, stacked below. No cards (§1 Cardless): the state is the badge. -->
 				<div
-					class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_150px_minmax(0,1fr)] xl:items-start xl:gap-8"
+					class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_190px_minmax(0,1fr)] xl:items-start xl:gap-8"
 				>
 					{#each ['staging', 'connector', 'production'] as const as slot (slot)}
 						{#if slot === 'connector'}
@@ -225,6 +225,7 @@
 										variant="outline"
 										size="sm"
 										disabled={!canPromote}
+										class="xl:h-auto xl:max-w-full xl:py-1.5 xl:whitespace-normal"
 										onclick={() => (promoteOpen = true)}
 									>
 										<Icon icon={Rocket01Icon} />
@@ -330,7 +331,9 @@
 											</dt>
 											<dd class="truncate font-mono text-danger">{latest.state.error_code}</dd>
 										{:else if latest.state.services?.length}
-											<dt class="text-muted-foreground">{l.translate('deployment.services')}</dt>
+											<dt class="text-muted-foreground first-letter:uppercase">
+												{l.translate('deployment.services')}
+											</dt>
 											<dd class="truncate">
 												{latest.state.services.map((s) => s.name).join(' · ')}
 											</dd>
