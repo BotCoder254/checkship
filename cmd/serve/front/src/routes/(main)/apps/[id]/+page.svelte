@@ -49,7 +49,7 @@
 		type DeploymentDetail,
 		type Environment
 	} from '#lib/resources/deployments.ts';
-	import { deploymentBadge, deploymentMoment } from '#lib/status.ts';
+	import { deploymentBadge, deploymentMoment, isCancelled } from '#lib/status.ts';
 	import { cn } from '#lib/utils.js';
 	import DeployCharts from '#lib/components/dashboard/deploy-charts.svelte';
 	import StatsStrip from '#lib/components/dashboard/stats-strip.svelte';
@@ -325,7 +325,7 @@
 												· <span class="font-mono">{hashOf(latest)?.slice(0, 7)}</span>
 											{/if}
 										</dd>
-										{#if latest.state.error_code}
+										{#if latest.state.error_code && !isCancelled(latest.state)}
 											<dt class="text-muted-foreground first-letter:uppercase">
 												{l.translate('deployment.error_code')}
 											</dt>
@@ -507,7 +507,7 @@
 											{#snippet badge()}<EnvironmentChip environment={d.environment} />{/snippet}
 											{#snippet details()}
 												{clock(deploymentMoment(d))}
-												{#if d.state.error_code}
+												{#if d.state.error_code && !isCancelled(d.state)}
 													· <span class="font-mono text-danger">{d.state.error_code}</span>
 												{:else if deploymentCommit(d.source)}
 													· <span class="font-mono">{deploymentCommit(d.source)}</span>

@@ -40,6 +40,7 @@
 	import routes from '#lib/path.ts';
 	import type { AppDetail } from '#lib/resources/apps.ts';
 	import service, { DeploymentStatus, type Deployment } from '#lib/resources/deployments.ts';
+	import { isCancelled, isFailure } from '#lib/status.ts';
 	import { cn } from '#lib/utils.js';
 	import DeploymentPreview from './deployment-preview.svelte';
 	import DeployForm from './deployments/deploy-form.svelte';
@@ -117,12 +118,13 @@
 		previewNumber: () => (previewOpen ? previewNumber : undefined)
 	};
 
-	type EnvState = 'live' | 'deploying' | 'failed' | 'none';
+	type EnvState = 'live' | 'deploying' | 'failed' | 'cancelled' | 'none';
 	function envState(environment: Environment): EnvState {
 		const latest = app.latest_deployments[environment];
 		if (!latest) return 'none';
 		if (latest.state.status === DeploymentStatus.Succeeded) return 'live';
-		if (latest.state.status === DeploymentStatus.Failed) return 'failed';
+		if (isFailure(latest.state)) return 'failed';
+		if (isCancelled(latest.state)) return 'cancelled';
 		return 'deploying';
 	}
 
@@ -269,7 +271,7 @@
 							'size-2 rounded-full',
 							state === 'live' && 'bg-success',
 							state === 'failed' && 'bg-danger',
-							state === 'none' && 'bg-faint'
+							(state === 'none' || state === 'cancelled') && 'bg-faint'
 						)}
 					></span>
 				{/if}

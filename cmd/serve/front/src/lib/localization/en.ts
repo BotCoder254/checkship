@@ -349,6 +349,41 @@ You may reconsider and try to make the target reachable before deleting it.`,
 	'status.succeeded': 'Succeeded',
 	'status.configuring': 'Configuring',
 	'status.ready': 'Ready',
+	// Cancelling a deployment (seelf#7)
+	'status.cancelled': 'Cancelled',
+	'deployment.cancel': 'Cancel',
+	'deployment.cancel.title': (number: number) => `Cancel deployment #${number}?`,
+	'deployment.cancel.confirm': 'Cancel deployment',
+	'deployment.cancel.keep': 'Keep it',
+	'deployment.cancel.description.pending': (number: number) =>
+		`Deployment #${number} is still waiting for its turn. It won't run, and the deployments queued after it run as usual.`,
+	'deployment.cancel.description.running': (number: number) =>
+		`Deployment #${number} stops now, wherever it is: fetching the source, pulling, building or starting containers. Images already pulled stay cached for the next deployment.`,
+	'deployment.cancel.warning':
+		'If containers were already being replaced, this environment may be left half updated. Redeploy the deployment it was serving to go back.',
+	'deployment.cancel.done': (number: number) => `Deployment #${number} cancelled`,
+	'deployment.cancel.requested': (number: number) => `Stopping deployment #${number}…`,
+	'deployment.cancelling': 'Cancelling…',
+	'deployment.cancelled.ran':
+		'Cancelled on request while it ran. If containers were already being replaced, redeploy the previous deployment to go back.',
+	'deployment.cancelled.queued':
+		'Cancelled on request before it started. Nothing changed on the target.',
+	'deployment.cancelled_line': (time: string) => `cancelled ${time}`,
+	'deployment.cancelled_ran_line': (time: string, duration: string) =>
+		`cancelled ${time} · ran ${duration}`,
+	'deployment.step.cancelled': 'Cancelled',
+	'deployment.step.never_started': 'never started',
+	'deployment.logs.live': 'Live',
+	'deployment.logs.reconnecting': 'Reconnecting…',
+	'deployment.logs.compacted':
+		'Download and extract lines update in place, one line per layer. Copy gives every line written.',
+	'deployment.logs.nothing_cancelled':
+		'Nothing was written: the deployment was cancelled before it started.',
+	deployment_cancelled: 'Cancelled',
+	deployment_not_cancellable:
+		'This deployment has already finished, it can no longer be cancelled.',
+	'detail.state.production.cancelled': 'Production cancelled',
+	'detail.state.staging.cancelled': 'Staging cancelled',
 	// Deployment page
 	'deployment.promote.title': 'Promote to production',
 	'deployment.promote.description': (number: number) =>
@@ -990,6 +1025,7 @@ You may reconsider and try to make the target reachable before deleting it.`,
 		`${environment}: the last ${count} deploys, oldest first`,
 	'detail.strip.oldest': (count: number) => `${count} deploys ago`,
 	'detail.strip.latest': 'Latest',
+	'detail.strip.live': 'Live',
 	'detail.strip.shown': 'This list',
 	'charts.last_days': (days: number) => `Last ${days} days`,
 	'backups.figures.label': (days: number) => `Backup figures, last ${days} days`,

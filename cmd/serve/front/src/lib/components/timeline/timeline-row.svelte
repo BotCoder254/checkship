@@ -4,16 +4,15 @@
 	  [tile]  Title  [badge]                      [actions] [⋯]
 	          14:32 · main · a41c9e2 · took 48 s
 
-	- The tile carries the state as an icon and a colour; the title line or the badge says it in
-	  words too, so meaning never rests on colour alone.
+	- The tile carries the state as an icon and a colour, drawn bare: no well behind it (owner's call
+	  2026-11-20). The title line or the badge says it in words too, so meaning never rests on colour
+	  alone.
 	- The title is the row's one link or button, stretched over the whole row, so clicking anywhere
 	  opens the item. Its accessible name is `label`, which says everything the row shows. With
 	  neither `href` nor `onclick` (an internal service) the row is plain text.
 	- Actions (a quick button, the ⋯ menu) sit above the stretched link and are always visible.
 	- At rest a row has no fill (§1 Cardless); the fill answers you. Hover: the `hover` wash; an
-	  open ⋯ menu keeps `raised`. The tile is a `sunken` well (`raised` in dark, where sunken barely
-	  differs from surface) and flips to `surface` under a fill so it stays visible. Selected (its
-	  drawer is open): `accent-soft`.
+	  open ⋯ menu keeps `raised`. Selected (its drawer is open): `accent-soft`.
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
@@ -92,22 +91,11 @@
 			: interactive && 'hover:bg-hover has-[[data-state=open]]:bg-raised'
 	)}
 >
-	<span
-		aria-hidden="true"
-		class={cn(
-			'flex size-8 items-center justify-center rounded-md transition-colors',
-			toneClass[tone],
-			selected
-				? 'bg-surface'
-				: !interactive
-					? 'bg-sunken dark:bg-raised'
-					: 'bg-sunken group-hover/row:bg-surface group-has-[[data-state=open]]/row:bg-surface dark:bg-raised dark:group-hover/row:bg-surface dark:group-has-[[data-state=open]]/row:bg-surface'
-		)}
-	>
+	<span aria-hidden="true" class={cn('flex size-8 items-center justify-center', toneClass[tone])}>
 		{#if tile}
 			{@render tile()}
 		{:else if icon}
-			<Icon {icon} class={cn('size-4.5', spin && 'animate-spin')} />
+			<Icon {icon} class={cn('size-5', spin && 'animate-spin')} />
 		{/if}
 	</span>
 

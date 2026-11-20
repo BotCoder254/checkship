@@ -3,7 +3,9 @@
 	Redeploy behind a confirmation dialog, then what happened in order (a timeline: queued, started,
 	finished, with the wait and the run time), the error first when it failed, then Source, Services
 	and Logs as sections (headings and
-	space, no lines). Polls while the deployment runs or its target is being configured.
+	space, no lines). Polls the details while the deployment runs or its target is being configured;
+	the log is streamed live (#lib/deployment-logs.svelte.ts) and only polled when the stream keeps
+	failing. Cancel (seelf#7) shows while it is pending or running.
 -->
 <script lang="ts">
 	import { copyText } from '#lib/clipboard.ts';
@@ -11,6 +13,7 @@
 	import Copy01Icon from '@hugeicons/core-free-icons/Copy01Icon';
 	import RefreshIcon from '@hugeicons/core-free-icons/RefreshIcon';
 	import Rocket01Icon from '@hugeicons/core-free-icons/Rocket01Icon';
+	import StopCircleIcon from '@hugeicons/core-free-icons/StopCircleIcon';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
@@ -23,9 +26,11 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import l from '#lib/localization/index.ts';
 	import routes from '#lib/path.ts';
-	import service from '#lib/resources/deployments.ts';
+	import service, { DeploymentStatus } from '#lib/resources/deployments.ts';
 	import { TargetStatus } from '#lib/resources/targets.ts';
-	import { deploymentBadge } from '#lib/status.ts';
+	import { compactProgress } from '#lib/deployment-logs.ts';
+	import { DeploymentLogStream } from '#lib/deployment-logs.svelte.ts';
+	import { deploymentBadge, isCancellable, isCancelled } from '#lib/status.ts';
 
 	let { data } = $props();
 
@@ -43,13 +48,34 @@
 	);
 
 	const deploymentQuery = $derived(service.queryByAppAndNumber(app.id, number, poll));
-	const logsQuery = $derived(service.queryLogs(app.id, number, poll));
 	const deploymentStore = $derived(deploymentQuery.data);
-	const logsStore = $derived(logsQuery.data);
 	const deployment = $derived($deploymentStore ?? data.deployment);
-	const logs = $derived($logsStore);
-	const logsErrorStore = $derived(logsQuery.error);
-	const logsFailed = $derived(!!$logsErrorStore);
+
+	// The log, live. One stream per deployment shown (promote and redeploy navigate to another).
+	let stream = $state<DeploymentLogStream>();
+
+	$effect(() => {
+		const live = new DeploymentLogStream(service.logsStreamUrl(app.id, number));
+		stream = live;
+		live.start();
+		return () => live.stop();
+	});
+
+	// The stream keeps failing (a proxy buffering it, for example): poll the whole log as before.
+	const fallback = $derived(stream?.status === 'fallback');
+	const logsQuery = $derived(fallback ? service.queryLogs(app.id, number, poll) : undefined);
+	const logsStore = $derived(logsQuery?.data);
+	const logsErrorStore = $derived(logsQuery?.error);
+	const logs = $derived(fallback ? $logsStore : stream?.text);
+	const logsFailed = $derived(fallback && !!$logsErrorStore);
+	// Downloads collapse to one line per layer; Copy still copies everything.
+	const shownLogs = $derived(compactProgress(logs ?? ''));
+	const logsLive = $derived(
+		!deployment.state.finished_at && (stream?.status === 'live' || stream?.status === 'connecting')
+	);
+	const logsReconnecting = $derived(
+		!deployment.state.finished_at && stream?.status === 'reconnecting'
+	);
 
 	// Stop polling once this deployment has finished and its target is no longer configuring.
 	$effect(() => {
@@ -64,6 +90,24 @@
 
 	let promoteOpen = $state(false);
 	let redeployOpen = $state(false);
+	let cancelOpen = $state(false);
+	// The deployment a cancel was asked for: its button says "Cancelling…" until it has ended.
+	let cancelRequestedFor = $state<number>();
+
+	const cancelled = $derived(isCancelled(deployment.state));
+	const cancellable = $derived(!app.cleanup_requested_at && isCancellable(deployment.state));
+	const cancelling = $derived(cancelRequestedFor === number && cancellable);
+	const running = $derived(deployment.state.status === DeploymentStatus.Running);
+
+	async function cancelDeployment() {
+		const result = await service.cancel(app.id, number);
+		if (isCancelled(result.state)) {
+			toast.success(l.translate('deployment.cancel.done', [number]));
+		} else {
+			cancelRequestedFor = number;
+			toast.success(l.translate('deployment.cancel.requested', [number]));
+		}
+	}
 	let logsElement = $state<HTMLPreElement>();
 
 	// Keep the newest lines in view while the deployment runs, unless the reader scrolled up.
@@ -75,8 +119,10 @@
 	}
 
 	$effect(() => {
-		void logs;
-		if (poll && followLogs && logsElement) logsElement.scrollTop = logsElement.scrollHeight;
+		void shownLogs;
+		// Opened while it ran: keep following until the last lines, which may arrive after the end.
+		if ((poll || !data.deployment.state.finished_at) && followLogs && logsElement)
+			logsElement.scrollTop = logsElement.scrollHeight;
 	});
 
 	const badge = $derived(deploymentBadge(deployment.state));
@@ -84,6 +130,14 @@
 
 	function timing() {
 		const { started_at, finished_at } = deployment.state;
+		if (cancelled && finished_at) {
+			return started_at
+				? l.translate('deployment.cancelled_ran_line', [
+						l.time(finished_at),
+						l.duration(started_at, finished_at)
+					])
+				: l.translate('deployment.cancelled_line', [l.time(finished_at)]);
+		}
 		if (started_at && finished_at) {
 			return l.translate('deployment.finished_line', [
 				l.time(finished_at),
@@ -108,6 +162,18 @@
 	]}
 >
 	{#snippet actions()}
+		{#if cancellable}
+			<Button
+				variant="outline"
+				loading={cancelling}
+				onclick={() => {
+					if (!cancelling) cancelOpen = true;
+				}}
+			>
+				<Icon icon={StopCircleIcon} />
+				{l.translate(cancelling ? 'deployment.cancelling' : 'deployment.cancel')}
+			</Button>
+		{/if}
 		{#if !app.cleanup_requested_at}
 			{#if deployment.environment !== 'production'}
 				<Button variant="outline" onclick={() => (promoteOpen = true)}>
@@ -152,7 +218,13 @@
 
 	<DeploymentTimeline requestedAt={deployment.requested_at} state={deployment.state} />
 
-	{#if deployment.state.error_code}
+	{#if cancelled}
+		<p class="text-sm text-muted-foreground">
+			{l.translate(
+				deployment.state.started_at ? 'deployment.cancelled.ran' : 'deployment.cancelled.queued'
+			)}
+		</p>
+	{:else if deployment.state.error_code}
 		<Notice tone="danger" role="alert">
 			<strong class="font-mono font-semibold">{deployment.state.error_code}</strong>
 			<p class="text-muted-foreground">{l.translate('deployment.failed.help')}</p>
@@ -215,9 +287,24 @@
 
 	<section class="flex flex-col gap-3">
 		<div class="flex items-center justify-between gap-3">
-			<h2 class="text-xs font-semibold tracking-wide text-muted-foreground">
-				{l.translate('deployment.logs.title')}
-			</h2>
+			<div class="flex items-center gap-3.5">
+				<h2 class="text-xs font-semibold tracking-wide text-muted-foreground">
+					{l.translate('deployment.logs.title')}
+				</h2>
+				{#if logsLive}
+					<span class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+						<span
+							aria-hidden="true"
+							class="size-2 animate-pulse rounded-full bg-success motion-reduce:animate-none"
+						></span>
+						{l.translate('deployment.logs.live')}
+					</span>
+				{:else if logsReconnecting}
+					<span class="text-xs font-medium text-warning" role="status">
+						{l.translate('deployment.logs.reconnecting')}
+					</span>
+				{/if}
+			</div>
 			<Button variant="outline" size="sm" onclick={copyLogs} disabled={!logs}>
 				<Icon icon={Copy01Icon} />
 				{l.translate('copy')}
@@ -229,10 +316,38 @@
 		<pre
 			bind:this={logsElement}
 			onscroll={onLogsScroll}
-			class="max-h-[70vh] min-h-40 overflow-auto rounded-md bg-canvas px-4 py-3.5 font-mono text-xs/5 whitespace-pre-wrap text-ink">{logs ||
-				l.translate('deployment.waiting_for_logs')}</pre>
+			aria-label={l.translate('deployment.logs.title')}
+			class="max-h-[70vh] min-h-40 overflow-auto rounded-md bg-canvas px-4 py-3.5 font-mono text-xs/5 whitespace-pre-wrap text-ink">{shownLogs.text ||
+				l.translate(
+					cancelled && !deployment.state.started_at
+						? 'deployment.logs.nothing_cancelled'
+						: 'deployment.waiting_for_logs'
+				)}</pre>
+		{#if shownLogs.collapsed > 0}
+			<p class="text-xs text-muted-foreground">{l.translate('deployment.logs.compacted')}</p>
+		{/if}
 	</section>
 </div>
+
+<ConfirmDialog
+	bind:open={cancelOpen}
+	title={l.translate('deployment.cancel.title', [number])}
+	description={l.translate(
+		running ? 'deployment.cancel.description.running' : 'deployment.cancel.description.pending',
+		[number]
+	)}
+	confirmLabel={l.translate('deployment.cancel.confirm')}
+	cancelLabel={l.translate('deployment.cancel.keep')}
+	icon={StopCircleIcon}
+	destructive
+	onconfirm={cancelDeployment}
+>
+	{#snippet extra()}
+		{#if running}
+			<Notice tone="warning">{l.translate('deployment.cancel.warning')}</Notice>
+		{/if}
+	{/snippet}
+</ConfirmDialog>
 
 <ConfirmDialog
 	bind:open={promoteOpen}
