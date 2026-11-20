@@ -25,7 +25,9 @@
 	import routes from '#lib/path.ts';
 	import { preferences } from '#lib/preferences.svelte.ts';
 	import appsService from '#lib/resources/apps.ts';
-	import { DeploymentStatus } from '#lib/resources/deployments.ts';
+	import { DeploymentStatus, type State } from '#lib/resources/deployments.ts';
+	import { isCancelled } from '#lib/status.ts';
+	import UnavailableIcon from '@hugeicons/core-free-icons/UnavailableIcon';
 	import jobsService from '#lib/resources/jobs.ts';
 	import targetsService, { TargetStatus } from '#lib/resources/targets.ts';
 	import { cn } from '#lib/utils.js';
@@ -58,8 +60,11 @@
 			.filter((app) => app !== undefined)
 	);
 
-	function recentIcon(status: DeploymentStatus | undefined) {
-		switch (status) {
+	function recentIcon(state: State | undefined) {
+		if (state && isCancelled(state))
+			return { icon: UnavailableIcon, tone: 'text-muted-foreground' };
+
+		switch (state?.status) {
 			case DeploymentStatus.Succeeded:
 				return { icon: CheckmarkCircle02Icon, tone: 'text-success' };
 			case DeploymentStatus.Failed:
@@ -162,7 +167,7 @@
 					{l.translate('nav.recent')}
 				</p>
 				{#each recent as app (app.id)}
-					{@const state = recentIcon(app.latest_deployments.production?.state.status)}
+					{@const state = recentIcon(app.latest_deployments.production?.state)}
 					<a
 						href={routes.app(app.id)}
 						onclick={onnavigate}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/checkship-deploy/checkship/internal/deployment/app/get_app_deployments"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/get_dashboard"
+	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 	"github.com/checkship-deploy/checkship/pkg/monad"
 	"github.com/checkship-deploy/checkship/pkg/storage"
 	"github.com/checkship-deploy/checkship/pkg/storage/sqlite/builder"
@@ -83,6 +84,9 @@ func (s *gateway) GetDashboardActivity(ctx context.Context, q get_dashboard.Acti
 			WHERE TRUE`).
 		S(builder.MaybeValue(q.Environment, "AND deployments.config_environment = ?")).
 		S(builder.MaybeValue(q.Status, "AND deployments.state_status = ?")).
+		// The failures (the Failures drawer) are real ones: cancelled deployments are left out
+		S(builder.If(q.Status.Get(255) == uint8(domain.DeploymentStatusFailed),
+			"AND IFNULL(deployments.state_errcode, '') != ?", domain.ErrDeploymentCancelled.Error())).
 		S(builder.MaybeValue(q.AppID, "AND deployments.app_id = ?")).
 		S(builder.MaybeValue(q.Since, "AND deployments.requested_at >= ?")).
 		S(builder.Maybe(q.After, func(c get_dashboard.Cursor) (string, []any) {

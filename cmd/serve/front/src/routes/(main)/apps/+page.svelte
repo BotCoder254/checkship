@@ -36,16 +36,17 @@
 	import routes from '#lib/path.ts';
 	import service, { type App } from '#lib/resources/apps.ts';
 	import { deploymentTile } from '#lib/deployment-row.ts';
-	import { DeploymentStatus, type Deployment } from '#lib/resources/deployments.ts';
+	import type { Deployment } from '#lib/resources/deployments.ts';
 	import jobsService from '#lib/resources/jobs.ts';
-	import { deploymentBadge, deploymentMoment } from '#lib/status.ts';
+	import { deploymentBadge, deploymentMoment, isFailure } from '#lib/status.ts';
 
 	const { data: apps } = service.queryAll();
 	const { data: jobs } = jobsService.queryAll({ page: 1 });
 
 	const failed = $derived(
 		($apps ?? []).filter(
-			(app) => app.latest_deployments.production?.state.status === DeploymentStatus.Failed
+			(app) =>
+				!!app.latest_deployments.production && isFailure(app.latest_deployments.production.state)
 		).length
 	);
 

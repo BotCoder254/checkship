@@ -16,7 +16,7 @@
 	import routes from '#lib/path.ts';
 	import type { AppDetail } from '#lib/resources/apps.ts';
 	import service from '#lib/resources/deployments.ts';
-	import { deploymentBadge } from '#lib/status.ts';
+	import { deploymentBadge, isCancelled } from '#lib/status.ts';
 
 	type Props = { app: AppDetail; number: number; open: boolean };
 
@@ -97,7 +97,7 @@
 				<dt class="text-muted-foreground">{l.translate('preview.finished')}</dt>
 				<dd>{l.datetime(deployment.state.finished_at)}</dd>
 			{/if}
-			{#if deployment.state.error_code}
+			{#if deployment.state.error_code && !isCancelled(deployment.state)}
 				<dt class="text-muted-foreground">{l.translate('deployment.error_code')}</dt>
 				<dd class="font-mono break-all text-danger">{deployment.state.error_code}</dd>
 			{/if}

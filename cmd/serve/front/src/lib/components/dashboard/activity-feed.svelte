@@ -23,7 +23,7 @@
 		deploymentLabel,
 		deploymentTile
 	} from '#lib/deployment-row.ts';
-	import { deploymentMoment } from '#lib/status.ts';
+	import { deploymentMoment, isCancelled } from '#lib/status.ts';
 	import { groupByDay } from '#lib/timeline.ts';
 	import Icon from '#lib/components/icon.svelte';
 	import EnvironmentChip from '#lib/components/environment-chip.svelte';
@@ -177,7 +177,7 @@
 							{#snippet badge()}<EnvironmentChip environment={d.environment} />{/snippet}
 							{#snippet details()}
 								{clock(deploymentMoment(d))}
-								{#if d.state.error_code}
+								{#if d.state.error_code && !isCancelled(d.state)}
 									· <span class="font-mono text-danger">{d.state.error_code}</span>
 								{/if}
 								{#if duration}· {duration}{/if}

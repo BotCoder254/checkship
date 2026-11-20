@@ -29,3 +29,14 @@ steps:
 ::: info
 You'll need to replace the domain `checkship.example.com` and the application id `2PvP5liIhcMn59yo5q6m53QWWXM` to match your configuration.
 :::
+
+### Cancel a superseded deployment
+
+A deployment queued by an older commit can be cancelled when a newer one comes in, so only the latest runs. The deployment number is in the response of the call that queued it (`deployment_number`):
+
+```sh
+curl -X POST -H "Authorization: Bearer $CHECKSHIP_API_KEY" \
+  https://checkship.example.com/api/v1/apps/2PvP5liIhcMn59yo5q6m53QWWXM/deployments/42/cancel
+```
+
+A deployment that has already finished answers `400` with `deployment_not_cancellable`, which a pipeline can ignore. See [Cancel a deployment](/reference/deployments#cancel) for what happens to a running one.

@@ -1,8 +1,10 @@
 package docker
 
 import (
+	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/checkship-deploy/checkship/pkg/assert"
 )
@@ -14,7 +16,7 @@ func Test_ProgressFilter(t *testing.T) {
 
 	t.Run("should let every line which is not a progress bar go through", func(t *testing.T) {
 		var out strings.Builder
-		f := newProgressFilter(&out)
+		f, _ := clockedFilter(&out)
 
 		input := "[STEP] launching docker compose project\n db Pulling \n a8a2131d1a02 Pulling fs layer \n a8a2131d1a02 Pull complete \n db Pulled \n"
 		n, err := f.Write([]byte(input))
@@ -26,7 +28,7 @@ func Test_ProgressFilter(t *testing.T) {
 
 	t.Run("should drop a line identical to the last one printed for the same layer", func(t *testing.T) {
 		var out strings.Builder
-		f := newProgressFilter(&out)
+		f, _ := clockedFilter(&out)
 
 		_, _ = f.Write([]byte(" aaa Extracting 1 s\n aaa Extracting 1 s\n bbb Extracting 1 s\n aaa Extracting 1 s\n aaa Extracting 2 s\n"))
 
@@ -35,7 +37,7 @@ func Test_ProgressFilter(t *testing.T) {
 
 	t.Run("should keep a progress bar line only when its layer reaches another tenth", func(t *testing.T) {
 		var out strings.Builder
-		f := newProgressFilter(&out)
+		f, _ := clockedFilter(&out)
 
 		for _, line := range []string{
 			bar("aaa", "Downloading", 1),
@@ -60,7 +62,7 @@ func Test_ProgressFilter(t *testing.T) {
 
 	t.Run("should keep a BuildKit layer download line only when it reaches another tenth", func(t *testing.T) {
 		var out strings.Builder
-		f := newProgressFilter(&out)
+		f, _ := clockedFilter(&out)
 
 		input := []string{
 			"#4 [1/2] FROM docker.io/library/python:3.13-alpine\n",
@@ -83,7 +85,7 @@ func Test_ProgressFilter(t *testing.T) {
 
 	t.Run("should handle lines split across writes and flush the last incomplete one", func(t *testing.T) {
 		var out strings.Builder
-		f := newProgressFilter(&out)
+		f, _ := clockedFilter(&out)
 
 		_, _ = f.Write([]byte(" db Pul"))
 		assert.Equal(t, "", out.String())
@@ -94,4 +96,31 @@ func Test_ProgressFilter(t *testing.T) {
 		assert.Nil(t, f.Flush())
 		assert.Equal(t, " db Pulling \n db Pulled\n", out.String())
 	})
+
+	t.Run("should keep a progress bar line once a second even within the same tenth", func(t *testing.T) {
+		var out strings.Builder
+		f, advance := clockedFilter(&out)
+
+		_, _ = f.Write([]byte(bar("aaa", "Downloading", 11)))
+		advance(400 * time.Millisecond)
+		_, _ = f.Write([]byte(bar("aaa", "Downloading", 12)))
+		advance(700 * time.Millisecond)
+		_, _ = f.Write([]byte(bar("aaa", "Downloading", 13)))
+		_, _ = f.Write([]byte(bar("aaa", "Downloading", 13))) // identical: still dropped
+		advance(1500 * time.Millisecond)
+		_, _ = f.Write([]byte(bar("bbb", "Downloading", 1)))
+
+		assert.Equal(t, bar("aaa", "Downloading", 11)+
+			bar("aaa", "Downloading", 13)+
+			bar("bbb", "Downloading", 1), out.String())
+	})
+}
+
+// A filter whose clock only moves when told to.
+func clockedFilter(out io.Writer) (*progressFilter, func(time.Duration)) {
+	now := time.Date(2026, 11, 20, 10, 0, 0, 0, time.UTC)
+	f := newProgressFilter(out)
+	f.now = func() time.Time { return now }
+
+	return f, func(d time.Duration) { now = now.Add(d) }
 }

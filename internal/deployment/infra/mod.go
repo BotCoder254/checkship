@@ -18,6 +18,7 @@ import (
 	"github.com/checkship-deploy/checkship/internal/deployment/app/upload_backup"
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/backupstore"
 
+	"github.com/checkship-deploy/checkship/internal/deployment/app/cancel_deployment"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/cleanup_app"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/cleanup_target"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/configure_target"
@@ -46,12 +47,14 @@ import (
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/artifact"
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/provider"
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/provider/docker"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/running"
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/source"
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/source/archive"
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/source/git"
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/source/raw"
 	deploymentsqlite "github.com/checkship-deploy/checkship/internal/deployment/infra/sqlite"
 	"github.com/checkship-deploy/checkship/pkg/bus"
+	"github.com/checkship-deploy/checkship/pkg/live"
 	"github.com/checkship-deploy/checkship/pkg/log"
 	"github.com/checkship-deploy/checkship/pkg/monad"
 	"github.com/checkship-deploy/checkship/pkg/storage/sqlite"
@@ -74,6 +77,7 @@ func Setup(
 	db *sqlite.Database,
 	b bus.Bus,
 	scheduler bus.Scheduler,
+	logSignals *live.Signals, // Notified with the log path each time a deployment log is written
 ) error {
 	appsStore := deploymentsqlite.NewAppsStore(db)
 	deploymentsStore := deploymentsqlite.NewDeploymentsStore(db)
@@ -84,7 +88,8 @@ func Setup(
 	backupStorageStore := deploymentsqlite.NewBackupStorageStore(db)
 	deploymentQueryHandler := deploymentsqlite.NewGateway(db)
 
-	artifactManager := artifact.NewLocal(opts, logger)
+	artifactManager := artifact.NewLocal(opts, logger, artifact.WithLogWritten(logSignals.Notify))
+	runningDeployments := running.New()
 
 	sourceFacade := source.NewFacade(
 		raw.New(),
@@ -105,7 +110,8 @@ func Setup(
 	bus.Register(b, create_app.Handler(appsStore, appsStore))
 	bus.Register(b, update_app.Handler(appsStore, appsStore))
 	bus.Register(b, queue_deployment.Handler(appsStore, deploymentsStore, deploymentsStore, sourceFacade))
-	bus.Register(b, deploy.Handler(deploymentsStore, deploymentsStore, artifactManager, sourceFacade, providerFacade, targetsStore, registriesStore))
+	bus.Register(b, deploy.Handler(deploymentsStore, deploymentsStore, artifactManager, sourceFacade, providerFacade, targetsStore, registriesStore, runningDeployments))
+	bus.Register(b, cancel_deployment.Handler(deploymentsStore, deploymentsStore, runningDeployments))
 	bus.Register(b, request_app_cleanup.Handler(appsStore, appsStore))
 	bus.Register(b, delete_app.Handler(appsStore, appsStore, artifactManager))
 	bus.Register(b, cleanup_app.Handler(targetsStore, deploymentsStore, providerFacade, cleanup_app.Backups{

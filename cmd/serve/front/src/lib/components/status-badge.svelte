@@ -4,7 +4,14 @@
 -->
 <script lang="ts" module>
 	export type BadgeState =
-		'succeeded' | 'ready' | 'failed' | 'running' | 'configuring' | 'pending' | 'deleting';
+		| 'succeeded'
+		| 'ready'
+		| 'failed'
+		| 'running'
+		| 'configuring'
+		| 'pending'
+		| 'deleting'
+		| 'cancelled';
 </script>
 
 <script lang="ts">
@@ -14,6 +21,7 @@
 	import Clock01Icon from '@hugeicons/core-free-icons/Clock01Icon';
 	import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
 	import Loading03Icon from '@hugeicons/core-free-icons/Loading03Icon';
+	import UnavailableIcon from '@hugeicons/core-free-icons/UnavailableIcon';
 	import type { IconData } from '#lib/components/icon.svelte';
 	import Icon from '#lib/components/icon.svelte';
 	import { cn } from '#lib/utils.js';
@@ -35,6 +43,7 @@
 				spin: true
 			},
 			pending: { fill: 'bg-raised', icon: Clock01Icon, tone: 'text-muted-foreground' },
+			cancelled: { fill: 'bg-raised', icon: UnavailableIcon, tone: 'text-muted-foreground' },
 			deleting: { fill: 'bg-danger-soft', icon: Delete02Icon, tone: 'text-danger' }
 		};
 

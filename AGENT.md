@@ -426,7 +426,27 @@ In staging it would be `sandbox-staging...`.
 ### 6.7 Redeploy / promote / logs
 - `POST .../deployments/:n/redeploy` → `app.Redeploy` creates a new number with the same source and env (using the **current** app config).
 - `POST .../deployments/:n/promote` → only from non-production, re-runs the same source in production.
-- `GET .../deployments/:n/logs` serves the raw log file. The UI polls it every 2.5s while the deployment is running or the target is configuring.
+- `GET .../deployments/:n/logs` serves the raw log file (copy, CI, and the UI's fallback when the stream keeps failing).
+- `GET .../deployments/:n/logs/stream` (`cmd/serve/deployment_logs.go`) follows the log as SSE: `logs` events `{text}` with whole lines
+  only (64 KiB max), `id` = byte offset (resume with `Last-Event-ID` or `?offset=`), `reset` when the offset is past the end, `end`
+  once the deployment has finished and everything was sent. It wakes on `live.Signals` (`pkg/live/signals.go`), which the artifact
+  manager notifies with the log path on every write (`artifact.WithLogWritten`, wired in `infra/mod.go`; `startup` creates the
+  `Signals` and exposes `LogSignals()`), with a 1 s fallback tick. Its own `live.Limiter` (5 per user, 40 in all). The page
+  (`#lib/deployment-logs.svelte.ts`, pure parts in `#lib/deployment-logs.ts`) collapses image download lines per layer for display.
+- The docker `progressFilter` keeps a pull/BuildKit progress line on each new tenth **or** after 1 s for that layer, so the log moves
+  every second (BuildKit's own plain printer still delays parallel steps up to 10 s; see docs/reference/deployments.md#live-logs).
+
+### 6.7b Cancel a deployment (seelf#7)
+- `POST .../deployments/:n/cancel` → `cancel_deployment` (cookie or API key). Pending: `Deployment.Cancel()` → Failed with errcode
+  `deployment_cancelled` (the `on_deployment_failed_cleanup_jobs` trigger drops the queued job), then the registry is signalled in case a
+  worker already claimed it. Running: `RunningDeployments.Cancel(id)` (`infra/running`, in memory, single process) cancels the job's
+  context with cause `ErrDeploymentCancelled`; the deploy job ends it as `deployment_cancelled` (its deferred state write uses
+  `context.WithoutCancel`). Finished, or running with no worker: `deployment_not_cancellable` (400).
+- The deploy job calls `running.Track` first thing. The trigger only deletes unclaimed jobs, so a running job keeps its group lock until
+  the worker has stopped: the next deployment of that app+env never overlaps a cancelled one.
+- A cancelled deployment is stored as Failed but is **not a failure**: `get_dashboard.outcome` counts it as "other" (no error code, no
+  duration, no recovery window), the activity feed's Failed filter leaves it out, and the UI uses `isCancelled`/`isFailure`
+  (`#lib/status.ts`) for the grey Cancelled badge, the `stopped` timeline step and the deploy strip. DESIGN.md §11.4/§11.5/§11.7.
 
 ### 6.8 Exposing checkship itself (`EXPOSED_ON`, `expose_checkship_container`)
 `EXPOSED_ON=http://checkship@docker.localhost`: the user part is the **container name**, the rest is the default local target url.
@@ -494,7 +514,9 @@ error. A cancel button appears only for `Cancellable` jobs (`DELETE /jobs/:id`; 
 | GET /apps/:id/deployments ?page&environment | cookie or API key | get_app_deployments (5/page) |
 | GET /apps/:id/deployments/:n | cookie or API key | get_deployment |
 | POST /apps/:id/deployments/:n/redeploy, /promote | cookie or API key | redeploy / promote |
+| POST /apps/:id/deployments/:n/cancel | cookie or API key | cancel_deployment (400 `deployment_not_cancellable`) |
 | GET /apps/:id/deployments/:n/logs | cookie or API key | raw log file |
+| GET /apps/:id/deployments/:n/logs/stream ?offset | cookie or API key | deployment log as SSE (§6.7); 429 `too_many_streams` |
 | GET /apps/:id/logs ?environment&tail&since | cookie or API key | get_app_logs → SSE stream (§6.13); 404 `no_containers`, 409 `logs_unavailable`, 429 `too_many_streams` |
 | GET /apps/:id/services ?environment | cookie or API key | get_app_services → container states |
 
@@ -540,7 +562,7 @@ History notes: v1→v2 migration `1706004450_add_target` created a default targe
   `timeline-group.svelte` (grouped by day or state, `lib/timeline.ts`) or a plain `timeline-list.svelte`; DESIGN.md §5 Lists.
 - Cardless (DESIGN.md §1): the workspace is the one container. No grey boxes around sections, notes or settings; use
   `section-heading.svelte`, `notice.svelte` (tinted only for warning or danger) and `setting-row.svelte`. `bg-sunken` is
-  only for inputs, choice cards, the logs console, error text and row icon tiles.
+  only for inputs, choice cards, the logs console and error text (row icons are bare since 2026-11-20).
 - Empty states: `empty-state.svelte` with an `illustration` from `illustration.svelte` and a `size` (page, section,
   compact); never a grey line or a boxed blank slate. DESIGN.md §11.5.
 - Charts: drawn in SVG by `#lib/components/charts/` (column, line, share bar, calendar, metric) with the maths in

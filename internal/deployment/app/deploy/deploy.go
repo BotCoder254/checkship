@@ -24,6 +24,10 @@ func (c Command) ResourceID() string { return c.AppID + "-" + strconv.Itoa(c.Dep
 // Handle the deployment process.
 // If an unexpected error occurs during this process, it uses the bus.PreserveOrder function
 // to make sure all deployments are processed linearly.
+//
+// The deployment is tracked in running for as long as the job runs, so it can be cancelled:
+// the context given to the source and the provider is then cancelled and the deployment ends
+// with domain.ErrDeploymentCancelled.
 func Handler(
 	reader domain.DeploymentsReader,
 	writer domain.DeploymentsWriter,
@@ -32,14 +36,25 @@ func Handler(
 	provider domain.Provider,
 	targetsReader domain.TargetsReader,
 	registriesReader domain.RegistriesReader,
+	running domain.RunningDeployments,
 ) bus.RequestHandler[bus.UnitType, Command] {
-	return func(ctx context.Context, cmd Command) (result bus.UnitType, finalErr error) {
+	return func(jobCtx context.Context, cmd Command) (result bus.UnitType, finalErr error) {
 		result = bus.Unit
 
-		depl, err := reader.GetByID(ctx, domain.DeploymentIDFrom(
+		id := domain.DeploymentIDFrom(
 			domain.AppID(cmd.AppID),
 			domain.DeploymentNumber(cmd.DeploymentNumber),
-		))
+		)
+
+		// Tracked before anything is read, so a cancel arriving while the job starts always
+		// reaches it. ctx is cancelled on cancel; the deployment state itself is always read and
+		// written with persistCtx, otherwise the final write would fail and the job be retried.
+		ctx, release := running.Track(jobCtx, id)
+		defer release()
+
+		persistCtx := context.WithoutCancel(ctx)
+
+		depl, err := reader.GetByID(ctx, id)
 
 		if err != nil {
 			// Deployment does not exist anymore, the app should have been deleted, return early
@@ -77,6 +92,12 @@ func Handler(
 			}
 		}
 
+		// Cancelled while the job was starting: the cancel command has already marked the
+		// deployment as cancelled, don't start it.
+		if ctx.Err() != nil {
+			return result, nil
+		}
+
 		if err = writer.Write(ctx, &depl); err != nil {
 			return result, err
 		}
@@ -92,9 +113,16 @@ func Handler(
 		// Based on wether or not there was an error, it will update the deployment
 		// accordingly.
 		defer func() {
+			// A cancel stops whatever step was running with an error of its own (context
+			// canceled, compose_failed...): record why it really stopped. A deployment which
+			// managed to finish anyway keeps its success.
+			if finalErr != nil && wasCancelled(ctx) {
+				finalErr = domain.ErrDeploymentCancelled
+			}
+
 			// Since the deployment process could take some time, retrieve a fresh version of the
 			// deployment right now
-			if depl, err = reader.GetByID(ctx, depl.ID()); err != nil {
+			if depl, err = reader.GetByID(persistCtx, depl.ID()); err != nil {
 				if errors.Is(err, apperr.ErrNotFound) {
 					finalErr = nil
 				} else {
@@ -109,7 +137,7 @@ func Handler(
 				return
 			}
 
-			if err = writer.Write(ctx, &depl); err != nil {
+			if err = writer.Write(persistCtx, &depl); err != nil {
 				finalErr = err
 				return
 			}
@@ -123,6 +151,13 @@ func Handler(
 		}
 
 		defer deploymentCtx.Logger().Close()
+
+		// Runs before the logger is closed: the log says why it stopped.
+		defer func() {
+			if finalErr != nil && wasCancelled(ctx) {
+				deploymentCtx.Logger().Warnf("deployment cancelled, stopping")
+			}
+		}()
 
 		// If the target does not exist, let's fail the deployment correctly
 		if targetErr != nil {
@@ -153,4 +188,8 @@ func Handler(
 
 		return
 	}
+}
+
+func wasCancelled(ctx context.Context) bool {
+	return errors.Is(context.Cause(ctx), domain.ErrDeploymentCancelled)
 }

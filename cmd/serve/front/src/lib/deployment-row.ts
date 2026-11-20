@@ -7,17 +7,20 @@ import CancelCircleIcon from '@hugeicons/core-free-icons/CancelCircleIcon';
 import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
 import Clock01Icon from '@hugeicons/core-free-icons/Clock01Icon';
 import Loading03Icon from '@hugeicons/core-free-icons/Loading03Icon';
+import UnavailableIcon from '@hugeicons/core-free-icons/UnavailableIcon';
 import type { IconData } from '#lib/components/icon.svelte';
 import type { TimelineTone } from '#lib/components/timeline/timeline-row.svelte';
 import l from '#lib/localization/index.ts';
 import { DeploymentStatus, type SourceData, type State } from '#lib/resources/deployments.ts';
-import { deploymentBadge, deploymentMoment } from '#lib/status.ts';
+import { deploymentBadge, deploymentMoment, isCancelled } from '#lib/status.ts';
 
 export function deploymentTile(state: State): {
 	icon: IconData;
 	tone: TimelineTone;
 	spin: boolean;
 } {
+	if (isCancelled(state)) return { icon: UnavailableIcon, tone: 'muted', spin: false };
+
 	switch (state.status) {
 		case DeploymentStatus.Succeeded:
 			return { icon: CheckmarkCircle02Icon, tone: 'success', spin: false };
@@ -74,7 +77,7 @@ export function deploymentLabel(d: RowDeployment, prefix?: string): string {
 		]),
 		deploymentSource(d.source),
 		deploymentCommit(d.source),
-		d.state.error_code ?? undefined
+		isCancelled(d.state) ? undefined : (d.state.error_code ?? undefined)
 	];
 	return [prefix, ...parts].filter(Boolean).join(', ');
 }

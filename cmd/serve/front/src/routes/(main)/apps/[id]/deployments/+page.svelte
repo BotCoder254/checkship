@@ -2,8 +2,8 @@
 	Deployments tab (DESIGN.md §11.7): the whole history, filtered on the server by environment,
 	status and a search on number, branch or commit. A list grouped by day (§5 Lists and tables),
 	20 at a time with Show more. Each row opens its preview; its menu (Railway) has View logs,
-	Promote (staging rows), Redeploy and Copy link. The deployment each environment serves is marked
-	Live.
+	Promote (staging rows), Redeploy and Copy link, plus Cancel deployment in its own group for a
+	pending or running one (seelf#7). The deployment each environment serves is marked Live.
 -->
 <script lang="ts">
 	import { copyText } from '#lib/clipboard.ts';
@@ -17,6 +17,7 @@
 	import RepeatIcon from '@hugeicons/core-free-icons/RepeatIcon';
 	import Rocket01Icon from '@hugeicons/core-free-icons/Rocket01Icon';
 	import Search01Icon from '@hugeicons/core-free-icons/Search01Icon';
+	import StopCircleIcon from '@hugeicons/core-free-icons/StopCircleIcon';
 	import TestTube01Icon from '@hugeicons/core-free-icons/TestTube01Icon';
 	import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
 	import { toast } from 'svelte-sonner';
@@ -31,9 +32,10 @@
 		deploymentSource,
 		deploymentTile
 	} from '#lib/deployment-row.ts';
-	import { deploymentMoment } from '#lib/status.ts';
+	import { deploymentMoment, isCancellable, isCancelled } from '#lib/status.ts';
 	import { groupByDay } from '#lib/timeline.ts';
 	import ConfirmDialog from '#lib/components/confirm-dialog.svelte';
+	import Notice from '#lib/components/notice.svelte';
 	import EmptyState from '#lib/components/empty-state.svelte';
 	import Icon from '#lib/components/icon.svelte';
 	import EnvironmentChip from '#lib/components/environment-chip.svelte';
@@ -137,6 +139,8 @@
 	let promoteOpen = $state(false);
 	let redeploy = $state<Deployment>();
 	let redeployOpen = $state(false);
+	let cancelTarget = $state<Deployment>();
+	let cancelOpen = $state(false);
 
 	async function copyLink(d: Deployment) {
 		const link = new URL(routes.deployment(app.id, d.deployment_number), location.origin).href;
@@ -238,7 +242,7 @@
 												>{deploymentSource(d.source)}</span
 											>
 										{/if}
-										{#if d.state.error_code}
+										{#if d.state.error_code && !isCancelled(d.state)}
 											· <span class="font-mono text-danger">{d.state.error_code}</span>
 										{:else if deploymentCommit(d.source)}
 											· <span class="font-mono">{deploymentCommit(d.source)}</span>
@@ -289,6 +293,20 @@
 													{l.translate('detail.row.copy')}
 												</RowMenuItem>
 											</RowMenuGroup>
+											{#if !app.cleanup_requested_at && isCancellable(d.state)}
+												<RowMenuGroup>
+													<RowMenuItem
+														icon={StopCircleIcon}
+														variant="destructive"
+														onSelect={() => {
+															cancelTarget = d;
+															cancelOpen = true;
+														}}
+													>
+														{l.translate('deployment.cancel.confirm')}
+													</RowMenuItem>
+												</RowMenuGroup>
+											{/if}
 										</RowMenu>
 									{/snippet}
 								</TimelineRow>
@@ -351,6 +369,38 @@
 					.promote(app.id, promoteNumber)
 					.then((d) => workspace.openPreview(d.deployment_number))}
 		/>
+		{#if cancelTarget}
+			{@const target = cancelTarget}
+			<ConfirmDialog
+				bind:open={cancelOpen}
+				title={l.translate('deployment.cancel.title', [target.deployment_number])}
+				description={l.translate(
+					target.state.status === DeploymentStatus.Running
+						? 'deployment.cancel.description.running'
+						: 'deployment.cancel.description.pending',
+					[target.deployment_number]
+				)}
+				confirmLabel={l.translate('deployment.cancel.confirm')}
+				cancelLabel={l.translate('deployment.cancel.keep')}
+				icon={StopCircleIcon}
+				destructive
+				onconfirm={() =>
+					service.cancel(app.id, target.deployment_number).then((d) => {
+						toast.success(
+							l.translate(
+								isCancelled(d.state) ? 'deployment.cancel.done' : 'deployment.cancel.requested',
+								[target.deployment_number]
+							)
+						);
+					})}
+			>
+				{#snippet extra()}
+					{#if target.state.status === DeploymentStatus.Running}
+						<Notice tone="warning">{l.translate('deployment.cancel.warning')}</Notice>
+					{/if}
+				{/snippet}
+			</ConfirmDialog>
+		{/if}
 		{#if redeploy}
 			{@const target = redeploy}
 			<ConfirmDialog

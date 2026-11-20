@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Compose prints one line per pull event when its output is not a terminal, which is always
@@ -20,16 +21,23 @@ import (
 //
 //	#4 sha256:f9abc654947e09e316e7703544bd7e68123d383aeb70c5a9cf15be03e71721ce 4.19MB / 12.67MB 16.7s
 //
-// progressFilter sits between compose and the deployment log. It keeps a progress line only
-// when its layer reaches another tenth of its size and drops a line identical to the last one
-// printed for the same layer or service. Every other line goes through as is.
+// progressFilter sits between compose and the deployment log. It keeps a progress line when
+// its layer reaches another tenth of its size, or when progressInterval has passed since the
+// last line kept for that layer, so a slow download still moves in the live log every second
+// instead of looking stuck for minutes. It drops a line identical to the last one printed for
+// the same layer or service. Every other line goes through as is.
 type progressFilter struct {
-	mu       sync.Mutex
-	out      io.Writer
-	pending  []byte            // Last incomplete line, written once its newline arrives
-	printed  map[string]int    // Last tenth printed per "<layer> <action>"
-	lastLine map[string]string // Last line printed per layer or service
+	mu        sync.Mutex
+	out       io.Writer
+	now       func() time.Time
+	pending   []byte               // Last incomplete line, written once its newline arrives
+	printed   map[string]int       // Last tenth printed per "<layer> <action>"
+	printedAt map[string]time.Time // When that line was printed
+	lastLine  map[string]string    // Last line printed per layer or service
 }
+
+// Longest a moving download stays silent in the deployment log.
+const progressInterval = time.Second
 
 var (
 	progressBarLine = regexp.MustCompile(`^\s*(\S+) (\S+) \[([=> ]+)\]`)
@@ -44,9 +52,11 @@ var sizeUnits = map[string]float64{
 
 func newProgressFilter(out io.Writer) *progressFilter {
 	return &progressFilter{
-		out:      out,
-		printed:  make(map[string]int),
-		lastLine: make(map[string]string),
+		out:       out,
+		now:       time.Now,
+		printed:   make(map[string]int),
+		printedAt: make(map[string]time.Time),
+		lastLine:  make(map[string]string),
 	}
 }
 
@@ -131,13 +141,17 @@ func (f *progressFilter) keep(line string) bool {
 	return true
 }
 
-// Tells whether the given layer progress reached another tenth since the last printed line.
+// Tells whether the given layer progress reached another tenth, or progressInterval has
+// passed, since the last printed line.
 func (f *progressFilter) reached(key string, tenth int) bool {
-	if last, found := f.printed[key]; found && last == tenth {
+	now := f.now()
+
+	if last, found := f.printed[key]; found && last == tenth && now.Sub(f.printedAt[key]) < progressInterval {
 		return false
 	}
 
 	f.printed[key] = tenth
+	f.printedAt[key] = now
 
 	return true
 }

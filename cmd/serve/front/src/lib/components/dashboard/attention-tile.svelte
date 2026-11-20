@@ -15,7 +15,7 @@
 	import l from '#lib/localization/index.ts';
 	import routes from '#lib/path.ts';
 	import type { App } from '#lib/resources/apps.ts';
-	import { DeploymentStatus } from '#lib/resources/deployments.ts';
+	import { isFailure } from '#lib/status.ts';
 	import targetsService, { TargetStatus, type Target } from '#lib/resources/targets.ts';
 	import { cn } from '#lib/utils.js';
 	import EmptyState from '#lib/components/empty-state.svelte';
@@ -45,7 +45,7 @@
 		const list: Item[] = [];
 		for (const app of apps ?? []) {
 			const latest = app.latest_deployments.production;
-			if (app.cleanup_requested_at || latest?.state.status !== DeploymentStatus.Failed) continue;
+			if (app.cleanup_requested_at || !latest || !isFailure(latest.state)) continue;
 			list.push({
 				key: `app-${app.id}`,
 				tone: 'danger',

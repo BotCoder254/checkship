@@ -21,8 +21,12 @@ GET /apps/:id/deployments/:number
 POST /apps/:id/deployments/:number/redeploy
 # Promote a staging deployment to the production environment
 POST /apps/:id/deployments/:number/promote
+# Cancel a pending or running deployment
+POST /apps/:id/deployments/:number/cancel
 # Retrieve deployment logs
 GET /apps/:id/deployments/:number/logs
+# Follow a deployment log while it is written (server-sent events)
+GET /apps/:id/deployments/:number/logs/stream?offset=0
 # Follow the logs of an application's containers (server-sent events)
 GET /apps/:id/logs?environment=production&tail=200
 # State of an application's containers
@@ -43,6 +47,37 @@ DELETE /backups/:id
 ```
 
 The [Backups](/reference/backups#api) page describes their bodies.
+
+## Cancel a deployment {#cancel-a-deployment}
+
+`POST /apps/:id/deployments/:number/cancel` cancels a pending or running deployment (see [Cancel a deployment](/reference/deployments#cancel)) and answers `200` with the deployment as it is now, in the same shape as `GET /apps/:id/deployments/:number`.
+
+```sh
+curl -X POST -H "Authorization: Bearer <user API Key>" \
+  "https://checkship.example.com/api/v1/apps/<app id>/deployments/<number>/cancel"
+```
+
+- A **pending** deployment comes back already cancelled: `state.status` is `2` (failed) and `state.error_code` is `deployment_cancelled`.
+- A **running** one comes back still running (`state.status` `1`): it stops within seconds and then reads the same way. Poll the deployment, or follow its log stream until `end`, to know when.
+- `400` with `deployment_not_cancellable` when the deployment has already finished (succeeded, failed or cancelled). `404` with `not_found` when it doesn't exist.
+
+## Deployment logs {#deployment-logs}
+
+`GET /apps/:id/deployments/:number/logs` returns the whole log as plain text. `GET /apps/:id/deployments/:number/logs/stream` follows it as [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) while the deployment runs, and closes once it has finished and every line was sent.
+
+```sh
+curl -N -H "Authorization: Bearer <user API Key>" \
+  "https://checkship.example.com/api/v1/apps/<app id>/deployments/<number>/logs/stream"
+```
+
+| Event   | Data                                                                                                                                         |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `logs`  | `{"text": "..."}`: the new whole lines, at most 64 KiB per event. The event `id` is the byte offset reached in the log                       |
+| `reset` | `{}`: the offset asked for is past the end of the log; what follows starts from the beginning, so drop what you have                          |
+| `end`   | `{}`: the deployment has finished and everything was sent. The stream closes                                                                  |
+| `error` | `{"code": "logs_failed"}` when the log can't be read. Nothing follows                                                                         |
+
+A comment line (`: ping`) is sent every 15 seconds. To resume after a disconnection, send the last event `id` in a `Last-Event-ID` header, or in an `offset` parameter. Errors before the stream starts are plain JSON: `404` with `not_found`, and `429` with `too_many_streams` past the limits (5 streams per user, 40 in all).
 
 ## Runtime logs {#runtime-logs}
 

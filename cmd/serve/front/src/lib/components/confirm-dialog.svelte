@@ -20,6 +20,8 @@
 		title: string;
 		description: string;
 		confirmLabel: string;
+		/** The button that closes without doing anything; "Cancel" by default. */
+		cancelLabel?: string;
 		icon?: IconData;
 		destructive?: boolean;
 		typeToConfirm?: string;
@@ -34,6 +36,7 @@
 		title,
 		description,
 		confirmLabel,
+		cancelLabel,
 		icon,
 		destructive = false,
 		typeToConfirm,
@@ -99,7 +102,9 @@
 		{/if}
 
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel disabled={pending}>{l.translate('cancel')}</AlertDialog.Cancel>
+			<AlertDialog.Cancel disabled={pending}
+				>{cancelLabel ?? l.translate('cancel')}</AlertDialog.Cancel
+			>
 			<Button
 				variant={destructive ? 'destructive' : 'default'}
 				loading={pending}

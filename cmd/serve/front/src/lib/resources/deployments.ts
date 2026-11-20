@@ -97,7 +97,16 @@ export interface DeploymentsService {
 	queue(appid: string, data: QueueDeployment): Promise<Deployment>;
 	redeploy(appid: string, number: number): Promise<Deployment>;
 	promote(appid: string, number: number): Promise<Deployment>;
-	queryAllByApp(id: string, filters?: QueryDeploymentsFilters): QueryResult<Paginated<Deployment>>;
+	/** Cancels a pending or running deployment (seelf#7); answers with it as it is now. */
+	cancel(appid: string, number: number): Promise<DeploymentDetail>;
+	/** Where the live log of a deployment is streamed (server-sent events). */
+	logsStreamUrl(appid: string, number: number): string;
+	/** With `poll`, refreshed like a running deployment so new deploys show up on their own. */
+	queryAllByApp(
+		id: string,
+		filters?: QueryDeploymentsFilters,
+		poll?: boolean
+	): QueryResult<Paginated<Deployment>>;
 	queryLogs(appid: string, number: number, poll?: boolean): QueryResult<string>;
 	queryByAppAndNumber(appid: string, number: number, poll?: boolean): QueryResult<DeploymentDetail>;
 	fetchByAppAndNumber(
@@ -161,9 +170,29 @@ class RemoteDeploymentsService implements DeploymentsService {
 		});
 	}
 
-	queryAllByApp(id: string, filters?: QueryDeploymentsFilters): QueryResult<Paginated<Deployment>> {
+	cancel(appid: string, number: number): Promise<DeploymentDetail> {
+		return this._fetcher.post(`/api/v1/apps/${appid}/deployments/${number}/cancel`, undefined, {
+			invalidate: [
+				`/api/v1/apps/${appid}`,
+				`/api/v1/apps/${appid}/deployments`,
+				`/api/v1/apps/${appid}/deployments/${number}`,
+				'/api/v1/apps'
+			]
+		});
+	}
+
+	logsStreamUrl(appid: string, number: number): string {
+		return `/api/v1/apps/${appid}/deployments/${number}/logs/stream`;
+	}
+
+	queryAllByApp(
+		id: string,
+		filters?: QueryDeploymentsFilters,
+		poll?: boolean
+	): QueryResult<Paginated<Deployment>> {
 		return this._fetcher.query(`/api/v1/apps/${id}/deployments`, {
-			params: filters
+			params: filters,
+			refreshInterval: poll ? this._options.runningDeploymentsPollingInterval : undefined
 		});
 	}
 }

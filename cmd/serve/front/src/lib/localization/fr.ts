@@ -361,6 +361,40 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 		'status.succeeded': 'Réussi',
 		'status.configuring': 'Configuration',
 		'status.ready': 'Prête',
+		// Annulation d'un déploiement (seelf#7)
+		'status.cancelled': 'Annulé',
+		'deployment.cancel': 'Annuler',
+		'deployment.cancel.title': (number: number) => `Annuler le déploiement n°${number} ?`,
+		'deployment.cancel.confirm': 'Annuler le déploiement',
+		'deployment.cancel.keep': 'Le garder',
+		'deployment.cancel.description.pending': (number: number) =>
+			`Le déploiement n°${number} attend encore son tour. Il ne sera pas lancé, et les déploiements en file après lui se déroulent normalement.`,
+		'deployment.cancel.description.running': (number: number) =>
+			`Le déploiement n°${number} s'arrête maintenant, où qu'il en soit : récupération des sources, téléchargement, construction ou démarrage des conteneurs. Les images déjà téléchargées restent en cache pour le prochain déploiement.`,
+		'deployment.cancel.warning':
+			"Si des conteneurs étaient déjà en cours de remplacement, cet environnement peut rester à moitié mis à jour. Redéployez le déploiement qu'il servait pour revenir en arrière.",
+		'deployment.cancel.done': (number: number) => `Déploiement n°${number} annulé`,
+		'deployment.cancel.requested': (number: number) => `Arrêt du déploiement n°${number}…`,
+		'deployment.cancelling': 'Annulation…',
+		'deployment.cancelled.ran':
+			'Annulé à la demande pendant son exécution. Si des conteneurs étaient en cours de remplacement, redéployez le déploiement précédent pour revenir en arrière.',
+		'deployment.cancelled.queued':
+			"Annulé à la demande avant son démarrage. Rien n'a changé sur la cible.",
+		'deployment.cancelled_line': (time: string) => `annulé à ${time}`,
+		'deployment.cancelled_ran_line': (time: string, duration: string) =>
+			`annulé à ${time} · durée ${duration}`,
+		'deployment.step.cancelled': 'Annulé',
+		'deployment.step.never_started': 'jamais démarré',
+		'deployment.logs.live': 'En direct',
+		'deployment.logs.reconnecting': 'Reconnexion…',
+		'deployment.logs.compacted':
+			"Les lignes de téléchargement et d'extraction se mettent à jour sur place, une par couche. Copier donne toutes les lignes écrites.",
+		'deployment.logs.nothing_cancelled':
+			"Rien n'a été écrit : le déploiement a été annulé avant de démarrer.",
+		deployment_cancelled: 'Annulé',
+		deployment_not_cancellable: 'Ce déploiement est déjà terminé, il ne peut plus être annulé.',
+		'detail.state.production.cancelled': 'Production annulée',
+		'detail.state.staging.cancelled': 'Staging annulé',
 		'deployment.promote.title': 'Promouvoir en production',
 		'deployment.promote.description': (number: number) =>
 			`Le déploiement #${number} sera redéployé en production, avec la même source.`,
@@ -1020,6 +1054,7 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 			`${environment} : les ${count} derniers déploiements, du plus ancien au plus récent`,
 		'detail.strip.oldest': (count: number) => `Il y a ${count} déploiements`,
 		'detail.strip.latest': 'Le plus récent',
+		'detail.strip.live': 'En ligne',
 		'detail.strip.shown': 'Cette liste',
 		'charts.last_days': (days: number) => `${days} derniers jours`,
 		'backups.figures.label': (days: number) => `Chiffres des sauvegardes, ${days} derniers jours`,
