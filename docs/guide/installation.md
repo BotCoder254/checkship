@@ -109,3 +109,48 @@ If set, the `EXPOSED_ON` will be used to determine:
 
 If a local target already exists, the container will be attached to it without updating the target URL.
 :::
+
+## Behind a reverse proxy {#reverse-proxy}
+
+If you put checkship behind your own reverse proxy (nginx, Caddy, Traefik…), it must let **server-sent events** through as they are written. The dashboard uses them for live updates, the [live deployment logs](/reference/deployments#live-logs) and the runtime logs of an application. A proxy that buffers or compresses these responses makes logs arrive in bursts, or only when the deployment ends.
+
+checkship already answers these streams with `Content-Type: text/event-stream`, `Cache-Control: no-store` and `X-Accel-Buffering: no`. Depending on your proxy, also:
+
+::: code-group
+
+```nginx [nginx]
+location /api/v1/ {
+    proxy_pass http://checkship:8080;
+    proxy_http_version 1.1;
+    proxy_buffering off;       # stream responses as they come
+    proxy_cache off;
+    proxy_read_timeout 1h;     # streams stay open while a deployment runs
+    gzip off;
+}
+```
+
+```caddy [Caddy]
+checkship.example.com {
+    # Compress only these types: text/event-stream stays out, compression breaks streaming
+    encode {
+        gzip
+        match {
+            header Content-Type text/html*
+            header Content-Type text/css*
+            header Content-Type application/javascript*
+            header Content-Type application/json*
+        }
+    }
+    reverse_proxy checkship:8080
+}
+```
+
+```yml [Traefik (labels)]
+labels:
+  # Only if you add a compress middleware: leave event streams out of it
+  - traefik.http.middlewares.checkship-compress.compress.excludedcontenttypes=text/event-stream
+```
+
+:::
+
+The proxy deployed by checkship on its targets needs nothing: it doesn't compress or buffer.

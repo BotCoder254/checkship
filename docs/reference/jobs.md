@@ -25,3 +25,5 @@ Since a target on which you have, in the past, successfully deployed something c
 From the **checkship** perspective, it has effectively deployed something and when, for example, deleting an application, **checkship** will queue a cleanup job which cannot succeed because a target is not reachable anymore.
 
 For that **particular case**, you can press the **cancel button** on a job to allow the deletion to proceed without cleaning up resources.
+
+Deployment jobs have no cancel button here: cancel the **deployment** instead, from its page or the Deployments tab (see [Cancel a deployment](/reference/deployments#cancel)). That stops it even while it runs, and records it as cancelled, where deleting its job would leave it pending forever.
