@@ -122,6 +122,11 @@ func (t *service) Fetch(ctx context.Context, deploymentCtx domain.DeploymentCont
 	tr := tar.NewReader(gzr)
 
 	for {
+		// Stop between entries when the deployment is cancelled
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		header, err := tr.Next()
 
 		switch {

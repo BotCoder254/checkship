@@ -102,6 +102,33 @@ func Test_Summarize(t *testing.T) {
 	})
 }
 
+func Test_SummarizeCancelled(t *testing.T) {
+	at := time.Date(2026, 11, 12, 10, 0, 0, 0, time.UTC)
+	cancelled := row("a", "production", domain.DeploymentStatusFailed, at.Add(time.Hour), 300)
+	cancelled.ErrCode.Set(domain.ErrDeploymentCancelled.Error())
+	rows := []get_dashboard.Row{
+		row("a", "production", domain.DeploymentStatusSucceeded, at, 40),
+		cancelled,
+		row("a", "production", domain.DeploymentStatusSucceeded, at.Add(2*time.Hour), 60),
+	}
+
+	s := get_dashboard.Summarize(get_dashboard.Filters{Days: 7, Until: until}, rows, 1)
+
+	t.Run("should count a cancelled deployment neither as a success nor as a failure", func(t *testing.T) {
+		assert.Equal(t, 3, s.Current.Deployments)
+		assert.Equal(t, 2, s.Current.Succeeded)
+		assert.Equal(t, 0, s.Current.Failed)
+		assert.Equal(t, 1, s.Current.Other)
+		assert.Equal(t, 1.0, s.Current.SuccessRate.MustGet())
+		assert.HasLength(t, 0, s.Errors)
+		assert.Equal(t, 0, s.Current.Recoveries)
+	})
+
+	t.Run("should leave its run time out of the durations", func(t *testing.T) {
+		assert.Equal(t, 60.0, s.Current.MaxDuration.MustGet())
+	})
+}
+
 func Test_RankApps(t *testing.T) {
 	at := until.Add(-time.Hour)
 	apps := []get_dashboard.AppRef{{ID: "a", Name: "api"}, {ID: "b", Name: "blog"}, {ID: "c", Name: "docs"}}

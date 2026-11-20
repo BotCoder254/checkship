@@ -41,16 +41,18 @@ type (
 	}
 
 	server struct {
-		options            ServerOptions
-		router             *gin.Engine
-		bus                bus.Dispatcher
-		logger             log.Logger
-		usersReader        domain.UsersReader
-		scheduledJobsStore bus.ScheduledJobsStore
-		live               *live.Hub
-		logsLimiter        *live.Limiter
-		shutdown           context.Context    // Done when the server shuts down: ends the runtime logs streams
-		stopStreams        context.CancelFunc // Cancels shutdown
+		options               ServerOptions
+		router                *gin.Engine
+		bus                   bus.Dispatcher
+		logger                log.Logger
+		usersReader           domain.UsersReader
+		scheduledJobsStore    bus.ScheduledJobsStore
+		live                  *live.Hub
+		logsLimiter           *live.Limiter
+		deploymentLogsLimiter *live.Limiter
+		logSignals            *live.Signals      // Notified each time a deployment log is written
+		shutdown              context.Context    // Done when the server shuts down: ends the runtime logs streams
+		stopStreams           context.CancelFunc // Cancels shutdown
 	}
 )
 
@@ -58,14 +60,16 @@ func newHttpServer(options ServerOptions, root startup.ServerRoot) *server {
 	gin.SetMode(gin.ReleaseMode)
 
 	s := &server{
-		options:            options,
-		router:             gin.New(),
-		usersReader:        root.UsersReader(),
-		scheduledJobsStore: root.ScheduledJobsStore(),
-		live:               root.Live(),
-		logsLimiter:        live.NewLimiter(logsStreamsPerUser, logsStreamsTotal),
-		bus:                root.Bus(),
-		logger:             root.Logger(),
+		options:               options,
+		router:                gin.New(),
+		usersReader:           root.UsersReader(),
+		scheduledJobsStore:    root.ScheduledJobsStore(),
+		live:                  root.Live(),
+		logsLimiter:           live.NewLimiter(logsStreamsPerUser, logsStreamsTotal),
+		deploymentLogsLimiter: live.NewLimiter(deploymentLogsStreamsPerUser, deploymentLogsStreamsTotal),
+		logSignals:            root.LogSignals(),
+		bus:                   root.Bus(),
+		logger:                root.Logger(),
 	}
 
 	s.shutdown, s.stopStreams = context.WithCancel(context.Background())
@@ -133,7 +137,9 @@ func newHttpServer(options ServerOptions, root startup.ServerRoot) *server {
 	v1securedAllowApi.GET("/apps/:id/deployments/:number", s.getDeploymentByIDHandler())
 	v1securedAllowApi.POST("/apps/:id/deployments/:number/redeploy", s.redeployHandler())
 	v1securedAllowApi.POST("/apps/:id/deployments/:number/promote", s.promoteHandler())
+	v1securedAllowApi.POST("/apps/:id/deployments/:number/cancel", s.cancelDeploymentHandler())
 	v1securedAllowApi.GET("/apps/:id/deployments/:number/logs", s.getDeploymentLogsHandler())
+	v1securedAllowApi.GET("/apps/:id/deployments/:number/logs/stream", s.deploymentLogsStreamHandler())
 	v1securedAllowApi.GET("/apps/:id/logs", s.appLogsHandler())
 	v1securedAllowApi.GET("/apps/:id/services", s.appServicesHandler())
 	v1securedAllowApi.GET("/apps/:id/volumes", s.appVolumesHandler())

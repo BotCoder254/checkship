@@ -108,7 +108,7 @@ type (
 		Deployments    int                  `json:"deployments"`
 		Succeeded      int                  `json:"succeeded"`
 		Failed         int                  `json:"failed"`
-		Other          int                  `json:"other"`           // pending or running
+		Other          int                  `json:"other"`           // pending, running or cancelled
 		SuccessRate    monad.Maybe[float64] `json:"success_rate"`    // 0..1 over finished deployments
 		MedianDuration monad.Maybe[float64] `json:"median_duration"` // seconds
 		MaxDuration    monad.Maybe[float64] `json:"max_duration"`    // seconds
@@ -258,7 +258,7 @@ func Summarize(f Filters, rows []Row, apps int) Summary {
 			byEnv[r.Environment] = env
 		}
 		env.Deployments++
-		switch domain.DeploymentStatus(r.Status) {
+		switch outcome(r) {
 		case domain.DeploymentStatusSucceeded:
 			env.Succeeded++
 		case domain.DeploymentStatusFailed:
@@ -274,7 +274,7 @@ func Summarize(f Filters, rows []Row, apps int) Summary {
 			continue
 		}
 		at := r.FinishedAt.Get(r.RequestedAt)
-		switch domain.DeploymentStatus(r.Status) {
+		switch outcome(r) {
 		case domain.DeploymentStatusFailed:
 			if _, failing := failedSince[r.AppID]; !failing {
 				failedSince[r.AppID] = at
@@ -349,7 +349,7 @@ func RankApps(q AppsQuery, apps []AppRef, rows []Row) storage.Paginated[AppStat]
 			continue
 		}
 		stat.Deployments++
-		switch domain.DeploymentStatus(r.Status) {
+		switch outcome(r) {
 		case domain.DeploymentStatusSucceeded:
 			stat.Succeeded++
 		case domain.DeploymentStatusFailed:
@@ -451,7 +451,7 @@ type periodAcc struct {
 
 func (p *periodAcc) add(r Row) {
 	p.deployments++
-	switch domain.DeploymentStatus(r.Status) {
+	switch outcome(r) {
 	case domain.DeploymentStatusSucceeded:
 		p.succeeded++
 	case domain.DeploymentStatusFailed:
@@ -491,7 +491,7 @@ type dayAcc struct {
 }
 
 func (d *dayAcc) add(r Row) {
-	switch domain.DeploymentStatus(r.Status) {
+	switch outcome(r) {
 	case domain.DeploymentStatusSucceeded:
 		d.succeeded++
 	case domain.DeploymentStatusFailed:
@@ -513,7 +513,26 @@ func (d dayAcc) day(date string) Day {
 	return out
 }
 
+// What a deployment row counts as. A cancelled deployment is stored as failed (seelf#7) but
+// is neither a success nor a failure: it counts with the others.
+func outcome(r Row) domain.DeploymentStatus {
+	status := domain.DeploymentStatus(r.Status)
+
+	if status == domain.DeploymentStatusFailed && r.ErrCode.Get("") == domain.ErrDeploymentCancelled.Error() {
+		return deploymentCancelled
+	}
+
+	return status
+}
+
+// Not a stored status: only outcome returns it.
+const deploymentCancelled domain.DeploymentStatus = 255
+
 func duration(r Row) (float64, bool) {
+	if outcome(r) == deploymentCancelled {
+		return 0, false // Stopped halfway, its run time says nothing about deployments
+	}
+
 	started, hasStarted := r.StartedAt.TryGet()
 	finished, hasFinished := r.FinishedAt.TryGet()
 	if !hasStarted || !hasFinished || finished.Before(started) {

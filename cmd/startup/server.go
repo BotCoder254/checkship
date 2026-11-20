@@ -28,6 +28,7 @@ type (
 		UsersReader() domain.UsersReader
 		ScheduledJobsStore() bus.ScheduledJobsStore
 		Live() *live.Hub
+		LogSignals() *live.Signals
 	}
 
 	ServerOptions interface {
@@ -48,6 +49,7 @@ type (
 		schedulerStore bus.ScheduledJobsStore
 		scheduler      bus.RunnableScheduler
 		live           *live.Hub
+		logSignals     *live.Signals
 	}
 )
 
@@ -82,6 +84,9 @@ func Server(options ServerOptions, logger log.Logger) (ServerRoot, error) {
 		return nil, err
 	}
 
+	// Wakes the live deployment log streams up each time a log is written
+	s.logSignals = live.NewSignals()
+
 	// Setups deployment infrastructure
 	if err = deploymentinfra.Setup(
 		options,
@@ -89,6 +94,7 @@ func Server(options ServerOptions, logger log.Logger) (ServerRoot, error) {
 		s.db,
 		s.bus,
 		s.scheduler,
+		s.logSignals,
 	); err != nil {
 		return nil, err
 	}
@@ -154,3 +160,4 @@ func (s *serverRoot) Logger() log.Logger                         { return s.logg
 func (s *serverRoot) UsersReader() domain.UsersReader            { return s.usersReader }
 func (s *serverRoot) ScheduledJobsStore() bus.ScheduledJobsStore { return s.schedulerStore }
 func (s *serverRoot) Live() *live.Hub                            { return s.live }
+func (s *serverRoot) LogSignals() *live.Signals                  { return s.logSignals }

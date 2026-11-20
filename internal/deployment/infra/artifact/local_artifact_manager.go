@@ -35,7 +35,11 @@ type (
 		appsDirectory string
 		logsDirectory string
 		logger        log.Logger
+		logWritten    func(path string)
 	}
+
+	// Configures the local artifact manager.
+	LocalOption func(*localArtifactManager)
 
 	deploymentTemplateData struct {
 		Number      domain.DeploymentNumber
@@ -44,12 +48,26 @@ type (
 )
 
 // Instantiate a new ArtifactManager which will store all the artifacts locally.
-func NewLocal(options LocalOptions, logger log.Logger) domain.ArtifactManager {
-	return &localArtifactManager{
+func NewLocal(options LocalOptions, logger log.Logger, opts ...LocalOption) domain.ArtifactManager {
+	m := &localArtifactManager{
 		options:       options,
 		appsDirectory: filepath.Join(options.DataDir(), appsDir),
 		logsDirectory: filepath.Join(options.DataDir(), logsDir),
 		logger:        logger,
+	}
+
+	for _, opt := range opts {
+		opt(m)
+	}
+
+	return m
+}
+
+// Calls the given function with the log path each time a deployment log is written to (and
+// when it is closed), so live log streams can wake up. It must not block.
+func WithLogWritten(fn func(path string)) LocalOption {
+	return func(m *localArtifactManager) {
+		m.logWritten = fn
 	}
 }
 
@@ -57,14 +75,21 @@ func (a *localArtifactManager) PrepareBuild(
 	ctx context.Context,
 	deployment domain.Deployment,
 ) (domain.DeploymentContext, error) {
-	logFile, err := ostools.OpenAppend(a.LogPath(ctx, deployment))
+	logPath := a.LogPath(ctx, deployment)
+	logFile, err := ostools.OpenAppend(logPath)
 
 	if err != nil {
 		a.logger.Error(err)
 		return domain.DeploymentContext{}, ErrArtifactOpenLoggerFailed
 	}
 
-	logger := newLogger(logFile)
+	var written func()
+
+	if a.logWritten != nil {
+		written = func() { a.logWritten(logPath) }
+	}
+
+	logger := newLogger(logFile, written)
 
 	defer func() {
 		if err == nil {

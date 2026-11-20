@@ -252,6 +252,11 @@ func (d *docker) Deploy(
 
 	defer client.Close()
 
+	// A cancelled deployment (seelf#7) also drops the idle connections to the Docker daemon
+	// right away; requests in flight end with the context.
+	stopClosing := context.AfterFunc(ctx, func() { _ = client.Close() })
+	defer stopClosing()
+
 	logger.Stepf("successfully connected to docker version %s", client.version)
 
 	if len(client.registries) > 0 {
@@ -283,7 +288,12 @@ func (d *docker) Deploy(
 			Wait: true,
 		},
 	}); err != nil {
-		logger.Error(err)
+		// Stopped on purpose: the deploy job says so in the log, "context canceled" would only
+		// look like a failure.
+		if ctx.Err() == nil {
+			logger.Error(err)
+		}
+
 		return nil, ErrComposeFailed
 	}
 

@@ -268,3 +268,49 @@ func Test_DeploymentEvents(t *testing.T) {
 		assert.False(t, evt.HasSucceeded())
 	})
 }
+
+func Test_DeploymentCancel(t *testing.T) {
+	t.Run("should cancel a pending deployment", func(t *testing.T) {
+		deployment := fixture.Deployment()
+
+		assert.Nil(t, deployment.Cancel())
+
+		changed := assert.EventIs[domain.DeploymentStateChanged](t, &deployment, 1)
+		assert.Equal(t, domain.DeploymentStatusFailed, changed.State.Status())
+		assert.Equal(t, domain.ErrDeploymentCancelled.Error(), changed.State.ErrCode().MustGet())
+		assert.True(t, changed.State.FinishedAt().HasValue())
+		assert.False(t, changed.State.StartedAt().HasValue())
+		assert.True(t, changed.State.IsCancelled())
+	})
+
+	t.Run("should refuse to cancel a deployment which is not pending", func(t *testing.T) {
+		running := fixture.Deployment()
+		assert.Nil(t, running.HasStarted())
+		assert.ErrorIs(t, domain.ErrDeploymentNotCancellable, running.Cancel())
+
+		succeeded := fixture.Deployment()
+		assert.Nil(t, succeeded.HasStarted())
+		assert.Nil(t, succeeded.HasEnded(domain.Services{}, nil))
+		assert.ErrorIs(t, domain.ErrDeploymentNotCancellable, succeeded.Cancel())
+
+		cancelled := fixture.Deployment()
+		assert.Nil(t, cancelled.Cancel())
+		assert.ErrorIs(t, domain.ErrDeploymentNotCancellable, cancelled.Cancel())
+	})
+
+	t.Run("should only report a failure with the cancel code as cancelled", func(t *testing.T) {
+		failed := fixture.Deployment()
+		assert.Nil(t, failed.HasStarted())
+		assert.Nil(t, failed.HasEnded(nil, errors.New("compose_failed")))
+
+		changed := assert.EventIs[domain.DeploymentStateChanged](t, &failed, 2)
+		assert.False(t, changed.State.IsCancelled())
+
+		stopped := fixture.Deployment()
+		assert.Nil(t, stopped.HasStarted())
+		assert.Nil(t, stopped.HasEnded(nil, domain.ErrDeploymentCancelled))
+
+		changed = assert.EventIs[domain.DeploymentStateChanged](t, &stopped, 2)
+		assert.True(t, changed.State.IsCancelled())
+	})
+}

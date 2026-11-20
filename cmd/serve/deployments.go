@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/checkship-deploy/checkship/internal/deployment/app/cancel_deployment"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/get_app_deployments"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/get_deployment"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/get_deployment_log"
@@ -90,6 +91,37 @@ func (s *server) promoteHandler() gin.HandlerFunc {
 		}
 
 		return s.sendDeploymentCreatedResponse(ctx, appid, number)
+	})
+}
+
+// Cancel a pending or running deployment (seelf#7). Answers with the deployment as it is
+// now: a pending one is already cancelled, a running one ends within seconds.
+func (s *server) cancelDeploymentHandler() gin.HandlerFunc {
+	return http.Send(s, func(ctx *gin.Context) error {
+		appid := ctx.Param("id")
+		number, err := deploymentNumber(ctx)
+
+		if err != nil {
+			return err
+		}
+
+		if _, err = bus.Send(s.bus, ctx.Request.Context(), cancel_deployment.Command{
+			AppID:            appid,
+			DeploymentNumber: number,
+		}); err != nil {
+			return err
+		}
+
+		deployment, err := bus.Send(s.bus, ctx.Request.Context(), get_deployment.Query{
+			AppID:            appid,
+			DeploymentNumber: number,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		return http.Ok(ctx, deployment)
 	})
 }
 

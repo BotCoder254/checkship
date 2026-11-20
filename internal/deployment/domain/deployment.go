@@ -19,6 +19,8 @@ var (
 	ErrInvalidSourceDeployment             = apperr.New("invalid_source_deployment")
 	ErrNotInPendingState                   = apperr.New("not_in_pending_state")
 	ErrNotInRunningState                   = apperr.New("not_in_running_state")
+	ErrDeploymentCancelled                 = apperr.New("deployment_cancelled")
+	ErrDeploymentNotCancellable            = apperr.New("deployment_not_cancellable")
 )
 
 const (
@@ -58,6 +60,18 @@ type (
 		Target      monad.Maybe[TargetID]
 		App         monad.Maybe[AppID]
 		Environment monad.Maybe[Environment]
+	}
+
+	// Keeps track of the deployments being processed by this process so they can be
+	// stopped while they run (seelf#7). A deployment is tracked from the moment its job
+	// starts until the job returns.
+	RunningDeployments interface {
+		// Returns a context derived from the given one which is cancelled, with
+		// ErrDeploymentCancelled as its cause, when Cancel is called for that deployment.
+		// The returned function must be called once the job is done.
+		Track(context.Context, DeploymentID) (context.Context, func())
+		// Cancel the deployment if a job is processing it. Returns false if none is.
+		Cancel(DeploymentID) bool
 	}
 
 	DeploymentsWriter interface {
@@ -206,6 +220,23 @@ func (d *Deployment) HasStarted() error {
 	return nil
 }
 
+// Cancel a deployment which has not started yet. A running deployment is stopped by its
+// job (see RunningDeployments) which then ends it with ErrDeploymentCancelled.
+func (d *Deployment) Cancel() error {
+	if err := d.state.cancelled(); err != nil {
+		return err
+	}
+
+	d.stateChanged()
+
+	return nil
+}
+
+// Tells wether this deployment was cancelled.
+func (s DeploymentState) IsCancelled() bool {
+	return s.status == DeploymentStatusFailed && s.errcode.Get("") == ErrDeploymentCancelled.Error()
+}
+
 // Mark the deployment has ended with available services or with an error if any.
 // The internal status of the deployment will be updated accordingly.
 func (d *Deployment) HasEnded(services Services, deploymentErr error) error {
@@ -263,6 +294,18 @@ func (s *DeploymentState) started() error {
 
 	s.status = DeploymentStatusRunning
 	s.startedAt.Set(time.Now().UTC())
+
+	return nil
+}
+
+func (s *DeploymentState) cancelled() error {
+	if s.status != DeploymentStatusPending {
+		return ErrDeploymentNotCancellable
+	}
+
+	s.status = DeploymentStatusFailed
+	s.errcode.Set(ErrDeploymentCancelled.Error())
+	s.finishedAt.Set(time.Now().UTC())
 
 	return nil
 }
