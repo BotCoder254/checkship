@@ -293,8 +293,10 @@ wSD0v0RcmkITP1ZR0AAAAYcHF1ZXJuYUBMdWNreUh5ZHJvLmxvY2FsAQID
 						Image:   "traefik:v2.11",
 						Restart: types.RestartPolicyUnlessStopped,
 						Command: types.ShellCommand{
+							fmt.Sprintf("--certificatesresolvers.%s.acme.httpchallenge.entrypoint=insecure", "checkship-resolver-"+targetIdLower),
+							fmt.Sprintf("--certificatesresolvers.%s.acme.httpchallenge=true", "checkship-resolver-"+targetIdLower),
 							fmt.Sprintf("--certificatesresolvers.%s.acme.storage=/letsencrypt/acme.json", "checkship-resolver-"+targetIdLower),
-							fmt.Sprintf("--certificatesresolvers.%s.acme.tlschallenge=true", "checkship-resolver-"+targetIdLower),
+
 							"--entrypoints.http.address=:443",
 							"--entrypoints.http.http.tls.certresolver=checkship-resolver-" + targetIdLower,
 							"--entrypoints.insecure.address=:80",

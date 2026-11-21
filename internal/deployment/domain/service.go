@@ -42,6 +42,7 @@ type (
 		name        string
 		image       string
 		entrypoints []Entrypoint
+		domains     []Hostname // Custom domains its main http entrypoint is also served at (seelf#5)
 	}
 
 	// Main structure used to build a services array. Manipulated by actual providers.
@@ -120,6 +121,11 @@ func (b *ServiceBuilder) addEntrypoint(router Router, port Port, custom bool) En
 		port:     port,
 	}
 
+	// Custom domains (seelf#5) are served by the main http entrypoint
+	if router == RouterHttp && !custom {
+		b.Service.domains = b.parent.config.DomainsFor(b.Service.name)
+	}
+
 	if router == RouterHttp {
 		if !b.subdomain.HasValue() {
 			b.subdomain.Set(b.parent.config.subDomain(b.Service.name, b.parent.defaultSubdomainAvailable))
@@ -158,8 +164,9 @@ func ParsePort(raw string) (Port, error) {
 func (p Port) String() string { return strconv.FormatUint(uint64(p), 10) }
 func (p Port) Uint32() uint32 { return uint32(p) }
 
-func (s Service) Name() string  { return s.name }
-func (s Service) Image() string { return s.image }
+func (s Service) Name() string        { return s.name }
+func (s Service) Domains() []Hostname { return s.domains } // Custom domains of its main http entrypoint
+func (s Service) Image() string       { return s.image }
 
 func (e Entrypoint) Name() EntrypointName           { return e.name }
 func (e Entrypoint) Router() Router                 { return e.router }
@@ -223,6 +230,7 @@ type (
 		Name        string                 `json:"name"`
 		Image       string                 `json:"image"`
 		Entrypoints []marshalledEntrypoint `json:"entrypoints"`
+		Domains     []Hostname             `json:"domains,omitempty"`
 	}
 )
 
@@ -231,6 +239,7 @@ func (s Service) MarshalJSON() ([]byte, error) {
 		Name:        s.name,
 		Image:       s.image,
 		Entrypoints: make([]marshalledEntrypoint, len(s.entrypoints)),
+		Domains:     s.domains,
 	}
 
 	for i, entry := range s.entrypoints {
@@ -255,6 +264,7 @@ func (s *Service) UnmarshalJSON(b []byte) error {
 
 	s.image = m.Image
 	s.name = m.Name
+	s.domains = m.Domains
 	s.entrypoints = make([]Entrypoint, len(m.Entrypoints))
 
 	for i, entry := range m.Entrypoints {

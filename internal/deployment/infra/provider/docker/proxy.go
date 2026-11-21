@@ -132,7 +132,11 @@ func (b *proxyProjectBuilder) createComposeProject() {
 			"--entrypoints.insecure.http.redirections.entryPoint.to="+httpMainEntryPoint,
 			"--entrypoints.insecure.http.redirections.entryPoint.scheme=https",
 			"--entrypoints."+httpMainEntryPoint+".address=:443",
-			"--certificatesresolvers."+b.certResolverName+".acme.tlschallenge=true",
+			// HTTP-01, not TLS-ALPN-01: it also works for domains behind a CDN that ends TLS
+			// itself, such as Cloudflare's proxy, where TLS-ALPN-01 can never succeed (seelf#5).
+			// Traefik answers the challenge on :80 before the https redirection.
+			"--certificatesresolvers."+b.certResolverName+".acme.httpchallenge=true",
+			"--certificatesresolvers."+b.certResolverName+".acme.httpchallenge.entrypoint=insecure",
 			"--certificatesresolvers."+b.certResolverName+".acme.storage=/letsencrypt/acme.json",
 			"--entrypoints."+httpMainEntryPoint+".http.tls.certresolver="+b.certResolverName,
 		)

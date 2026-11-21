@@ -1,6 +1,10 @@
 package serve
 
 import (
+	nethttp "net/http"
+
+	"github.com/checkship-deploy/checkship/internal/auth/domain"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/check_app_domains"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/create_app"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/get_app_detail"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/get_apps"
@@ -76,6 +80,33 @@ func (s *server) getAppByIDHandler() gin.HandlerFunc {
 		}
 
 		return http.Ok(ctx, app)
+	})
+}
+
+// DNS, CAA and certificate status of an environment's custom domains (seelf#5). Only the
+// domains saved on the application are checked, a few checks at a time per user.
+func (s *server) checkAppDomainsHandler() gin.HandlerFunc {
+	return http.Send(s, func(ctx *gin.Context) error {
+		uid, _ := domain.CurrentUser(ctx.Request.Context()).TryGet()
+		release, err := s.domainChecksLimiter.Acquire(string(uid))
+
+		if err != nil {
+			ctx.AbortWithStatusJSON(nethttp.StatusTooManyRequests, gin.H{"code": err.Error()})
+			return nil
+		}
+
+		defer release()
+
+		result, err := bus.Send(s.bus, ctx.Request.Context(), check_app_domains.Query{
+			AppID:       ctx.Param("id"),
+			Environment: environmentOrProduction(ctx.Query("environment")),
+		})
+
+		if err != nil {
+			return err
+		}
+
+		return http.Ok(ctx, result)
 	})
 }
 

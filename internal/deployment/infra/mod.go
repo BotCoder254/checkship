@@ -19,8 +19,10 @@ import (
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/backupstore"
 
 	"github.com/checkship-deploy/checkship/internal/deployment/app/cancel_deployment"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/check_app_domains"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/cleanup_app"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/cleanup_target"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/cloudflare_setup"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/configure_target"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/create_app"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/create_registry"
@@ -45,6 +47,8 @@ import (
 	"github.com/checkship-deploy/checkship/internal/deployment/app/update_target"
 	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/artifact"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/cloudflare"
+	"github.com/checkship-deploy/checkship/internal/deployment/infra/domaincheck"
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/provider"
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/provider/docker"
 	"github.com/checkship-deploy/checkship/internal/deployment/infra/running"
@@ -67,6 +71,10 @@ type Options interface {
 	cleanup_app.Options
 	configure_storage.Options
 	archive.Options
+
+	// The address checkship itself is exposed on (EXPOSED_ON), if any: no application can
+	// take it as a custom domain.
+	AppExposedUrl() monad.Maybe[domain.Url]
 }
 
 // Setup the deployment module and register everything needed in the given
@@ -107,8 +115,24 @@ func Setup(
 	backupRunner := backup_volumes.NewRunner(targetsStore, backupsStore, backupsStore, providerFacade, backupFiles, opts, logger)
 
 	bus.Register(b, expose_checkship_container.Handler(targetsStore, targetsStore, dock))
-	bus.Register(b, create_app.Handler(appsStore, appsStore))
-	bus.Register(b, update_app.Handler(appsStore, appsStore))
+	domainsRules := create_app.DomainsRules{Targets: targetsStore, Apps: appsStore, Reserved: opts.AppExposedUrl()}
+	bus.Register(b, create_app.Handler(appsStore, appsStore, domainsRules))
+	bus.Register(b, update_app.Handler(appsStore, appsStore, domainsRules))
+	bus.Register(b, check_app_domains.Handler(appsStore, targetsStore, domaincheck.New()))
+
+	// Connect Cloudflare
+	cloudflareDeps := cloudflare_setup.Deps{
+		Connections: deploymentsqlite.NewCloudflareConnectionsStore(db),
+		Cloudflare:  cloudflare.New(),
+		Targets:     targetsStore,
+		Apps:        appsStore,
+		Connector:   dock,
+	}
+	bus.Register(b, cloudflare_setup.ConnectHandler(cloudflareDeps))
+	bus.Register(b, cloudflare_setup.StatusHandler(cloudflareDeps))
+	bus.Register(b, cloudflare_setup.SyncHandler(cloudflareDeps))
+	bus.Register(b, cloudflare_setup.SyncJobHandler(cloudflareDeps))
+	bus.Register(b, cloudflare_setup.DisconnectHandler(cloudflareDeps))
 	bus.Register(b, queue_deployment.Handler(appsStore, deploymentsStore, deploymentsStore, sourceFacade))
 	bus.Register(b, deploy.Handler(deploymentsStore, deploymentsStore, artifactManager, sourceFacade, providerFacade, targetsStore, registriesStore, runningDeployments))
 	bus.Register(b, cancel_deployment.Handler(deploymentsStore, deploymentsStore, runningDeployments))
@@ -184,8 +208,16 @@ func Setup(
 	bus.On(b, configure_target.OnAppEnvChangedHandler(targetsStore, targetsStore))
 	bus.On(b, configure_target.OnAppCleanupRequestedHandler(targetsStore, targetsStore))
 	bus.On(b, delete_target.OnTargetCleanupRequestedHandler(scheduler))
+	bus.On(b, cloudflare_setup.OnAppCreatedHandler(scheduler))
+	bus.On(b, cloudflare_setup.OnAppEnvChangedHandler(scheduler))
+	bus.On(b, cloudflare_setup.OnAppCleanupRequestedHandler(scheduler))
+	bus.On(b, cloudflare_setup.OnTargetCleanupRequestedHandler(scheduler))
 
 	if err := db.Migrate(deploymentsqlite.Migrations); err != nil {
+		return err
+	}
+
+	if err := ReconfigureOutdatedProxies(context.Background(), targetsStore, logger); err != nil {
 		return err
 	}
 

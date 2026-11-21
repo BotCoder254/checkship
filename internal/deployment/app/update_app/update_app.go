@@ -38,6 +38,7 @@ func (Command) Name_() string { return "deployment.command.update_app" }
 func Handler(
 	reader domain.AppsReader,
 	writer domain.AppsWriter,
+	rules create_app.DomainsRules,
 ) bus.RequestHandler[string, Command] {
 	return func(ctx context.Context, cmd Command) (string, error) {
 		var url domain.Url
@@ -72,12 +73,49 @@ func Handler(
 		// Determine the availability of updated targets
 		var productionConfig, stagingConfig monad.Maybe[domain.EnvironmentConfig]
 
+		// Custom domains: those given replace the environment's ones, omitted ones are kept.
+		// Both environments are checked every time, against the target each will run on, so a
+		// domain can't move twice into the application and a target change re-checks the domains.
+		inputs := make([]create_app.DomainsInput, 0, 2)
+
+		for _, item := range []struct {
+			env  domain.Environment
+			conf monad.Maybe[EnvironmentConfig]
+		}{{domain.Production, cmd.Production}, {domain.Staging, cmd.Staging}} {
+			current := app.Config(item.env)
+			input := create_app.DomainsInput{
+				Environment: item.env,
+				Target:      current.Target(),
+				Raw:         create_app.RawDomains(current.Domains()),
+			}
+
+			if conf, isUpdated := item.conf.TryGet(); isUpdated {
+				input.Target = domain.TargetID(conf.Target)
+
+				if raw, isSet := conf.Domains.TryGet(); isSet {
+					input.Raw = raw
+				}
+			}
+
+			inputs = append(inputs, input)
+		}
+
+		domains, err := create_app.BuildDomains(ctx, rules, app.ID(), inputs...)
+
+		if err != nil {
+			return "", err
+		}
+
 		if conf, isUpdated := cmd.Production.TryGet(); isUpdated {
-			productionConfig.Set(create_app.BuildEnvironmentConfig(domain.TargetID(conf.Target), conf.Vars))
+			config := create_app.BuildEnvironmentConfig(domain.TargetID(conf.Target), conf.Vars)
+			config.HasDomains(domains[domain.Production])
+			productionConfig.Set(config)
 		}
 
 		if conf, isUpdated := cmd.Staging.TryGet(); isUpdated {
-			stagingConfig.Set(create_app.BuildEnvironmentConfig(domain.TargetID(conf.Target), conf.Vars))
+			config := create_app.BuildEnvironmentConfig(domain.TargetID(conf.Target), conf.Vars)
+			config.HasDomains(domains[domain.Staging])
+			stagingConfig.Set(config)
 		}
 
 		productionRequirement, stagingRequirement, err := reader.CheckAppNamingAvailabilityByID(ctx, app.ID(), productionConfig, stagingConfig)
