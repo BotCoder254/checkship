@@ -72,7 +72,7 @@
 		</div>
 
 		<dl
-			class="grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-label/5 [&_dt]:first-letter:uppercase"
+			class="grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-2.5 track p-4 text-label/5 [&_dt]:first-letter:uppercase"
 		>
 			<dt class="text-muted-foreground">{l.translate('deployment.environment')}</dt>
 			<dd>

@@ -306,7 +306,7 @@
 
 		<section class="flex flex-col gap-2.5" aria-labelledby="domains-how">
 			<h3 id="domains-how" class="text-sm font-semibold">{l.translate('domains.how')}</h3>
-			<ol class="grid gap-3 text-xs text-muted-foreground sm:grid-cols-3">
+			<ol class="grid gap-3 track p-4 text-xs text-muted-foreground sm:grid-cols-3">
 				<li class="flex flex-col gap-1">
 					<b class="text-label font-semibold text-ink">{l.translate('domains.how.1.title')}</b>
 					{l.translate('domains.how.1')}
@@ -347,92 +347,96 @@
 					)}
 				</p>
 
-				<ul class="flex flex-col">
-					{#each section.hostnames as hostname, index (hostname)}
-						{@const status = statuses.get(hostname)}
-						{@const problem = serverErrors[hostname]}
-						<li
-							class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1.5 border-b border-line py-2.5"
-						>
-							<span class="flex min-w-0 flex-col">
-								<span class="font-mono text-label font-semibold break-all">{hostname}</span>
-								{#if unicodeOf(hostname) !== hostname}
-									<span class="text-xs text-muted-foreground">{unicodeOf(hostname)}</span>
-								{/if}
-							</span>
-							<Button
-								variant="ghost"
-								size="icon"
-								aria-label={l.translate('domains.remove', [hostname])}
-								onclick={() => remove(section.name, hostname)}
+				<div class="flex min-w-0 flex-col gap-2 track p-3 sm:p-4">
+					<ul class="flex flex-col">
+						{#each section.hostnames as hostname, index (hostname)}
+							{@const status = statuses.get(hostname)}
+							{@const problem = serverErrors[hostname]}
+							<li
+								class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1.5 border-b border-line py-2.5"
 							>
-								<Icon icon={Delete02Icon} />
-							</Button>
-							{#if problem}
-								<p class="col-span-2 text-xs text-danger" role="alert">
-									{problem.code === 'domain_already_used' && problem.app
-										? l.translate('domains.error.used_by', [problem.app])
-										: l.translate(problem.code as AppTranslationsString)}
-								</p>
-							{:else}
-								<span class="col-span-2 flex flex-wrap gap-1.5">
-									{#each domainChips(status, check?.https ?? false) as chip (chip.key)}
-										<span
-											class={cn(
-												'inline-flex h-6 items-center gap-1.5 rounded-sm px-2 text-xs font-semibold text-ink',
-												chipFill[chip.tone]
-											)}
-										>
-											<span aria-hidden="true" class={cn('size-2 rounded-full', chipDot[chip.tone])}
-											></span>
-											{chip.key === 'domains.status.points_elsewhere'
-												? l.translate('domains.status.points_elsewhere.at', [
-														status?.addresses.join(', ') ?? ''
-													])
-												: l.translate(chip.key as AppTranslationsString)}
-										</span>
-									{/each}
+								<span class="flex min-w-0 flex-col">
+									<span class="font-mono text-label font-semibold break-all">{hostname}</span>
+									{#if unicodeOf(hostname) !== hostname}
+										<span class="text-xs text-muted-foreground">{unicodeOf(hostname)}</span>
+									{/if}
 								</span>
-								<p class="col-span-2 text-xs text-muted-foreground">
-									{hint(status, section.name === mainService && index === 0)}
-								</p>
-							{/if}
-						</li>
-					{/each}
-				</ul>
+								<Button
+									variant="ghost"
+									size="icon"
+									aria-label={l.translate('domains.remove', [hostname])}
+									onclick={() => remove(section.name, hostname)}
+								>
+									<Icon icon={Delete02Icon} />
+								</Button>
+								{#if problem}
+									<p class="col-span-2 text-xs text-danger" role="alert">
+										{problem.code === 'domain_already_used' && problem.app
+											? l.translate('domains.error.used_by', [problem.app])
+											: l.translate(problem.code as AppTranslationsString)}
+									</p>
+								{:else}
+									<span class="col-span-2 flex flex-wrap gap-1.5">
+										{#each domainChips(status, check?.https ?? false) as chip (chip.key)}
+											<span
+												class={cn(
+													'inline-flex h-6 items-center gap-1.5 rounded-sm px-2 text-xs font-semibold text-ink',
+													chipFill[chip.tone]
+												)}
+											>
+												<span
+													aria-hidden="true"
+													class={cn('size-2 rounded-full', chipDot[chip.tone])}
+												></span>
+												{chip.key === 'domains.status.points_elsewhere'
+													? l.translate('domains.status.points_elsewhere.at', [
+															status?.addresses.join(', ') ?? ''
+														])
+													: l.translate(chip.key as AppTranslationsString)}
+											</span>
+										{/each}
+									</span>
+									<p class="col-span-2 text-xs text-muted-foreground">
+										{hint(status, section.name === mainService && index === 0)}
+									</p>
+								{/if}
+							</li>
+						{/each}
+					</ul>
 
-				<Label for="domains-add-{section.name}" class="mt-1">
-					{l.translate('domains.add', [section.name])}
-				</Label>
-				<p class="text-xs text-muted-foreground">{l.translate('domains.add.help')}</p>
-				<form
-					class="flex gap-2"
-					onsubmit={(event) => {
-						event.preventDefault();
-						add(section.name);
-					}}
-				>
-					<Input
-						id="domains-add-{section.name}"
-						bind:value={drafts[section.name]}
-						oninput={() => (typedErrors[section.name] = undefined)}
-						placeholder={l.translate('domains.add.placeholder')}
-						class="font-mono text-label"
-						autocomplete="off"
-						spellcheck="false"
-						aria-invalid={!!typedErrors[section.name] || undefined}
-						aria-describedby="domains-add-{section.name}-error"
-					/>
-					<Button type="submit" variant="outline">
-						<Icon icon={Add01Icon} />
-						{l.translate('domains.add.button')}
-					</Button>
-				</form>
-				{#if typedErrors[section.name]}
-					<p id="domains-add-{section.name}-error" class="text-xs text-danger" role="alert">
-						{l.translate(typedErrors[section.name] as AppTranslationsString)}
-					</p>
-				{/if}
+					<Label for="domains-add-{section.name}" class="mt-1">
+						{l.translate('domains.add', [section.name])}
+					</Label>
+					<p class="text-xs text-muted-foreground">{l.translate('domains.add.help')}</p>
+					<form
+						class="flex gap-2"
+						onsubmit={(event) => {
+							event.preventDefault();
+							add(section.name);
+						}}
+					>
+						<Input
+							id="domains-add-{section.name}"
+							bind:value={drafts[section.name]}
+							oninput={() => (typedErrors[section.name] = undefined)}
+							placeholder={l.translate('domains.add.placeholder')}
+							class="font-mono text-label"
+							autocomplete="off"
+							spellcheck="false"
+							aria-invalid={!!typedErrors[section.name] || undefined}
+							aria-describedby="domains-add-{section.name}-error"
+						/>
+						<Button type="submit" variant="outline">
+							<Icon icon={Add01Icon} />
+							{l.translate('domains.add.button')}
+						</Button>
+					</form>
+					{#if typedErrors[section.name]}
+						<p id="domains-add-{section.name}-error" class="text-xs text-danger" role="alert">
+							{l.translate(typedErrors[section.name] as AppTranslationsString)}
+						</p>
+					{/if}
+				</div>
 			</section>
 		{/each}
 
@@ -471,7 +475,7 @@
 		<section class="flex flex-col gap-2" aria-labelledby="domains-legend">
 			<h3 id="domains-legend" class="text-sm font-semibold">{l.translate('domains.legend')}</h3>
 			<p class="text-xs text-muted-foreground">{l.translate('domains.legend.intro')}</p>
-			<dl class="grid grid-cols-[140px_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-xs">
+			<dl class="grid grid-cols-[140px_minmax(0,1fr)] gap-x-3 gap-y-1.5 track p-4 text-xs">
 				{#each ['points_here', 'points_elsewhere', 'no_record', 'behind_cloudflare', 'caa_blocks', 'default_certificate', 'certificate_ok'] as const as key (key)}
 					<dt class="font-semibold">{l.translate(`domains.status.${key}`)}</dt>
 					<dd class="text-muted-foreground">{l.translate(`domains.legend.${key}`)}</dd>
@@ -483,7 +487,7 @@
 			<section class="flex flex-col gap-2" aria-labelledby="domains-records">
 				<h3 id="domains-records" class="text-sm font-semibold">{l.translate('domains.records')}</h3>
 				<p class="text-xs text-muted-foreground">{l.translate('domains.records.help')}</p>
-				<div class="overflow-x-auto">
+				<div class="overflow-x-auto track p-3 sm:p-4">
 					<table class="w-full text-left text-xs">
 						<thead class="text-muted-foreground">
 							<tr>

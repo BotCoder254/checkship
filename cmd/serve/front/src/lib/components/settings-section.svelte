@@ -1,7 +1,7 @@
 <!--
 	A form section in two columns (DESIGN.md §11.6): the title and one sentence on the left (260px),
 	the fields on the right, so forms use the page width instead of a narrow centred column. One
-	column below md.
+	column below md. In a track (§1, 2026-11-21), so each section reads on its own.
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
@@ -22,7 +22,10 @@
 
 <section
 	{id}
-	class={cn('grid scroll-mt-6 gap-4 md:grid-cols-[260px_minmax(0,1fr)] md:gap-10', className)}
+	class={cn(
+		'grid scroll-mt-6 gap-4 track p-4 sm:p-6 md:grid-cols-[260px_minmax(0,1fr)] md:gap-10',
+		className
+	)}
 >
 	<div class="flex flex-col gap-1.5">
 		<h2 class="text-base font-semibold">{title}</h2>

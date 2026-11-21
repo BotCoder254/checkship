@@ -72,7 +72,10 @@
 
 <section
 	aria-label={label ?? l.translate('dashboard.strip.label', [range])}
-	class={cn('grid grid-cols-2 gap-x-6 gap-y-6 sm:gap-x-10 xl:grid-cols-4', className)}
+	class={cn(
+		'grid grid-cols-2 gap-x-6 gap-y-6 track p-4 sm:gap-x-10 sm:p-5 xl:grid-cols-4',
+		className
+	)}
 >
 	{#if error && !summary}
 		<div class="col-span-full flex flex-wrap items-center gap-3 py-2">

@@ -203,35 +203,39 @@
 				</SectionHeading>
 
 				<!-- A pipeline in the direction code moves (owner, 2026-11-17): staging, Promote, production
-				     side by side from xl, stacked below. No cards (§1 Cardless): the state is the badge. -->
+				     side by side from xl, stacked below. One track (owner, 2026-11-21, canvas "checkship
+				     environments pipeline", option C): a single rounded outline in line-strong on the page's
+				     own background holds both lanes, the named exception to §1 Cardless. Nothing inside gets
+				     a box; the state stays in the marker and badge. Promote is centred on the gap and on the
+				     lanes' height. -->
 				<div
-					class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_190px_minmax(0,1fr)] xl:items-start xl:gap-8"
+					class="grid gap-2 track p-3 xl:grid-cols-[minmax(0,1fr)_190px_minmax(0,1fr)] xl:items-stretch"
 				>
 					{#each ['staging', 'connector', 'production'] as const as slot (slot)}
 						{#if slot === 'connector'}
 							<div
-								class="flex flex-wrap items-center gap-x-3.5 gap-y-2 xl:flex-col xl:pt-10 xl:text-center"
+								class="flex flex-col items-center justify-center gap-2.5 px-2 py-3 text-center xl:py-0"
 							>
 								<span
 									class={cn(
-										'flex size-9 shrink-0 items-center justify-center rounded-full bg-raised xl:-rotate-90',
-										canPromote ? 'text-primary' : 'text-muted-foreground'
+										'flex size-10 shrink-0 items-center justify-center rounded-full xl:-rotate-90',
+										canPromote ? 'bg-accent-soft text-primary' : 'bg-raised text-muted-foreground'
 									)}
 								>
 									<Icon icon={ArrowDown02Icon} class="size-4.5" />
 								</span>
 								{#if staging}
 									<Button
-										variant="outline"
+										variant={canPromote && newer ? 'default' : 'outline'}
 										size="sm"
 										disabled={!canPromote}
-										class="xl:h-auto xl:max-w-full xl:py-1.5 xl:whitespace-normal"
+										class="h-auto max-w-full py-1.5 whitespace-normal"
 										onclick={() => (promoteOpen = true)}
 									>
 										<Icon icon={Rocket01Icon} />
 										{l.translate('detail.promote.to_production', [staging.deployment_number])}
 									</Button>
-									<span class="text-xs text-muted-foreground">
+									<span class="max-w-[190px] text-xs text-muted-foreground">
 										{#if !staging.state.finished_at}
 											{l.translate('detail.promote.wait', [staging.deployment_number])}
 										{:else if !canPromote}
@@ -243,7 +247,7 @@
 										{/if}
 									</span>
 								{:else}
-									<span class="text-xs text-muted-foreground">
+									<span class="max-w-[190px] text-xs text-muted-foreground">
 										{l.translate('detail.promote.none')}
 									</span>
 								{/if}
@@ -255,7 +259,10 @@
 							{@const urls = liveUrls(latest)}
 							{@const url = urls[0]}
 							{@const state = latest ? cardState(latest) : undefined}
-							<section aria-labelledby="card-{environment}" class="flex min-w-0 flex-col gap-4">
+							<section
+								aria-labelledby="card-{environment}"
+								class="flex min-w-0 flex-col gap-4 p-3 sm:p-5"
+							>
 								<div class="flex min-w-0 flex-col gap-2.5">
 									<div class="flex flex-wrap items-center gap-2.5">
 										<h3 id="card-{environment}" class="text-lg/[26px] font-semibold">
@@ -291,7 +298,7 @@
 											href={url}
 											target="_blank"
 											rel="noopener noreferrer"
-											class="flex min-w-0 items-center gap-1.5 self-start rounded-sm font-mono text-label text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+											class="flex max-w-full min-w-0 items-center gap-1.5 self-start rounded-sm font-mono text-label text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
 										>
 											<span class="truncate">{url}</span>
 											<Icon icon={LinkSquare02Icon} class="size-3.5 shrink-0" />
@@ -363,7 +370,7 @@
 										live={state === 'live' ? latest.deployment_number : undefined}
 										onopen={(n) => workspace.openPreview(n)}
 									/>
-									<div class="flex flex-wrap gap-1.5">
+									<div class="mt-auto flex flex-wrap gap-1.5">
 										<Button
 											variant="outline"
 											size="sm"
@@ -402,7 +409,7 @@
 									<p class="text-sm text-muted-foreground">
 										{l.translate(`app.env.empty.${environment}`)}
 									</p>
-									<div class="flex">
+									<div class="mt-auto flex">
 										{#if !deleting}
 											<Button
 												variant="outline"
@@ -442,54 +449,56 @@
 							{/if}
 						{/snippet}
 					</SectionHeading>
-					{#if services.length > 0}
-						<TimelineList labelledby="services-title">
-							{#each services as s (s.name)}
-								{@const url = s.production?.url ?? s.staging?.url}
-								<TimelineRow
-									icon={ContainerIcon}
-									label={[s.name, ...serviceDetails(s)].join(', ')}
-									href={url}
-									external
-								>
-									{#snippet title()}{s.name}{/snippet}
-									{#snippet details()}{serviceDetails(s).join(' · ')}{/snippet}
-									{#snippet actions()}
-										<RowMenu label={l.translate('table.menu', [s.name])}>
-											<RowMenuGroup>
-												{#if s.production?.url}
-													<RowMenuItem icon={LinkSquare02Icon} href={s.production.url} external>
-														{l.translate('menu.open_production')}
+					<div class="min-w-0 track p-2 sm:p-3">
+						{#if services.length > 0}
+							<TimelineList labelledby="services-title">
+								{#each services as s (s.name)}
+									{@const url = s.production?.url ?? s.staging?.url}
+									<TimelineRow
+										icon={ContainerIcon}
+										label={[s.name, ...serviceDetails(s)].join(', ')}
+										href={url}
+										external
+									>
+										{#snippet title()}{s.name}{/snippet}
+										{#snippet details()}{serviceDetails(s).join(' · ')}{/snippet}
+										{#snippet actions()}
+											<RowMenu label={l.translate('table.menu', [s.name])}>
+												<RowMenuGroup>
+													{#if s.production?.url}
+														<RowMenuItem icon={LinkSquare02Icon} href={s.production.url} external>
+															{l.translate('menu.open_production')}
+														</RowMenuItem>
+													{/if}
+													{#if s.staging?.url}
+														<RowMenuItem icon={LinkSquare02Icon} href={s.staging.url} external>
+															{l.translate('menu.open_staging')}
+														</RowMenuItem>
+													{/if}
+													{#if url}
+														<RowMenuItem icon={Copy01Icon} onSelect={() => copy(url)}>
+															{l.translate('menu.copy_url')}
+														</RowMenuItem>
+													{/if}
+													<RowMenuItem icon={CommandLineIcon} href={routes.appLogs(app.id)}>
+														{l.translate('menu.logs')}
 													</RowMenuItem>
-												{/if}
-												{#if s.staging?.url}
-													<RowMenuItem icon={LinkSquare02Icon} href={s.staging.url} external>
-														{l.translate('menu.open_staging')}
-													</RowMenuItem>
-												{/if}
-												{#if url}
-													<RowMenuItem icon={Copy01Icon} onSelect={() => copy(url)}>
-														{l.translate('menu.copy_url')}
-													</RowMenuItem>
-												{/if}
-												<RowMenuItem icon={CommandLineIcon} href={routes.appLogs(app.id)}>
-													{l.translate('menu.logs')}
-												</RowMenuItem>
-											</RowMenuGroup>
-										</RowMenu>
-									{/snippet}
-								</TimelineRow>
-							{/each}
-						</TimelineList>
-					{:else}
-						<EmptyState
-							illustration="rocket"
-							size="compact"
-							level={3}
-							title={l.translate('detail.services.none.title')}
-							description={l.translate('detail.services.none')}
-						/>
-					{/if}
+												</RowMenuGroup>
+											</RowMenu>
+										{/snippet}
+									</TimelineRow>
+								{/each}
+							</TimelineList>
+						{:else}
+							<EmptyState
+								illustration="rocket"
+								size="compact"
+								level={3}
+								title={l.translate('detail.services.none.title')}
+								description={l.translate('detail.services.none')}
+							/>
+						{/if}
+					</div>
 				</section>
 
 				<section class="flex min-w-0 flex-col gap-3" aria-labelledby="recent-title">
@@ -505,84 +514,86 @@
 							</a>
 						{/snippet}
 					</SectionHeading>
-					{#if recent.length > 0}
-						<div class="flex flex-col gap-3" aria-labelledby="recent-title" role="group">
-							{#each groupByDay(recent, deploymentMoment, l.locale()) as group (group.key)}
-								<TimelineGroup label={group.label} count={group.items.length} sticky={false}>
-									{#each group.items as d (d.deployment_number)}
-										{@const tile = deploymentTile(d.state)}
-										<TimelineRow
-											icon={tile.icon}
-											tone={tile.tone}
-											spin={tile.spin}
-											label={deploymentLabel(d)}
-											selected={workspace.previewNumber() === d.deployment_number}
-											onclick={() => workspace.openPreview(d.deployment_number)}
-										>
-											{#snippet title()}#{d.deployment_number}{/snippet}
-											{#snippet badge()}<EnvironmentChip environment={d.environment} />{/snippet}
-											{#snippet details()}
-												{clock(deploymentMoment(d))}
-												{#if d.state.error_code && !isCancelled(d.state)}
-													· <span class="font-mono text-danger">{d.state.error_code}</span>
-												{:else if deploymentCommit(d.source)}
-													· <span class="font-mono">{deploymentCommit(d.source)}</span>
-												{:else if deploymentSource(d.source)}
-													· {deploymentSource(d.source)}
-												{/if}
-											{/snippet}
-											{#snippet actions()}
-												<RowMenu label={l.translate('detail.row.menu', [d.deployment_number])}>
-													<RowMenuGroup>
-														<RowMenuItem
-															icon={CommandLineIcon}
-															onSelect={() => workspace.openPreview(d.deployment_number)}
-														>
-															{l.translate('detail.row.logs')}
-														</RowMenuItem>
-														{#if !deleting && d.state.finished_at}
+					<div class="min-w-0 track p-2 sm:p-3">
+						{#if recent.length > 0}
+							<div class="flex flex-col gap-3" aria-labelledby="recent-title" role="group">
+								{#each groupByDay(recent, deploymentMoment, l.locale()) as group (group.key)}
+									<TimelineGroup label={group.label} count={group.items.length} sticky={false}>
+										{#each group.items as d (d.deployment_number)}
+											{@const tile = deploymentTile(d.state)}
+											<TimelineRow
+												icon={tile.icon}
+												tone={tile.tone}
+												spin={tile.spin}
+												label={deploymentLabel(d)}
+												selected={workspace.previewNumber() === d.deployment_number}
+												onclick={() => workspace.openPreview(d.deployment_number)}
+											>
+												{#snippet title()}#{d.deployment_number}{/snippet}
+												{#snippet badge()}<EnvironmentChip environment={d.environment} />{/snippet}
+												{#snippet details()}
+													{clock(deploymentMoment(d))}
+													{#if d.state.error_code && !isCancelled(d.state)}
+														· <span class="font-mono text-danger">{d.state.error_code}</span>
+													{:else if deploymentCommit(d.source)}
+														· <span class="font-mono">{deploymentCommit(d.source)}</span>
+													{:else if deploymentSource(d.source)}
+														· {deploymentSource(d.source)}
+													{/if}
+												{/snippet}
+												{#snippet actions()}
+													<RowMenu label={l.translate('detail.row.menu', [d.deployment_number])}>
+														<RowMenuGroup>
 															<RowMenuItem
-																icon={RepeatIcon}
-																onSelect={() => {
-																	redeployNumber = d.deployment_number;
-																	redeployOpen = true;
-																}}
+																icon={CommandLineIcon}
+																onSelect={() => workspace.openPreview(d.deployment_number)}
 															>
-																{l.translate('deployment.redeploy')}
+																{l.translate('detail.row.logs')}
 															</RowMenuItem>
-														{/if}
-														<RowMenuItem
-															icon={Copy01Icon}
-															onSelect={() => copyLink(d.deployment_number)}
-														>
-															{l.translate('detail.row.copy')}
-														</RowMenuItem>
-													</RowMenuGroup>
-												</RowMenu>
-											{/snippet}
-										</TimelineRow>
-									{/each}
-								</TimelineGroup>
-							{/each}
-						</div>
-					{:else}
-						<EmptyState
-							illustration="rocket"
-							size="compact"
-							level={3}
-							title={l.translate('app.empty.title')}
-							description={l.translate('app.empty.description')}
-						>
-							{#snippet action()}
-								{#if !deleting}
-									<Button size="sm" onclick={() => workspace.openDeploy('production')}>
-										<Icon icon={Rocket01Icon} />
-										{l.translate('deployment.new')}
-									</Button>
-								{/if}
-							{/snippet}
-						</EmptyState>
-					{/if}
+															{#if !deleting && d.state.finished_at}
+																<RowMenuItem
+																	icon={RepeatIcon}
+																	onSelect={() => {
+																		redeployNumber = d.deployment_number;
+																		redeployOpen = true;
+																	}}
+																>
+																	{l.translate('deployment.redeploy')}
+																</RowMenuItem>
+															{/if}
+															<RowMenuItem
+																icon={Copy01Icon}
+																onSelect={() => copyLink(d.deployment_number)}
+															>
+																{l.translate('detail.row.copy')}
+															</RowMenuItem>
+														</RowMenuGroup>
+													</RowMenu>
+												{/snippet}
+											</TimelineRow>
+										{/each}
+									</TimelineGroup>
+								{/each}
+							</div>
+						{:else}
+							<EmptyState
+								illustration="rocket"
+								size="compact"
+								level={3}
+								title={l.translate('app.empty.title')}
+								description={l.translate('app.empty.description')}
+							>
+								{#snippet action()}
+									{#if !deleting}
+										<Button size="sm" onclick={() => workspace.openDeploy('production')}>
+											<Icon icon={Rocket01Icon} />
+											{l.translate('deployment.new')}
+										</Button>
+									{/if}
+								{/snippet}
+							</EmptyState>
+						{/if}
+					</div>
 				</section>
 			</div>
 		</div>

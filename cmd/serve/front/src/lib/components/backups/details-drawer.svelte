@@ -187,16 +187,18 @@
 						formatBytes(detail.result.size)
 					])}
 				</h3>
-				<ShareBar
-					items={volumeShare(detail)}
-					headers={[
-						l.translate('column.volumes'),
-						l.translate('backups.share.size'),
-						l.translate('charts.share'),
-						l.translate('backups.details.files')
-					]}
-					label={detail.result.volumes.map((v) => `${v.key} ${formatBytes(v.size)}`).join(', ')}
-				/>
+				<div class="track p-4">
+					<ShareBar
+						items={volumeShare(detail)}
+						headers={[
+							l.translate('column.volumes'),
+							l.translate('backups.share.size'),
+							l.translate('charts.share'),
+							l.translate('backups.details.files')
+						]}
+						label={detail.result.volumes.map((v) => `${v.key} ${formatBytes(v.size)}`).join(', ')}
+					/>
+				</div>
 			</section>
 
 			{#if detail.result.skipped?.length}
@@ -223,44 +225,46 @@
 			<h3 class="text-xs font-semibold tracking-wide text-muted-foreground">
 				{l.translate('backups.details.restores')}
 			</h3>
-			{#if detail.restores.length}
-				<TimelineList label={l.translate('backups.details.restores')}>
-					{#each detail.restores as restore (restore.id)}
-						{@const tile = restoreTile(restore.status)}
-						{@const line = [
-							l.relative(restore.requested_at),
-							restore.restored.length ? restore.restored.join(', ') : undefined,
-							restore.snapshot_id ? l.translate('backups.details.snapshot') : undefined,
-							restore.error_code ? errorText(restore.error_code) : undefined
-						]
-							.filter(Boolean)
-							.join(' · ')}
-						<TimelineRow
-							icon={tile.icon}
-							tone={tile.tone}
-							spin={tile.spin}
-							label={`${l.translate('backups.details.restore_line', [appName(restore), restore.environment])}, ${l.translate(`backups.status.${restore.status}`)}, ${line}`}
-						>
-							{#snippet title()}{l.translate('backups.details.restore_line', [
-									appName(restore),
-									restore.environment
-								])}{/snippet}
-							{#snippet badge()}<StatusBadge
-									state={tile.badge}
-									label={l.translate(`backups.status.${restore.status}`)}
-								/>{/snippet}
-							{#snippet details()}{line}{/snippet}
-						</TimelineRow>
-					{/each}
-				</TimelineList>
-			{:else}
-				<EmptyState
-					illustration="backups"
-					size="compact"
-					level={3}
-					title={l.translate('backups.details.no_restores.title')}
-				/>
-			{/if}
+			<div class="min-w-0 track p-2">
+				{#if detail.restores.length}
+					<TimelineList label={l.translate('backups.details.restores')}>
+						{#each detail.restores as restore (restore.id)}
+							{@const tile = restoreTile(restore.status)}
+							{@const line = [
+								l.relative(restore.requested_at),
+								restore.restored.length ? restore.restored.join(', ') : undefined,
+								restore.snapshot_id ? l.translate('backups.details.snapshot') : undefined,
+								restore.error_code ? errorText(restore.error_code) : undefined
+							]
+								.filter(Boolean)
+								.join(' · ')}
+							<TimelineRow
+								icon={tile.icon}
+								tone={tile.tone}
+								spin={tile.spin}
+								label={`${l.translate('backups.details.restore_line', [appName(restore), restore.environment])}, ${l.translate(`backups.status.${restore.status}`)}, ${line}`}
+							>
+								{#snippet title()}{l.translate('backups.details.restore_line', [
+										appName(restore),
+										restore.environment
+									])}{/snippet}
+								{#snippet badge()}<StatusBadge
+										state={tile.badge}
+										label={l.translate(`backups.status.${restore.status}`)}
+									/>{/snippet}
+								{#snippet details()}{line}{/snippet}
+							</TimelineRow>
+						{/each}
+					</TimelineList>
+				{:else}
+					<EmptyState
+						illustration="backups"
+						size="compact"
+						level={3}
+						title={l.translate('backups.details.no_restores.title')}
+					/>
+				{/if}
+			</div>
 		</section>
 	{/if}
 

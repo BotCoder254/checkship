@@ -95,31 +95,33 @@
 			{l.translate('backups.fresh.title')}
 			{#snippet aside()}{l.translate('backups.fresh.note')}{/snippet}
 		</SectionHeading>
-		<TimelineList labelledby="freshness-title">
-			{#each rows as row (`${row.app.id}:${row.environment}`)}
-				{@const tile = tiles[row.freshness]}
-				<TimelineRow
-					icon={tile.icon}
-					tone={tile.tone}
-					label={[
-						row.app.name,
-						l.translate(`deploy.environment.${row.environment}`),
-						detailsOf(row)
-					].join(', ')}
-					href={routes.appBackups(row.app.id)}
-				>
-					{#snippet title()}{row.app.name}{/snippet}
-					{#snippet badge()}<EnvironmentChip environment={row.environment} />{/snippet}
-					{#snippet details()}<span
-							class={row.freshness === 'stale'
-								? 'text-warning'
-								: row.freshness === 'never'
-									? 'text-danger'
-									: undefined}>{detailsOf(row)}</span
-						>{/snippet}
-				</TimelineRow>
-			{/each}
-		</TimelineList>
+		<div class="min-w-0 track p-2 sm:p-3">
+			<TimelineList labelledby="freshness-title">
+				{#each rows as row (`${row.app.id}:${row.environment}`)}
+					{@const tile = tiles[row.freshness]}
+					<TimelineRow
+						icon={tile.icon}
+						tone={tile.tone}
+						label={[
+							row.app.name,
+							l.translate(`deploy.environment.${row.environment}`),
+							detailsOf(row)
+						].join(', ')}
+						href={routes.appBackups(row.app.id)}
+					>
+						{#snippet title()}{row.app.name}{/snippet}
+						{#snippet badge()}<EnvironmentChip environment={row.environment} />{/snippet}
+						{#snippet details()}<span
+								class={row.freshness === 'stale'
+									? 'text-warning'
+									: row.freshness === 'never'
+										? 'text-danger'
+										: undefined}>{detailsOf(row)}</span
+							>{/snippet}
+					</TimelineRow>
+				{/each}
+			</TimelineList>
+		</div>
 		<p class="text-xs text-muted-foreground">{l.translate('backups.fresh.tones')}</p>
 	</section>
 {/if}

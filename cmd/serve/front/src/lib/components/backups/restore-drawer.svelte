@@ -229,7 +229,9 @@
 			<h3 id="restore-plan" class="text-xs font-semibold tracking-wide text-muted-foreground">
 				{l.translate('restore.plan.title')}
 			</h3>
-			<Steps label={l.translate('restore.plan.title')} steps={plan} />
+			<div class="track p-4">
+				<Steps label={l.translate('restore.plan.title')} steps={plan} />
+			</div>
 		</section>
 
 		{#if !snapshot && selected.length}

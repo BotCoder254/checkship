@@ -381,7 +381,7 @@
 			</p>
 		{/each}
 
-		<ol class="flex flex-col gap-5">
+		<ol class="flex flex-col gap-5 track p-4 sm:p-5">
 			<!-- 1 · Create a token -->
 			<li class="grid grid-cols-[24px_minmax(0,1fr)] gap-x-3 gap-y-1.5">
 				<span
