@@ -41,6 +41,10 @@ export type Service = {
 	name: string;
 	image: string;
 	entrypoints: Entrypoint[];
+	/** Custom domains the deployment was made with (seelf#5). */
+	domains?: string[];
+	/** Where it is served over http: custom domains first, then the default address. */
+	urls?: string[];
 };
 
 export type State = {

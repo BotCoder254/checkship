@@ -58,6 +58,12 @@
 
 	const deleting = $derived(!!app.cleanup_requested_at);
 	const url = $derived(liveUrl(app.latest_deployments.production));
+	// With a custom domain (seelf#5), the button names it: that's where it goes.
+	const visitDomain = $derived(
+		app.latest_deployments.production?.state.services?.some((s) => s.domains?.length) && url
+			? new URL(url).host
+			: undefined
+	);
 
 	let deployOpen = $state(false);
 	let deployEnvironment = $state<Environment>('production');
@@ -147,7 +153,9 @@
 				title={url ?? l.translate('detail.visit.none')}
 			>
 				<Icon icon={LinkSquare02Icon} />
-				{l.translate('detail.visit')}
+				{visitDomain
+					? l.translate('detail.visit.domain', [visitDomain])
+					: l.translate('detail.visit')}
 			</Button>
 			<div class="flex gap-0.5">
 				<Button

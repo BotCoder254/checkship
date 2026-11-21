@@ -10,12 +10,14 @@
 	type Props = {
 		title: string;
 		description?: string;
+		/** A second paragraph under the description, for a section that needs explaining. */
+		explain?: string;
 		id?: string;
 		class?: string;
 		children: Snippet;
 	};
 
-	let { title, description, id, class: className, children }: Props = $props();
+	let { title, description, explain, id, class: className, children }: Props = $props();
 </script>
 
 <section
@@ -26,6 +28,9 @@
 		<h2 class="text-base font-semibold">{title}</h2>
 		{#if description}
 			<p class="text-label text-muted-foreground">{description}</p>
+		{/if}
+		{#if explain}
+			<p class="mt-1.5 text-label text-muted-foreground">{explain}</p>
 		{/if}
 	</div>
 	<div class="flex min-w-0 flex-col gap-4">

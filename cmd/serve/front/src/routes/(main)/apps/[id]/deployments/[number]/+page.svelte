@@ -257,7 +257,10 @@
 			{#if services.length > 0}
 				<ul class="flex flex-col gap-1.5">
 					{#each services as service (service.name)}
-						{@const urls = service.entrypoints.filter((e) => e.url).map((e) => e.url!)}
+						{@const entrypointUrls = service.entrypoints.filter((e) => e.url).map((e) => e.url!)}
+						<!-- Custom domains first (seelf#5), then the default address and other ports -->
+						{@const urls = [...new Set([...(service.urls ?? []), ...entrypointUrls])]}
+						{@const defaultUrl = service.domains?.length ? service.urls?.at(-1) : undefined}
 						<li class="flex flex-col gap-1 py-1.5 text-sm">
 							<span class="flex items-center justify-between gap-3">
 								<span class="font-semibold">{service.name}</span>
@@ -272,7 +275,10 @@
 									rel="noopener noreferrer"
 									class="truncate font-mono text-label text-primary hover:underline"
 								>
-									{url}
+									{url}{#if url === defaultUrl}<span
+											class="ml-1.5 font-sans text-xs font-semibold text-muted-foreground"
+											>{l.translate('domains.url.default')}</span
+										>{/if}
 								</a>
 							{/each}
 							<span class="truncate font-mono text-xs text-muted-foreground">{service.image}</span>

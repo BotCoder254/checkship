@@ -44,14 +44,48 @@ export type AppDetail = {
 	staging: EnvironmentConfig;
 };
 
+/** Custom domains per compose service (seelf#5); the first of the main service is the primary. */
+export type DomainsPerService = Record<string, string[]>;
+
 export type EnvironmentConfig = {
 	target: TargetSummary;
 	vars?: EnvironmentVariablesPerService;
+	domains?: DomainsPerService;
 };
 
 export type CreateAppDataEnvironmentConfig = {
 	target: string;
 	vars?: EnvironmentVariablesPerService;
+	/** Omitted: the environment keeps its domains. {} removes them. */
+	domains?: DomainsPerService;
+};
+
+export type DnsStatus =
+	'points_here' | 'behind_cloudflare' | 'points_elsewhere' | 'no_record' | 'unknown';
+export type CaaStatus = 'caa_ok' | 'caa_blocks' | 'caa_unknown';
+export type CertificateStatus = 'certificate_ok' | 'default_certificate' | 'unreachable';
+
+export type DomainStatus = {
+	service: string;
+	hostname: string;
+	unicode: string;
+	dns: DnsStatus;
+	addresses: string[];
+	caa: CaaStatus;
+	caa_issuers?: string[];
+	/** Its zone's nameservers are Cloudflare's: Connect Cloudflare can set it up. */
+	cloudflare_dns?: boolean;
+	certificate?: CertificateStatus;
+	issuer?: string;
+	expires_at?: string;
+};
+
+export type DomainsCheck = {
+	environment: string;
+	https: boolean;
+	/** The environment's default address on its target, and what it resolves to. */
+	expected: { host: string; addresses: string[] };
+	domains: DomainStatus[];
 };
 
 export type CreateApp = {
@@ -75,6 +109,8 @@ export type UpdateApp = {
 export interface AppsService {
 	create(payload: CreateApp): Promise<AppDetail>;
 	update(id: string, payload: UpdateApp): Promise<AppDetail>;
+	/** DNS, CAA and certificate status of an environment's saved custom domains. */
+	checkDomains(id: string, environment: string): Promise<DomainsCheck>;
 	/** Unless `backupVolumes` is false, each environment's volumes are backed up before removal. */
 	delete(id: string, backupVolumes?: boolean): Promise<void>;
 	fetchAll(options?: FetchOptions): Promise<App[]>;
@@ -110,6 +146,13 @@ export class RemoteAppsService implements AppsService {
 
 	queryAll(): QueryResult<App[]> {
 		return this._fetcher.query('/api/v1/apps', { refreshInterval: this._options.pollingInterval });
+	}
+
+	checkDomains(id: string, environment: string): Promise<DomainsCheck> {
+		return this._fetcher.get(`/api/v1/apps/${id}/domains/check`, {
+			params: { environment },
+			cache: 'no-store'
+		});
 	}
 
 	queryById(id: string): QueryResult<AppDetail> {

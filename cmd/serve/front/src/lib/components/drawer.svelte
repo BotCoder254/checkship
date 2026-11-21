@@ -1,6 +1,6 @@
 <!--
 	Right drawer (DESIGN.md §11.6): for short tasks where the page behind still matters. 560px for
-	forms, 680px for previews, full screen on phones. Header (title, one line, close), a body that
+	forms, 620px for a form with tables and steps (Domains), 680px for previews, full screen on phones. Header (title, one line, close), a body that
 	scrolls, and a footer with the actions on the right. A shadow appears above the footer only while
 	there is more to scroll. Esc and the scrim close it; focus returns to what opened it.
 -->
@@ -18,7 +18,7 @@
 		open: boolean;
 		title: string;
 		description?: string | Snippet;
-		size?: 'form' | 'preview';
+		size?: 'form' | 'wide' | 'preview';
 		children: Snippet;
 		footer?: Snippet;
 		onclose?: () => void;
@@ -61,7 +61,7 @@
 	<Sheet.Content
 		side="right"
 		showCloseButton={false}
-		class={cn('md:w-140', size === 'preview' && 'md:w-170')}
+		class={cn('md:w-140', size === 'wide' && 'md:w-155', size === 'preview' && 'md:w-170')}
 	>
 		<header class="flex shrink-0 items-start justify-between gap-4 pt-5 pr-4 pb-4 pl-6">
 			<div class="flex min-w-0 flex-col gap-1">

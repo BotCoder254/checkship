@@ -495,8 +495,245 @@ You may reconsider and try to make the target reachable before deleting it.`,
 	'settings.vcs.token.help': 'Only for private repositories. Never shown again once saved.',
 	'settings.environments': 'Environments',
 	'settings.environments.description':
-		'Each environment runs on one target. Its variables open in a drawer.',
+		'Each environment runs on one target. Its variables and its own domains open in a drawer.',
 	'settings.variables': 'Variables',
+	// Custom domains (seelf#5)
+	'settings.domains': 'Domains',
+	'settings.domains.explain':
+		'Domains serve an environment at your own address, such as shop.acme.com, next to the default one checkship gives it. You point the domain’s DNS at the target; checkship routes it and gets the HTTPS certificate.',
+	'settings.domains.list': (env: string) =>
+		`${env}’s domains and how each one is doing. Open Domains to add one, fix one, or see the DNS record to create.`,
+	'settings.domains.primary': 'primary',
+	'domains.summary': (count: number) => (count === 1 ? '1 domain' : `${count} domains`),
+	'domains.summary.none': 'No domains',
+	'domains.title': (env: string) => `Domains · ${env}`,
+	'domains.description':
+		'Serve this environment at your own domains. Each one is added next to its default address, which keeps working.',
+	'domains.how': 'How it works',
+	'domains.how.1.title': '1 · Add the domain',
+	'domains.how.1': 'Under the service that should answer it: the one with the website or API.',
+	'domains.how.2.title': '2 · Point DNS here',
+	'domains.how.2':
+		'Create the record shown under DNS records to create, at your DNS provider. The status turns to Points here.',
+	'domains.how.3.title': '3 · Save',
+	'domains.how.3': (env: string) =>
+		`${env} is redeployed with the domain. HTTPS comes on its own on the first visit.`,
+	'domains.never_deployed':
+		'This environment hasn’t been deployed yet, so checkship doesn’t know its services. Deploy once, or add a service by name below.',
+	'domains.service.port': (port: number) => `port ${port}`,
+	'domains.service.also_at': 'also at',
+	'domains.service.main':
+		'The service’s first web port. Every domain listed here shows the same thing as its default address, which keeps working too. The first one is the primary: the Visit button and links use it.',
+	'domains.service.other':
+		'This service gets its own domains, so they reach it rather than the main service. A service with no web port can’t take a domain.',
+	'domains.remove': (hostname: string) => `Remove ${hostname}`,
+	'domains.removed': (hostname: string) =>
+		`${hostname} is removed once you save. Delete its DNS record at your provider too, so the name doesn’t keep pointing at this server.`,
+	'domains.add': (service: string) => `Add a domain to ${service}`,
+	'domains.add.help':
+		'Just the name, such as api.acme.com: no https://, port or path. It must not be used by another application.',
+	'domains.add.placeholder': 'shop.acme.com',
+	'domains.add.button': 'Add',
+	'domains.other_service': 'Another service',
+	'domains.other_service.help':
+		'Its name as in the compose file. Domains of a service without a web port are ignored when deploying, and the log says so.',
+	'domains.other_service.button': 'Add service',
+	'domains.legend': 'What the statuses mean',
+	'domains.legend.intro':
+		'checkship looks each domain up in DNS, then, once it points here, checks the certificate the server returns for it. Nothing is sent to the domain beyond that check.',
+	'domains.legend.points_here': 'DNS sends visitors to this target. Ready to save.',
+	'domains.legend.points_elsewhere': 'DNS sends them to another server. Fix the record first.',
+	'domains.legend.no_record': 'The name doesn’t exist yet. Create the record below.',
+	'domains.legend.behind_cloudflare':
+		'Cloudflare’s proxy hides the server. It works; the check just can’t see through it.',
+	'domains.legend.caa_blocks':
+		'A CAA record forbids Let’s Encrypt, so no certificate can be issued.',
+	'domains.legend.default_certificate':
+		'HTTPS isn’t issued yet. It is requested on the first visit after DNS points here.',
+	'domains.legend.certificate_ok': 'HTTPS works, from Let’s Encrypt, and renews on its own.',
+	'domains.status.unchecked': 'Not checked yet',
+	'domains.status.points_here': 'Points here',
+	'domains.status.points_elsewhere': 'Points elsewhere',
+	'domains.status.points_elsewhere.at': (addresses: string) =>
+		addresses ? `Points elsewhere · ${addresses}` : 'Points elsewhere',
+	'domains.status.no_record': 'No DNS record',
+	'domains.status.behind_cloudflare': 'Behind Cloudflare',
+	'domains.status.unknown': 'DNS not checked',
+	'domains.status.caa_blocks': 'CAA blocks Let’s Encrypt',
+	'domains.status.certificate_ok': 'Certificate OK',
+	'domains.status.default_certificate': 'Default certificate',
+	'domains.status.unreachable': 'No answer on 443',
+	'domains.hint.unchecked': 'Checked when you save or press Check again.',
+	'domains.hint.primary': 'Primary: the Visit button and service links use it.',
+	'domains.hint.ready': 'Served at this address too.',
+	'domains.hint.no_record':
+		'Create the record below before saving, or the certificate request fails.',
+	'domains.hint.points_elsewhere': (found: string, expected: string) =>
+		`It resolves to ${found}, but this target answers at ${expected || 'another address'}. Update the record below; until then the certificate request fails.`,
+	'domains.hint.behind_cloudflare':
+		'The check can’t see past Cloudflare’s proxy. Use SSL/TLS mode Full (strict) once the certificate is issued.',
+	'domains.hint.unknown': 'DNS could not be checked right now. Press Check again in a moment.',
+	'domains.hint.caa_blocks': (issuers: string) =>
+		`A CAA record only allows ${issuers || 'other authorities'}, so Let’s Encrypt refuses. Add a CAA record with issue "letsencrypt.org".`,
+	'domains.hint.default_certificate':
+		'Not issued yet: until Let’s Encrypt validates it, browsers see the proxy’s own certificate. Visit it once, then check again.',
+	'domains.hint.unreachable':
+		'Nothing answered on port 443 of the target. Check that the port is open in its firewall.',
+	'domains.records': 'DNS records to create',
+	'domains.records.help':
+		'Create them first, then save. A subdomain points at the service’s default address; a bare domain (acme.com) can’t use a CNAME, so it gets the server’s addresses.',
+	'domains.records.domain': 'Domain',
+	'domains.records.type': 'Type',
+	'domains.records.value': 'Value',
+	'domains.notice': (env: string) =>
+		`Saving redeploys ${env}. Certificates come from Let’s Encrypt on the first visit once DNS points here. It allows only 5 failed attempts per domain per hour, so check DNS before saving.`,
+	'domains.check': 'Check again',
+	'domains.save': 'Save and redeploy',
+	'domains.save.failed': (count: number) =>
+		count === 1
+			? 'Nothing was saved: 1 domain needs a change.'
+			: `Nothing was saved: ${count} domains need a change.`,
+	'domains.manual': (target: string) =>
+		`This environment runs on ${target}, a target with a manual proxy: checkship doesn’t route traffic there, so it can’t serve custom domains. Configure them in your own proxy, or give the target a URL so checkship runs its proxy.`,
+	'domains.manual.link': 'Open the target',
+	'domains.manual.why':
+		'Why: a manual proxy means you run your own (nginx, Caddy…) in front of the containers. checkship deploys them but never touches the routing, so it has nowhere to add a domain or a certificate.',
+	'domains.error.used_by': (app: string) =>
+		`Already used by the application ${app}. A domain can serve one application only.`,
+	'domains.also_at': 'Also at',
+	'domains.primary.explain':
+		'The primary domain is the first one added to the main service. Every address shows the same app; the default one keeps working if DNS has a problem.',
+	'domains.services.explain':
+		'Each service’s addresses, your domains first, then the default address checkship gives it.',
+	'domains.url.default': 'default',
+	'hostname.required': 'Type a domain such as api.acme.com.',
+	'hostname.not_a_name': 'Only the domain: no https://, port or path.',
+	'hostname.wildcard': 'Wildcard domains are not supported yet.',
+	'hostname.ip': 'An IP address is not a domain.',
+	invalid_hostname: 'Not a valid domain name.',
+	'cloudflare.title': 'Set it up with Cloudflare',
+	'cloudflare.intro': (target: string) =>
+		`This domain’s DNS is at Cloudflare. Give checkship a token once and it creates the records, and for ${target} if it can’t be reached from the internet, a Cloudflare Tunnel too. No copying records by hand.`,
+	'cloudflare.step1': 'Create a token on Cloudflare',
+	'cloudflare.step1.help':
+		'Open Cloudflare: the page is already filled in with these permissions. Click Continue to summary, then Create Token, and copy it.',
+	'cloudflare.permissions': 'Permissions',
+	'cloudflare.token_name': (target: string) => `checkship · ${target}`,
+	'cloudflare.open': 'Open Cloudflare',
+	'cloudflare.step2': 'Paste the token',
+	'cloudflare.token': 'Cloudflare API token',
+	'cloudflare.token.placeholder': 'Paste the token here',
+	'cloudflare.token.help':
+		'Stored on this checkship server and only ever sent to Cloudflare; it is never shown again. Revoke it any time from your Cloudflare profile, under API Tokens.',
+	'cloudflare.connect': 'Connect',
+	'cloudflare.connected': (account: string) =>
+		account ? `Connected to ${account}` : 'Connected to Cloudflare',
+	'cloudflare.zones': (zones: string) => `Domains it can manage: ${zones}`,
+	'cloudflare.replace_token': 'Use another token',
+	'cloudflare.step3': 'How should visitors reach this target?',
+	'cloudflare.step3.help':
+		'Then press Set up and redeploy: the domains are saved, and checkship does the rest on Cloudflare.',
+	'cloudflare.way': 'Visitors arrive',
+	'cloudflare.way.tunnel': 'Through a Cloudflare Tunnel',
+	'cloudflare.way.dns': 'With a DNS record',
+	'cloudflare.way.recommended': 'recommended here',
+	'cloudflare.way.tunnel.help':
+		'For a machine the internet can’t reach, like a desktop or a home server: no port to open. checkship runs the connector next to its proxy.',
+	'cloudflare.way.tunnel.not_allowed':
+		'This token couldn’t create a tunnel. Add Cloudflare Tunnel · Edit to it on Cloudflare, then choose this and set up again.',
+	'cloudflare.way.dns.help':
+		'For a server with a public address and ports 80 and 443 open: a proxied record points at it, and HTTPS comes from Let’s Encrypt.',
+	'cloudflare.setup': 'Set up and redeploy',
+	'cloudflare.running':
+		'Setting up on Cloudflare… The first time, downloading the tunnel connector can take a minute or two.',
+	'cloudflare.tasks': 'Done on Cloudflare',
+	'cloudflare.task.tunnel': 'Tunnel ready',
+	'cloudflare.task.routes': 'Routes added',
+	'cloudflare.task.records': 'DNS records set',
+	'cloudflare.task.connector': 'Connector running',
+	'cloudflare.task.cleanup': 'Old records removed',
+	'cloudflare.live': (url: string) => `${url} is live`,
+	'cloudflare.live.help':
+		'Cloudflare may take a minute to answer everywhere. The domain then shows Behind Cloudflare: the check can’t see past Cloudflare’s proxy, which is expected.',
+	'cloudflare.what':
+		'checkship only touches the records it creates, marked “managed by checkship” in Cloudflare. A record of yours for the same name is never replaced without asking.',
+	'cloudflare.problem.permission': (permission: string) =>
+		`The token is missing the ${permission} permission.`,
+	'cloudflare.problem.said': (message: string) => `Cloudflare said: “${message}”.`,
+	'cloudflare.problem.fix.tunnel':
+		'On Cloudflare, open My Profile › API Tokens (or Manage Account › Account API Tokens for a cfat_ token), edit this token and add Account › Cloudflare Tunnel › Edit (it may read Cloudflare One Connector: cloudflared › Write). The token stays the same: choose the tunnel and press Set up and redeploy again.',
+	'cloudflare.problem.fix':
+		'Open Cloudflare again to create a token with all three permissions, then paste the new one.',
+	'cloudflare.outside': (domains: string) => `Not in this Cloudflare account: ${domains}`,
+	'cloudflare.outside.help':
+		'The token’s account doesn’t hold these domains, so checkship left them alone. Set them up by hand, or connect a token of the account that holds them.',
+	'cloudflare.conflict': (hostname: string) =>
+		`${hostname} already has a record checkship didn’t create`,
+	'cloudflare.conflict.help': (type: string, content: string) =>
+		`${type} → ${content}. Keep it if it is used for something else; replace it to send this domain here.`,
+	'cloudflare.fix.title': (hostname: string) => `Point ${hostname} to the tunnel`,
+	'cloudflare.fix.why': (type: string, content: string) =>
+		`It already has a record checkship didn’t create (${type} → ${content}), so checkship left it alone. Replace it in Cloudflare in four steps, or let checkship do it below.`,
+	'cloudflare.fix.why.dns_edit':
+		'This token can only read DNS records, so add this one yourself on Cloudflare, as below. Or add DNS · Edit to the token and press Set up and redeploy again.',
+	'cloudflare.fix.open': 'Open the domain’s DNS records on Cloudflare',
+	'cloudflare.fix.open.button': (zone: string) => `Open DNS records of ${zone}`,
+	'cloudflare.fix.delete': 'Delete the record in the way',
+	'cloudflare.fix.delete.help':
+		'Click Edit on this row, then Delete. 100:: is Cloudflare’s placeholder for “no server”: if it serves a redirect rule or a Worker, keep it and use another domain instead.',
+	'cloudflare.fix.add': 'Add this record: click Add record, fill it in like this, and Save',
+	'cloudflare.fix.type': 'Type',
+	'cloudflare.fix.name': 'Name',
+	'cloudflare.fix.name.root': (zone: string) => `the domain itself, ${zone}`,
+	'cloudflare.fix.target': 'Target',
+	'cloudflare.fix.copy': 'Copy the target',
+	'cloudflare.fix.proxy': 'Proxy status',
+	'cloudflare.fix.proxied': 'Proxied (orange cloud on)',
+	'cloudflare.fix.add.help':
+		'The target is your tunnel’s own address. Proxied must stay on: a tunnel only answers through Cloudflare’s proxy.',
+	'cloudflare.fix.check': 'Check it',
+	'cloudflare.fix.check.help':
+		'checkship looks the record up on Cloudflare and takes it over, so it follows your domains from then on.',
+	'cloudflare.fix.check.button': 'Check the record',
+	'cloudflare.fix.or':
+		'Or let checkship do it: it deletes the record in the way and adds the one above.',
+	'cloudflare.fix.done': (hostname: string) => `${hostname} points to the tunnel`,
+	'cloudflare.fix.done.help':
+		'The record is in place and checkship manages it. Visitors reach this target through Cloudflare.',
+	'cloudflare.conflict.keep': 'Keep it',
+	'cloudflare.conflict.replace': 'Replace the record',
+	'cloudflare.account': 'Account',
+	'cloudflare.tunnel': 'Tunnel',
+	'cloudflare.tunnel.state': (status: string, connections: number) =>
+		`${status} · ${connections === 1 ? '1 connection' : `${connections} connections`}`,
+	'cloudflare.zones.label': 'Domains',
+	'cloudflare.records': 'Records checkship manages',
+	'cloudflare.records.none': 'None yet: set a domain up from an application’s Domains drawer.',
+	'cloudflare.target.help':
+		'They follow the applications’ domains: adding or removing a domain updates Cloudflare on its own. To use another token, open any application’s Domains drawer.',
+	'cloudflare.disconnect': 'Disconnect',
+	'cloudflare.disconnect.title': (target: string) => `Disconnect ${target} from Cloudflare?`,
+	'cloudflare.disconnect.description':
+		'checkship removes the tunnel and its connector and deletes the DNS records it created, then forgets the token. Domains set up this way stop answering until you set them up again. Your other records are not touched. Revoke the token on Cloudflare too.',
+	cloudflare_token_invalid:
+		'This doesn’t look like a Cloudflare API token. Copy the whole token Cloudflare shows once it is created.',
+	cloudflare_token_refused:
+		'Cloudflare refused this token: it may be expired, revoked or limited to other IP addresses.',
+	cloudflare_permission_missing: 'The token is missing a permission.',
+	cloudflare_unavailable: 'Cloudflare couldn’t be reached. Try again in a moment.',
+	cloudflare_not_connected: 'This target isn’t connected to Cloudflare yet.',
+	cloudflare_invalid_mode: 'Choose a tunnel or a DNS record.',
+	cloudflare_tunnel_not_allowed: 'The token can’t edit tunnels.',
+	cloudflare_automatic_proxy_only:
+		'Only a target whose proxy checkship runs can be set up with Cloudflare.',
+	domain_already_used: 'Already used by another application.',
+	domain_reserved_by_target:
+		'Inside the target’s own domain: checkship already serves these names. Use a domain outside it.',
+	domain_reserved: 'This is checkship’s own address. It can’t be given to an application.',
+	domain_duplicated: 'This domain is already on this application.',
+	too_many_domains: 'Too many domains: 20 per service, 50 per environment.',
+	custom_domains_need_automatic_proxy:
+		'This target uses a manual proxy, so it can’t serve custom domains.',
 	'settings.target_changed.title': (env: string, from: string, to: string) =>
 		`${env} moves from ${from} to ${to}`,
 	'settings.target_changed.description':
@@ -751,6 +988,7 @@ You may reconsider and try to make the target reachable before deleting it.`,
 		'Pick the environment and the source. It runs after any job already queued for that environment.',
 	// Application details v3 (DESIGN.md §11.7)
 	'detail.visit': 'Visit',
+	'detail.visit.domain': (domain: string) => `Visit ${domain}`,
 	'detail.visit.none': 'No URL until a deployment exposes a service',
 	'detail.deploy': 'Deploy',
 	'detail.deploy.hint': (branch: string) => `Deploy the latest commit of ${branch} to production`,
