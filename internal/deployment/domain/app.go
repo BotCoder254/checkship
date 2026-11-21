@@ -55,6 +55,11 @@ type (
 		) (EnvironmentConfigRequirement, EnvironmentConfigRequirement, error)
 		// Check if a specific target is used by an application.
 		HasAppsOnTarget(context.Context, TargetID) (HasAppsOnTarget, error)
+		// Which of the given custom domains are already used by another application than
+		// the given one, with that application's name.
+		GetDomainsOwners(ctx context.Context, except AppID, hostnames []Hostname) (map[Hostname]AppName, error)
+		// Custom domains of every application environment running on the given target.
+		GetDomainsOnTarget(ctx context.Context, target TargetID) ([]TargetDomain, error)
 		GetByID(context.Context, AppID) (App, error)
 	}
 
@@ -179,9 +184,11 @@ func AppFrom(scanner storage.Scanner) (a App, err error) {
 		&a.production.target,
 		&a.production.version,
 		&a.production.vars,
+		&a.production.domains,
 		&a.staging.target,
 		&a.staging.version,
 		&a.staging.vars,
+		&a.staging.domains,
 		&cleanupRequestedAt,
 		&cleanupRequestedBy,
 		&createdAt,
@@ -304,6 +311,16 @@ func (a *App) ID() AppID                                   { return a.id }
 func (a *App) VersionControl() monad.Maybe[VersionControl] { return a.versionControl }
 
 // Configuration of the given environment.
+// Subdomain of the environment's main service on its target: the application name, plus
+// "-<environment>" outside production (see ConfigSnapshot.subDomain).
+func (a *App) DefaultSubdomain(env Environment) string {
+	if env.IsProduction() {
+		return string(a.name)
+	}
+
+	return string(a.name) + "-" + string(env)
+}
+
 func (a *App) Config(env Environment) EnvironmentConfig {
 	if env.IsProduction() {
 		return a.production

@@ -42,6 +42,9 @@ type (
 		Url         monad.Maybe[string]      `json:"url"`
 		Status      monad.Maybe[uint8]       `json:"status"`
 		Entrypoints monad.Maybe[Entrypoints] `json:"-"`
+		// Its custom domains reach it through a Cloudflare Tunnel: Cloudflare serves them over
+		// https whatever the target's own scheme.
+		TunnelDomains bool `json:"-"`
 	}
 
 	Source struct {
@@ -79,8 +82,10 @@ type (
 		Name        string              `json:"name"`
 		Image       string              `json:"image"`
 		Entrypoints []Entrypoint        `json:"entrypoints"`
-		Url         monad.Maybe[string] `json:"url"`       // For compatibility with prior versions
-		Subdomain   monad.Maybe[string] `json:"subdomain"` // For compatibility with prior versions
+		Domains     []string            `json:"domains,omitempty"` // Custom domains the deployment was made with (seelf#5)
+		Urls        []string            `json:"urls,omitempty"`    // Where it is served over http: custom domains first, then the default address
+		Url         monad.Maybe[string] `json:"url"`               // For compatibility with prior versions
+		Subdomain   monad.Maybe[string] `json:"subdomain"`         // For compatibility with prior versions
 	}
 )
 
@@ -110,6 +115,11 @@ func (d *Deployment) ResolveServicesUrls() {
 
 	idx := strings.Index(url, "://")
 	targetScheme, targetHost := url[:idx+3], url[idx+3:]
+	domainScheme := targetScheme
+
+	if d.Target.TunnelDomains {
+		domainScheme = "https://"
+	}
 
 	for i, service := range services {
 		// Compatibility with old deployments
@@ -140,6 +150,15 @@ func (d *Deployment) ResolveServicesUrls() {
 			if !entrypoint.IsCustom {
 				entrypoint.Url.Set(targetScheme + host)
 				services[i].Entrypoints[j] = entrypoint
+
+				if entrypoint.Router == string(domain.RouterHttp) && len(services[i].Urls) == 0 {
+					urls := make([]string, 0, len(service.Domains)+1)
+					for _, hostname := range service.Domains {
+						urls = append(urls, domainScheme+hostname)
+					}
+					services[i].Urls = append(urls, targetScheme+host)
+				}
+
 				continue
 			}
 

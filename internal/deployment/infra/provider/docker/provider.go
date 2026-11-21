@@ -53,6 +53,7 @@ type (
 	Docker interface {
 		provider.Provider
 		expose_checkship_container.LocalProvider
+		domain.TunnelConnector
 	}
 
 	docker struct {

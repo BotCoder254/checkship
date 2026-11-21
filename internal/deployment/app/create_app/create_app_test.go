@@ -26,7 +26,7 @@ func Test_CreateApp(t *testing.T) {
 		spy.Dispatcher,
 	) {
 		context := fixture.PrepareDatabase(tb, seed...)
-		return create_app.Handler(context.AppsStore, context.AppsStore), context.Context, context.Dispatcher
+		return create_app.Handler(context.AppsStore, context.AppsStore, create_app.DomainsRules{Targets: context.TargetsStore, Apps: context.AppsStore}), context.Context, context.Dispatcher
 	}
 
 	t.Run("should require valid inputs", func(t *testing.T) {

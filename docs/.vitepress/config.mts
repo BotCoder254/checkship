@@ -36,6 +36,8 @@ export default defineConfig({
             text: "Continuous Integration / Deployment",
             link: "/guide/continuous-integration-deployment",
           },
+          { text: "Custom domains", link: "/guide/custom-domains" },
+          { text: "Cloudflare", link: "/guide/cloudflare" },
         ],
       },
       {

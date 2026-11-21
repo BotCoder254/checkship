@@ -38,6 +38,7 @@ func (s *deploymentsStore) GetByID(ctx context.Context, id domain.DeploymentID) 
 			,config_environment
 			,config_target
 			,config_vars
+			,config_domains
 			,state_status
 			,state_errcode
 			,state_services
@@ -63,6 +64,7 @@ func (s *deploymentsStore) GetLastDeployment(ctx context.Context, id domain.AppI
 			,config_environment
 			,config_target
 			,config_vars
+			,config_domains
 			,state_status
 			,state_errcode
 			,state_services
@@ -163,6 +165,7 @@ func (s *deploymentsStore) Write(c context.Context, deployments ...*domain.Deplo
 					"config_environment":   evt.Config.Environment(),
 					"config_target":        evt.Config.Target(),
 					"config_vars":          evt.Config.Vars(),
+					"config_domains":       evt.Config.Domains(),
 					"state_status":         evt.State.Status(),
 					"state_errcode":        evt.State.ErrCode(),
 					"state_services":       evt.State.Services(),

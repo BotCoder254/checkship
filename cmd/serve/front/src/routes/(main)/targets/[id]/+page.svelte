@@ -42,6 +42,7 @@
 	import { formatRate, splitSeconds } from '#lib/dashboard.ts';
 	import dashboard from '#lib/resources/dashboard.ts';
 	import TargetHeader from './target-header.svelte';
+	import TargetCloudflare from './target-cloudflare.svelte';
 	import EmptyState from '#lib/components/empty-state.svelte';
 
 	let { data } = $props();
@@ -263,6 +264,10 @@
 			</dl>
 		</section>
 	</div>
+
+	{#if target.url && !deleting}
+		<TargetCloudflare targetId={target.id} targetName={target.name} />
+	{/if}
 
 	<section class="flex flex-col gap-3" aria-labelledby="apps-title">
 		<SectionHeading id="apps-title">

@@ -15,6 +15,7 @@ type ConfigSnapshot struct {
 	environment Environment
 	target      TargetID
 	vars        monad.Maybe[ServicesEnv]
+	domains     monad.Maybe[ServicesDomains] // Custom domains, as they were when the deployment was queued
 }
 
 // Builds a new config snapshot for the given environment.
@@ -38,15 +39,26 @@ func (a *App) configSnapshotFor(env Environment) (ConfigSnapshot, error) {
 	snapshot.environment = env
 	snapshot.target = conf.Target()
 	snapshot.vars = conf.Vars()
+	snapshot.domains = conf.Domains()
 
 	return snapshot, nil
 }
 
-func (c ConfigSnapshot) AppID() AppID                   { return c.appid }
-func (c ConfigSnapshot) AppName() AppName               { return c.appname }
-func (c ConfigSnapshot) Environment() Environment       { return c.environment }
-func (c ConfigSnapshot) Target() TargetID               { return c.target }
-func (c ConfigSnapshot) Vars() monad.Maybe[ServicesEnv] { return c.vars } // FIXME: If I want to follow my mantra, it should returns a readonly map
+func (c ConfigSnapshot) AppID() AppID                          { return c.appid }
+func (c ConfigSnapshot) AppName() AppName                      { return c.appname }
+func (c ConfigSnapshot) Environment() Environment              { return c.environment }
+func (c ConfigSnapshot) Target() TargetID                      { return c.target }
+func (c ConfigSnapshot) Vars() monad.Maybe[ServicesEnv]        { return c.vars } // FIXME: If I want to follow my mantra, it should returns a readonly map
+func (c ConfigSnapshot) Domains() monad.Maybe[ServicesDomains] { return c.domains }
+
+// Custom domains of the given service, if any.
+func (c ConfigSnapshot) DomainsFor(service string) []Hostname {
+	if domains, isSet := c.domains.TryGet(); isSet {
+		return domains.For(service)
+	}
+
+	return nil
+}
 
 // Retrieve environment variables associated with the given service name.
 // FIXME: If I want to follow my mantra, it should returns a readonly map

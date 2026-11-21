@@ -40,6 +40,9 @@
 	import type { Target } from '#lib/resources/targets.ts';
 	import { cn } from '#lib/utils.js';
 	import EnvVarsDrawer from './env-vars-drawer.svelte';
+	import DomainsDrawer from './domains-drawer.svelte';
+	import { domainChips, worstTone, type ChipTone } from '#lib/hostname.ts';
+	import type { DomainsCheck } from '#lib/resources/apps.ts';
 
 	type Props = {
 		/** Page header, when the form is its own page (New application). */
@@ -85,6 +88,57 @@
 	const environments: Environment[] = ['production', 'staging'];
 	let varsOpen = $state(false);
 	let varsEnvironment = $state<Environment>('production');
+
+	// Custom domains (seelf#5): existing applications only, saved from their own drawer. `current`
+	// is refreshed after a save so the list and the drawer show what the server has.
+	let current = $state(initialData);
+	let domainsOpen = $state(false);
+	let domainsEnvironment = $state<Environment>('production');
+	let checks = $state<Partial<Record<Environment, DomainsCheck>>>({});
+
+	const domainsOf = (environment: Environment) =>
+		Object.entries(current?.[environment].domains ?? {}).flatMap(([service, hostnames]) =>
+			hostnames.map((hostname, index) => ({ service, hostname, primary: index === 0 }))
+		);
+
+	async function loadChecks() {
+		if (!current) return;
+		for (const environment of environments) {
+			if (!domainsOf(environment).length || !current[environment].target.url) continue;
+			try {
+				checks[environment] = await service.checkDomains(current.id, environment);
+			} catch {
+				// The list shows "not checked yet"
+			}
+		}
+	}
+
+	$effect(() => {
+		void loadChecks();
+	});
+
+	async function domainsSaved() {
+		if (!current) return;
+		current = await service.fetchById(current.id, { cache: 'no-store' }); // The effect checks again
+	}
+
+	const dotClass: Record<ChipTone, string> = {
+		success: 'bg-success',
+		warning: 'bg-warning',
+		danger: 'bg-danger',
+		muted: 'bg-faint'
+	};
+
+	function domainDot(environment: Environment, hostname: string) {
+		const check = checks[environment];
+		const status = check?.domains.find((d) => d.hostname === hostname);
+		return dotClass[worstTone(domainChips(status, check?.https ?? false))];
+	}
+
+	function domainsSummary(environment: Environment) {
+		const count = domainsOf(environment).length;
+		return count ? l.translate('domains.summary', [count]) : l.translate('domains.summary.none');
+	}
 	let howOpen = $state(false);
 
 	const targetLabel = (id: string) => {
@@ -315,11 +369,17 @@
 			id="settings-environments"
 			title={l.translate('settings.environments')}
 			description={l.translate('settings.environments.description')}
+			explain={initialData ? l.translate('settings.domains.explain') : undefined}
 		>
 			<div class="flex flex-col gap-3">
 				{#each environments as environment (environment)}
 					<div
-						class="grid gap-3 py-2 sm:grid-cols-[120px_minmax(0,1fr)_auto] sm:items-center sm:gap-4"
+						class={cn(
+							'grid gap-3 py-2 sm:items-center sm:gap-4',
+							initialData
+								? 'sm:grid-cols-[120px_minmax(0,1fr)]'
+								: 'sm:grid-cols-[120px_minmax(0,1fr)_auto]'
+						)}
 					>
 						<span class="flex flex-col gap-0.5">
 							<span id="app-{environment}-label" class="text-sm font-semibold">
@@ -333,37 +393,89 @@
 							>
 								{changed(environment)
 									? l.translate('app.environment.target.changed')
-									: summary(environment)}
+									: initialData
+										? `${domainsSummary(environment)} · ${summary(environment)}`
+										: summary(environment)}
 							</span>
 						</span>
-						<Select.Root type="single" bind:value={env[environment].target}>
-							<Select.Trigger
-								aria-labelledby="app-{environment}-label"
-								aria-invalid={!!fieldError(`${environment}.target`) || undefined}
-								class="w-full min-w-0"
-							>
-								<span class="truncate">{targetLabel(env[environment].target)}</span>
-							</Select.Trigger>
-							<Select.Content>
-								{#each targets as target (target.id)}
-									<Select.Item value={target.id} label={target.name}>
-										<Icon icon={ServerStack01Icon} class="text-muted-foreground" />
-										{targetLabel(target.id)}
-									</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-						<Button
-							variant="outline"
-							onclick={() => {
-								varsEnvironment = environment;
-								varsOpen = true;
-							}}
-						>
-							<Icon icon={PencilEdit02Icon} />
-							{l.translate('settings.variables')}
-						</Button>
+						<!-- Existing app: the target, then Domains and Variables under it (a new app keeps one row) -->
+						<div class={initialData ? 'flex min-w-0 flex-col gap-2' : 'contents'}>
+							<Select.Root type="single" bind:value={env[environment].target}>
+								<Select.Trigger
+									aria-labelledby="app-{environment}-label"
+									aria-invalid={!!fieldError(`${environment}.target`) || undefined}
+									class="w-full min-w-0"
+								>
+									<span class="truncate">{targetLabel(env[environment].target)}</span>
+								</Select.Trigger>
+								<Select.Content>
+									{#each targets as target (target.id)}
+										<Select.Item value={target.id} label={target.name}>
+											<Icon icon={ServerStack01Icon} class="text-muted-foreground" />
+											{targetLabel(target.id)}
+										</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+							<div class={initialData ? 'flex flex-wrap gap-2' : 'contents'}>
+								{#if initialData}
+									<Button
+										variant="outline"
+										onclick={() => {
+											domainsEnvironment = environment;
+											domainsOpen = true;
+										}}
+									>
+										<Icon icon={Globe02Icon} />
+										{l.translate('settings.domains')}
+										{#if domainsOf(environment).length}
+											<span
+												class="ml-0.5 inline-grid h-5 min-w-5 place-items-center rounded-full bg-surface px-1.5 text-xs font-semibold"
+												>{domainsOf(environment).length}</span
+											>
+										{/if}
+									</Button>
+								{/if}
+								<Button
+									variant="outline"
+									onclick={() => {
+										varsEnvironment = environment;
+										varsOpen = true;
+									}}
+								>
+									<Icon icon={PencilEdit02Icon} />
+									{l.translate('settings.variables')}
+								</Button>
+							</div>
+						</div>
 					</div>
+					{#if initialData && domainsOf(environment).length}
+						<div class="-mt-2 flex flex-col gap-1 text-label sm:pl-[136px]">
+							<span class="text-xs text-muted-foreground">
+								{l.translate('settings.domains.list', [
+									l.translate(`deploy.environment.${environment}`)
+								])}
+							</span>
+							<ul class="flex flex-col gap-1">
+								{#each domainsOf(environment) as domain (domain.hostname)}
+									<li class="flex min-w-0 items-center gap-2">
+										<span
+											aria-hidden="true"
+											class={cn(
+												'size-2 shrink-0 rounded-full',
+												domainDot(environment, domain.hostname)
+											)}
+										></span>
+										<span class="truncate font-mono">{domain.hostname}</span>
+										<span class="shrink-0 text-xs text-muted-foreground">
+											· {domain.service}{#if domain.primary && domain.service === Object.keys(current?.[environment].domains ?? {})[0]}
+												· {l.translate('settings.domains.primary')}{/if}
+										</span>
+									</li>
+								{/each}
+							</ul>
+						</div>
+					{/if}
 					{#if changed(environment) && initialData}
 						<Alert.Root variant="warning">
 							<Icon icon={Alert02Icon} />
@@ -400,6 +512,15 @@
 		</div>
 	{/if}
 </form>
+
+{#if current}
+	<DomainsDrawer
+		bind:open={domainsOpen}
+		app={current}
+		environment={domainsEnvironment}
+		onsaved={domainsSaved}
+	/>
+{/if}
 
 <EnvVarsDrawer
 	bind:open={varsOpen}

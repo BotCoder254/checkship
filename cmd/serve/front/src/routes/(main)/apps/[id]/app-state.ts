@@ -7,10 +7,20 @@ export function branchOf(app: AppDetail, environment: Environment): string | und
 	return source?.discriminator === 'git' ? source.data.branch : undefined;
 }
 
-/** The URL of the first exposed service of a deployment. */
+/**
+ * The URL of the first exposed service of a deployment: its primary custom domain when it has
+ * one (seelf#5), else its default address.
+ */
 export function liveUrl(deployment?: DeploymentDetail): string | undefined {
+	return liveUrls(deployment)[0];
+}
+
+/** Every http address of the main service: custom domains first, then the default one. */
+export function liveUrls(deployment?: DeploymentDetail): string[] {
 	for (const service of deployment?.state.services ?? []) {
+		if (service.urls?.length) return service.urls;
 		const url = service.entrypoints.find((e) => e.url)?.url;
-		if (url) return url;
+		if (url) return [url];
 	}
+	return [];
 }

@@ -66,10 +66,12 @@ func (s *gateway) GetAppByID(ctx context.Context, cmd get_app_detail.Query) (get
 				,production_target.name
 				,production_target.url
 				,apps.production_vars
+				,apps.production_domains
 				,staging_target.id
 				,staging_target.name
 				,staging_target.url
 				,apps.staging_vars
+				,apps.staging_domains
 				,apps.cleanup_requested_at
 				,cusers.id
 				,cusers.email
@@ -133,6 +135,7 @@ func (s *gateway) GetDeploymentByID(ctx context.Context, cmd get_deployment.Quer
 			,targets.url
 			,targets.state_status
 			,targets.entrypoints
+			,EXISTS(SELECT 1 FROM cloudflare_connections WHERE cloudflare_connections.target_id = targets.id AND cloudflare_connections.mode = 'tunnel')
 			,deployments.source_discriminator
 			,deployments.source
 			,deployments.state_status
@@ -285,6 +288,7 @@ var getDeploymentDetailDataloader = builder.NewDataloader(
 				,targets.url
 				,targets.state_status
 				,targets.entrypoints
+				,EXISTS(SELECT 1 FROM cloudflare_connections WHERE cloudflare_connections.target_id = targets.id AND cloudflare_connections.mode = 'tunnel')
 				,deployments.source_discriminator
 				,deployments.source
 				,deployments.state_status
@@ -358,10 +362,12 @@ func appDetailDataMapper(s storage.Scanner) (a get_app_detail.App, err error) {
 		&a.Production.Target.Name,
 		&a.Production.Target.Url,
 		&a.Production.Vars,
+		&a.Production.Domains,
 		&a.Staging.Target.ID,
 		&a.Staging.Target.Name,
 		&a.Staging.Target.Url,
 		&a.Staging.Vars,
+		&a.Staging.Domains,
 		&a.CleanupRequestedAt,
 		&cleanupRequestedById,
 		&cleanupRequestedByEmail,
@@ -459,6 +465,7 @@ func deploymentDetailMapper(kr storage.KeyedResult[get_app_detail.App]) storage.
 			&d.Target.Url,
 			&targetStatus,
 			&d.Target.Entrypoints,
+			&d.Target.TunnelDomains,
 			&d.Source.Discriminator,
 			&sourceData,
 			&d.State.Status,

@@ -50,6 +50,7 @@ type (
 		live                  *live.Hub
 		logsLimiter           *live.Limiter
 		deploymentLogsLimiter *live.Limiter
+		domainChecksLimiter   *live.Limiter      // A check resolves DNS and may open TLS connections: a few at a time
 		logSignals            *live.Signals      // Notified each time a deployment log is written
 		shutdown              context.Context    // Done when the server shuts down: ends the runtime logs streams
 		stopStreams           context.CancelFunc // Cancels shutdown
@@ -67,6 +68,7 @@ func newHttpServer(options ServerOptions, root startup.ServerRoot) *server {
 		live:                  root.Live(),
 		logsLimiter:           live.NewLimiter(logsStreamsPerUser, logsStreamsTotal),
 		deploymentLogsLimiter: live.NewLimiter(deploymentLogsStreamsPerUser, deploymentLogsStreamsTotal),
+		domainChecksLimiter:   live.NewLimiter(2, 10),
 		logSignals:            root.LogSignals(),
 		bus:                   root.Bus(),
 		logger:                root.Logger(),
@@ -121,6 +123,10 @@ func newHttpServer(options ServerOptions, root startup.ServerRoot) *server {
 	v1secured.GET("/registries", s.listRegistriesHandler())
 	v1secured.GET("/registries/:id", s.getRegistryByIDHandler())
 	v1secured.GET("/apps", s.listAppsHandler())
+	v1secured.GET("/targets/:id/cloudflare", s.cloudflareStatusHandler())
+	v1secured.PUT("/targets/:id/cloudflare", s.connectCloudflareHandler())
+	v1secured.POST("/targets/:id/cloudflare/setup", s.setupCloudflareHandler())
+	v1secured.DELETE("/targets/:id/cloudflare", s.disconnectCloudflareHandler())
 	v1secured.POST("/apps", s.createAppHandler())
 	v1secured.PATCH("/apps/:id", s.updateAppHandler())
 	v1secured.DELETE("/apps/:id", s.requestAppCleanupHandler())
@@ -132,6 +138,7 @@ func newHttpServer(options ServerOptions, root startup.ServerRoot) *server {
 	// FIXME: in the future, maybe all the API should be accessible, but not before https://github.com/checkship-deploy/checkship/issues/45
 	v1securedAllowApi := v1.Group("", s.authenticate(true))
 	v1securedAllowApi.GET("/apps/:id", s.getAppByIDHandler())
+	v1securedAllowApi.GET("/apps/:id/domains/check", s.checkAppDomainsHandler())
 	v1securedAllowApi.POST("/apps/:id/deployments", s.queueDeploymentHandler())
 	v1securedAllowApi.GET("/apps/:id/deployments", s.listDeploymentsByAppHandler())
 	v1securedAllowApi.GET("/apps/:id/deployments/:number", s.getDeploymentByIDHandler())

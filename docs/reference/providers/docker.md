@@ -62,6 +62,18 @@ The first service in **alphabetical order** using an `http` router will take the
 
 If some services uses custom entrypoints, the target will be [reconfigured](/reference/targets#configuration) automatically to **make them available**.
 
+### Custom domains
+
+A service's [custom domains](/reference/applications#custom-domains) are added to its main `http` entrypoint as **one router per domain**, next to its default one:
+
+```
+traefik.http.routers.<entrypoint>-d<8 hex>.rule=Host(`shop.acme.com`)
+traefik.http.routers.<entrypoint>-d<8 hex>.entrypoints=http
+traefik.http.routers.<entrypoint>-d<8 hex>.service=<entrypoint>
+```
+
+The suffix comes from the domain, so it stays the same from one deployment to the next. One router per domain means one certificate per domain: a domain whose DNS isn't ready can't hold back the certificate of the others. Traefik only ever requests certificates for the domains in these rules.
+
 ::: warning Proxy unavailability
 Currently, the proxy to handle the default http entrypoints and custom ones is **shared** meaning there is a **tiny unavailability** when new entrypoints should be exposed (the first time they are seen or when they are no more needed).
 

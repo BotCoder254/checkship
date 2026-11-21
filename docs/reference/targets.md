@@ -17,7 +17,13 @@ When declaring a target, you must choose how the proxy (needed to make your serv
 
 If the target manages the proxy itself, this url **determines where your applications will be made available**. It should be a **root url** as applications will use subdomains on it.
 
-The scheme associated with this url (`http` or `https`) will determine if certificates should be generated or not.
+The scheme associated with this url (`http` or `https`) will determine if certificates should be generated or not. With `https`, the proxy gets them from Let's Encrypt with the **HTTP-01** challenge (port 80 must be reachable from the internet), which also works for [custom domains](/reference/applications#custom-domains) proxied by Cloudflare. Targets set up by a version that used the TLS-ALPN-01 challenge are reconfigured once, on their own, at startup.
+
+Only targets with an automatic proxy can serve [custom domains](/reference/applications#custom-domains).
+
+### Cloudflare {#cloudflare}
+
+A target with an automatic proxy can be connected to a Cloudflare account with an API token ([Guide › Cloudflare](/guide/cloudflare#connect)). checkship then keeps the DNS records of the target's custom domains in step on Cloudflare, and for an `http://` target the internet can't reach, runs a Cloudflare Tunnel connector (`checkship-tunnel-<target>`) next to the proxy. The target's page shows the connection under **Cloudflare**, with **Disconnect**. Deleting the target disconnects it.
 
 ## Providers {#providers}
 

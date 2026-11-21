@@ -138,9 +138,11 @@ func (s *appsStore) GetByID(ctx context.Context, id domain.AppID) (domain.App, e
 			,production_target
 			,production_version
 			,production_vars
+			,production_domains
 			,staging_target
 			,staging_version
 			,staging_vars
+			,staging_domains
 			,cleanup_requested_at
 			,cleanup_requested_by
 			,created_at
@@ -154,31 +156,46 @@ func (s *appsStore) Write(c context.Context, apps ...*domain.App) error {
 	return sqlite.WriteAndDispatch(s.db, c, apps, func(ctx context.Context, e event.Event) error {
 		switch evt := e.(type) {
 		case domain.AppCreated:
-			return builder.
+			if err := builder.
 				Insert("apps", builder.Values{
 					"id":                 evt.ID,
 					"name":               evt.Name,
 					"production_target":  evt.Production.Target(),
 					"production_version": evt.Production.Version(),
 					"production_vars":    evt.Production.Vars(),
+					"production_domains": evt.Production.Domains(),
 					"staging_target":     evt.Staging.Target(),
 					"staging_version":    evt.Staging.Version(),
 					"staging_vars":       evt.Staging.Vars(),
+					"staging_domains":    evt.Staging.Domains(),
 					"created_at":         evt.Created.At(),
 					"created_by":         evt.Created.By(),
 				}).
-				Exec(s.db, ctx)
+				Exec(s.db, ctx); err != nil {
+				return err
+			}
+
+			if err := s.syncDomains(ctx, evt.ID, domain.Production, evt.Production); err != nil {
+				return err
+			}
+
+			return s.syncDomains(ctx, evt.ID, domain.Staging, evt.Staging)
 		case domain.AppEnvChanged:
 			// This is safe to interpolate the column name here since events are raised by our
 			// own code.
-			return builder.
+			if err := builder.
 				Update("apps", builder.Values{
 					string(evt.Environment) + "_target":  evt.Config.Target(),
 					string(evt.Environment) + "_version": evt.Config.Version(),
 					string(evt.Environment) + "_vars":    evt.Config.Vars(),
+					string(evt.Environment) + "_domains": evt.Config.Domains(),
 				}).
 				F("WHERE id = ?", evt.ID).
-				Exec(s.db, ctx)
+				Exec(s.db, ctx); err != nil {
+				return err
+			}
+
+			return s.syncDomains(ctx, evt.ID, evt.Environment, evt.Config)
 		case domain.AppVersionControlConfigured:
 			return builder.
 				Update("apps", builder.Values{
@@ -211,6 +228,95 @@ func (s *appsStore) Write(c context.Context, apps ...*domain.App) error {
 			return nil
 		}
 	})
+}
+
+// Mirrors an environment's custom domains in app_domains, whose primary key keeps every
+// domain on a single application environment.
+func (s *appsStore) syncDomains(ctx context.Context, id domain.AppID, env domain.Environment, config domain.EnvironmentConfig) error {
+	if err := builder.
+		Command("DELETE FROM app_domains WHERE app_id = ? AND environment = ?", id, env).
+		Exec(s.db, ctx); err != nil {
+		return err
+	}
+
+	domains, hasDomains := config.Domains().TryGet()
+
+	if !hasDomains {
+		return nil
+	}
+
+	for service, hostnames := range domains {
+		for _, hostname := range hostnames {
+			if err := builder.
+				Insert("app_domains", builder.Values{
+					"hostname":    hostname,
+					"app_id":      id,
+					"environment": env,
+					"service":     service,
+				}).
+				Exec(s.db, ctx); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// Returns, for each given hostname already used by another application, the name of that
+// application. The application being edited (if any) is left out: its own domains can move
+// between its environments and services.
+func (s *appsStore) GetDomainsOwners(ctx context.Context, except domain.AppID, hostnames []domain.Hostname) (map[domain.Hostname]domain.AppName, error) {
+	owners := make(map[domain.Hostname]domain.AppName)
+
+	if len(hostnames) == 0 {
+		return owners, nil
+	}
+
+	rows, err := builder.
+		Query[domainOwner](`
+			SELECT app_domains.hostname, apps.name
+			FROM app_domains
+			INNER JOIN apps ON apps.id = app_domains.app_id
+			WHERE app_domains.app_id != ?`, except).
+		S(builder.Array("AND app_domains.hostname IN", hostnames)).
+		All(s.db, ctx, domainOwnerMapper)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, row := range rows {
+		owners[row.hostname] = row.app
+	}
+
+	return owners, nil
+}
+
+func (s *appsStore) GetDomainsOnTarget(ctx context.Context, target domain.TargetID) ([]domain.TargetDomain, error) {
+	return builder.
+		Query[domain.TargetDomain](`
+			SELECT app_domains.hostname, apps.id, apps.name, app_domains.environment, app_domains.service
+			FROM app_domains
+			INNER JOIN apps ON apps.id = app_domains.app_id
+			WHERE apps.cleanup_requested_at IS NULL
+				AND ((app_domains.environment = 'production' AND apps.production_target = ?)
+					OR (app_domains.environment = 'staging' AND apps.staging_target = ?))
+			ORDER BY app_domains.hostname`, target, target).
+		All(s.db, ctx, func(sc storage.Scanner) (d domain.TargetDomain, err error) {
+			err = sc.Scan(&d.Hostname, &d.App, &d.AppName, &d.Environment, &d.Service)
+			return d, err
+		})
+}
+
+type domainOwner struct {
+	hostname domain.Hostname
+	app      domain.AppName
+}
+
+func domainOwnerMapper(s storage.Scanner) (o domainOwner, err error) {
+	err = s.Scan(&o.hostname, &o.app)
+	return o, err
 }
 
 type appNamingResult struct {

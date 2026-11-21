@@ -23,8 +23,9 @@ type (
 	}
 
 	EnvironmentConfig struct {
-		Target string                                    `json:"target"`
-		Vars   monad.Maybe[map[string]map[string]string] `json:"vars"`
+		Target  string                                    `json:"target"`
+		Vars    monad.Maybe[map[string]map[string]string] `json:"vars"`
+		Domains monad.Maybe[map[string][]string]          `json:"domains"` // Custom domains per service (seelf#5)
 	}
 
 	VersionControl struct {
@@ -38,6 +39,7 @@ func (Command) Name_() string { return "deployment.command.create_app" }
 func Handler(
 	reader domain.AppsReader,
 	writer domain.AppsWriter,
+	rules DomainsRules,
 ) bus.RequestHandler[string, Command] {
 	return func(ctx context.Context, cmd Command) (string, error) {
 		var (
@@ -65,11 +67,25 @@ func Handler(
 			return "", err
 		}
 
+		domains, err := BuildDomains(ctx, rules, "",
+			DomainsInput{Environment: domain.Production, Target: productionTarget, Raw: cmd.Production.Domains.Get(nil)},
+			DomainsInput{Environment: domain.Staging, Target: stagingTarget, Raw: cmd.Staging.Domains.Get(nil)},
+		)
+
+		if err != nil {
+			return "", err
+		}
+
+		productionConfig := BuildEnvironmentConfig(productionTarget, cmd.Production.Vars)
+		productionConfig.HasDomains(domains[domain.Production])
+		stagingConfig := BuildEnvironmentConfig(stagingTarget, cmd.Staging.Vars)
+		stagingConfig.HasDomains(domains[domain.Staging])
+
 		productionRequirement, stagingRequirement, err := reader.CheckAppNamingAvailability(
 			ctx,
 			appname,
-			BuildEnvironmentConfig(productionTarget, cmd.Production.Vars),
-			BuildEnvironmentConfig(stagingTarget, cmd.Staging.Vars),
+			productionConfig,
+			stagingConfig,
 		)
 
 		if err != nil {
@@ -111,6 +127,25 @@ func Handler(
 
 		return string(app.ID()), nil
 	}
+}
+
+// Custom domains as typed, from parsed ones (to check the domains an environment keeps).
+func RawDomains(domains monad.Maybe[domain.ServicesDomains]) map[string][]string {
+	parsed, isSet := domains.TryGet()
+
+	if !isSet {
+		return nil
+	}
+
+	raw := make(map[string][]string, len(parsed))
+
+	for service, hostnames := range parsed {
+		for _, hostname := range hostnames {
+			raw[service] = append(raw[service], string(hostname))
+		}
+	}
+
+	return raw
 }
 
 // Helper method to build a domain.EnvironmentConfig from a raw command value.

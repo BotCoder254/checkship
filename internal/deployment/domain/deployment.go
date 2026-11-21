@@ -153,6 +153,7 @@ func DeploymentFrom(scanner storage.Scanner) (d Deployment, err error) {
 		&d.config.environment,
 		&d.config.target,
 		&d.config.vars,
+		&d.config.domains,
 		&d.state.status,
 		&d.state.errcode,
 		&d.state.services,

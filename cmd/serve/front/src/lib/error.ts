@@ -10,10 +10,13 @@ export type ValidationDetail = Record<string, AppError<unknown>>;
 /** Validation error after a form submission */
 export class BadRequestError extends Error {
 	public readonly fields: Record<string, Maybe<string>>;
+	/** Each field's error as the server sent it, with its own detail (e.g. which app has a domain). */
+	public readonly details: ValidationDetail;
 	public readonly isValidationError: boolean;
 
 	public constructor(data: AppError<ValidationDetail>) {
 		super(data.code);
+		this.details = data.detail ?? {};
 		this.isValidationError = data.code === 'validation_failed';
 		this.fields = Object.entries(data.detail ?? {}).reduce(
 			(result, [name, err]) => ({

@@ -56,7 +56,7 @@
 	import dashboard from '#lib/resources/dashboard.ts';
 	import AppWorkspace, { type AppActions } from './app-workspace.svelte';
 	import DeployStrip from '#lib/components/deploy-strip.svelte';
-	import { liveUrl } from './app-state.ts';
+	import { liveUrls } from './app-state.ts';
 	import EmptyState from '#lib/components/empty-state.svelte';
 
 	let { data } = $props();
@@ -252,7 +252,8 @@
 							{@const environment = slot as Environment}
 							{@const latest = app.latest_deployments[environment]}
 							{@const target = app[environment].target}
-							{@const url = liveUrl(latest)}
+							{@const urls = liveUrls(latest)}
+							{@const url = urls[0]}
 							{@const state = latest ? cardState(latest) : undefined}
 							<section aria-labelledby="card-{environment}" class="flex min-w-0 flex-col gap-4">
 								<div class="flex min-w-0 flex-col gap-2.5">
@@ -295,6 +296,21 @@
 											<span class="truncate">{url}</span>
 											<Icon icon={LinkSquare02Icon} class="size-3.5 shrink-0" />
 										</a>
+										{#if urls.length > 1}
+											<p class="text-xs text-muted-foreground">
+												{l.translate('domains.also_at')}
+												{#each urls.slice(1) as other, i (other)}
+													{#if i > 0},{/if}
+													<a
+														href={other}
+														target="_blank"
+														rel="noopener noreferrer"
+														class="font-mono hover:underline">{other.replace(/^https?:\/\//, '')}</a
+													>
+												{/each}
+											</p>
+											<p class="text-xs text-faint">{l.translate('domains.primary.explain')}</p>
+										{/if}
 									{:else}
 										<p class="truncate text-label text-muted-foreground">
 											{l.translate('app.no_url')}

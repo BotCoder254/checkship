@@ -37,15 +37,21 @@ type (
 	}
 
 	EnvironmentConfig struct {
-		Target app.TargetSummary        `json:"target"`
-		Vars   monad.Maybe[ServicesEnv] `json:"vars"`
+		Target  app.TargetSummary            `json:"target"`
+		Vars    monad.Maybe[ServicesEnv]     `json:"vars"`
+		Domains monad.Maybe[ServicesDomains] `json:"domains"` // Custom domains per service (seelf#5)
 	}
 
-	ServicesEnv map[string]map[string]string
+	ServicesEnv     map[string]map[string]string
+	ServicesDomains map[string][]string
 )
 
 func (Query) Name_() string { return "deployment.query.get_app_detail" }
 
 func (e *ServicesEnv) Scan(value any) error {
 	return storage.ScanJSON(value, e)
+}
+
+func (d *ServicesDomains) Scan(value any) error {
+	return storage.ScanJSON(value, d)
 }

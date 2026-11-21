@@ -507,8 +507,251 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 			'Seulement pour les dépôts privés. Plus jamais affiché une fois enregistré.',
 		'settings.environments': 'Environnements',
 		'settings.environments.description':
-			"Chaque environnement tourne sur une cible. Ses variables s'ouvrent dans un tiroir.",
+			"Chaque environnement tourne sur une cible. Ses variables et ses domaines s'ouvrent dans un tiroir.",
 		'settings.variables': 'Variables',
+		// Domaines personnalisés (seelf#5)
+		'settings.domains': 'Domaines',
+		'settings.domains.explain':
+			'Les domaines servent un environnement à votre propre adresse, comme shop.acme.com, en plus de celle que checkship lui donne. Vous faites pointer le DNS du domaine vers la cible ; checkship le route et obtient le certificat HTTPS.',
+		'settings.domains.list': (env: string) =>
+			`Les domaines de ${env} et l’état de chacun. Ouvrez Domaines pour en ajouter, en corriger, ou voir l’enregistrement DNS à créer.`,
+		'settings.domains.primary': 'principal',
+		'domains.summary': (count: number) => (count === 1 ? '1 domaine' : `${count} domaines`),
+		'domains.summary.none': 'Aucun domaine',
+		'domains.title': (env: string) => `Domaines · ${env}`,
+		'domains.description':
+			'Servez cet environnement à vos propres domaines. Chacun s’ajoute à son adresse par défaut, qui continue de fonctionner.',
+		'domains.how': 'Comment ça marche',
+		'domains.how.1.title': '1 · Ajoutez le domaine',
+		'domains.how.1': 'Sous le service qui doit y répondre : celui du site ou de l’API.',
+		'domains.how.2.title': '2 · Pointez le DNS ici',
+		'domains.how.2':
+			'Créez l’enregistrement indiqué sous Enregistrements DNS à créer, chez votre fournisseur DNS. Le statut passe à Pointe ici.',
+		'domains.how.3.title': '3 · Enregistrez',
+		'domains.how.3': (env: string) =>
+			`${env} est redéployé avec le domaine. Le HTTPS arrive tout seul à la première visite.`,
+		'domains.never_deployed':
+			'Cet environnement n’a pas encore été déployé, checkship ne connaît donc pas ses services. Déployez une fois, ou ajoutez un service par son nom ci-dessous.',
+		'domains.service.port': (port: number) => `port ${port}`,
+		'domains.service.also_at': 'aussi sur',
+		'domains.service.main':
+			'Le premier port web du service. Chaque domaine listé ici affiche la même chose que son adresse par défaut, qui continue aussi de fonctionner. Le premier est le principal : le bouton Visiter et les liens l’utilisent.',
+		'domains.service.other':
+			'Ce service a ses propres domaines : ils mènent à lui plutôt qu’au service principal. Un service sans port web ne peut pas avoir de domaine.',
+		'domains.remove': (hostname: string) => `Retirer ${hostname}`,
+		'domains.removed': (hostname: string) =>
+			`${hostname} sera retiré à l’enregistrement. Supprimez aussi son enregistrement DNS chez votre fournisseur, pour que le nom ne pointe plus vers ce serveur.`,
+		'domains.add': (service: string) => `Ajouter un domaine à ${service}`,
+		'domains.add.help':
+			'Seulement le nom, comme api.acme.com : sans https://, port ni chemin. Il ne doit pas être utilisé par une autre application.',
+		'domains.add.placeholder': 'shop.acme.com',
+		'domains.add.button': 'Ajouter',
+		'domains.other_service': 'Un autre service',
+		'domains.other_service.help':
+			'Son nom dans le fichier compose. Les domaines d’un service sans port web sont ignorés au déploiement, et le journal le dit.',
+		'domains.other_service.button': 'Ajouter le service',
+		'domains.legend': 'Ce que veulent dire les statuts',
+		'domains.legend.intro':
+			'checkship cherche chaque domaine dans le DNS puis, quand il pointe ici, vérifie le certificat que le serveur renvoie. Rien d’autre n’est envoyé au domaine.',
+		'domains.legend.points_here':
+			'Le DNS envoie les visiteurs vers cette cible. Prêt à enregistrer.',
+		'domains.legend.points_elsewhere':
+			'Le DNS les envoie vers un autre serveur. Corrigez d’abord l’enregistrement.',
+		'domains.legend.no_record': 'Le nom n’existe pas encore. Créez l’enregistrement ci-dessous.',
+		'domains.legend.behind_cloudflare':
+			'Le proxy de Cloudflare cache le serveur. Ça fonctionne ; la vérification ne peut juste pas voir au travers.',
+		'domains.legend.caa_blocks':
+			'Un enregistrement CAA interdit Let’s Encrypt : aucun certificat ne peut être émis.',
+		'domains.legend.default_certificate':
+			'Le HTTPS n’est pas encore émis. Il est demandé à la première visite une fois le DNS pointé ici.',
+		'domains.legend.certificate_ok':
+			'Le HTTPS fonctionne, avec Let’s Encrypt, et se renouvelle seul.',
+		'domains.status.unchecked': 'Pas encore vérifié',
+		'domains.status.points_here': 'Pointe ici',
+		'domains.status.points_elsewhere': 'Pointe ailleurs',
+		'domains.status.points_elsewhere.at': (addresses: string) =>
+			addresses ? `Pointe ailleurs · ${addresses}` : 'Pointe ailleurs',
+		'domains.status.no_record': 'Aucun enregistrement DNS',
+		'domains.status.behind_cloudflare': 'Derrière Cloudflare',
+		'domains.status.unknown': 'DNS non vérifié',
+		'domains.status.caa_blocks': 'CAA bloque Let’s Encrypt',
+		'domains.status.certificate_ok': 'Certificat OK',
+		'domains.status.default_certificate': 'Certificat par défaut',
+		'domains.status.unreachable': 'Aucune réponse sur 443',
+		'domains.hint.unchecked': 'Vérifié à l’enregistrement ou avec Vérifier à nouveau.',
+		'domains.hint.primary': 'Principal : le bouton Visiter et les liens des services l’utilisent.',
+		'domains.hint.ready': 'Servi aussi à cette adresse.',
+		'domains.hint.no_record':
+			'Créez l’enregistrement ci-dessous avant d’enregistrer, sinon la demande de certificat échoue.',
+		'domains.hint.points_elsewhere': (found: string, expected: string) =>
+			`Il résout vers ${found}, mais cette cible répond sur ${expected || 'une autre adresse'}. Corrigez l’enregistrement ci-dessous ; d’ici là, la demande de certificat échoue.`,
+		'domains.hint.behind_cloudflare':
+			'La vérification ne voit pas derrière le proxy de Cloudflare. Utilisez le mode SSL/TLS Full (strict) une fois le certificat émis.',
+		'domains.hint.unknown': 'Le DNS n’a pas pu être vérifié. Réessayez dans un instant.',
+		'domains.hint.caa_blocks': (issuers: string) =>
+			`Un enregistrement CAA n’autorise que ${issuers || 'd’autres autorités'}, Let’s Encrypt refuse donc. Ajoutez un enregistrement CAA issue "letsencrypt.org".`,
+		'domains.hint.default_certificate':
+			'Pas encore émis : tant que Let’s Encrypt ne l’a pas validé, les navigateurs voient le certificat du proxy. Visitez-le une fois, puis vérifiez à nouveau.',
+		'domains.hint.unreachable':
+			'Rien n’a répondu sur le port 443 de la cible. Vérifiez que le port est ouvert dans son pare-feu.',
+		'domains.records': 'Enregistrements DNS à créer',
+		'domains.records.help':
+			'Créez-les d’abord, puis enregistrez. Un sous-domaine pointe vers l’adresse par défaut du service ; un domaine nu (acme.com) ne peut pas avoir de CNAME et reçoit les adresses du serveur.',
+		'domains.records.domain': 'Domaine',
+		'domains.records.type': 'Type',
+		'domains.records.value': 'Valeur',
+		'domains.notice': (env: string) =>
+			`Enregistrer redéploie ${env}. Les certificats viennent de Let’s Encrypt à la première visite une fois le DNS pointé ici. Seulement 5 échecs par domaine et par heure sont permis : vérifiez le DNS avant d’enregistrer.`,
+		'domains.check': 'Vérifier à nouveau',
+		'domains.save': 'Enregistrer et redéployer',
+		'domains.save.failed': (count: number) =>
+			count === 1
+				? 'Rien n’a été enregistré : 1 domaine doit changer.'
+				: `Rien n’a été enregistré : ${count} domaines doivent changer.`,
+		'domains.manual': (target: string) =>
+			`Cet environnement tourne sur ${target}, une cible avec un proxy manuel : checkship n’y route pas le trafic et ne peut donc pas servir de domaines personnalisés. Configurez-les dans votre propre proxy, ou donnez une URL à la cible pour que checkship fasse tourner son proxy.`,
+		'domains.manual.link': 'Ouvrir la cible',
+		'domains.manual.why':
+			'Pourquoi : un proxy manuel signifie que vous faites tourner le vôtre (nginx, Caddy…) devant les conteneurs. checkship les déploie mais ne touche jamais au routage, il n’a donc aucun endroit où ajouter un domaine ou un certificat.',
+		'domains.error.used_by': (app: string) =>
+			`Déjà utilisé par l’application ${app}. Un domaine ne sert qu’une seule application.`,
+		'domains.also_at': 'Aussi sur',
+		'domains.primary.explain':
+			'Le domaine principal est le premier ajouté au service principal. Toutes les adresses affichent la même application ; celle par défaut continue de fonctionner si le DNS a un problème.',
+		'domains.services.explain':
+			'Les adresses de chaque service, vos domaines d’abord, puis l’adresse par défaut donnée par checkship.',
+		'domains.url.default': 'par défaut',
+		'hostname.required': 'Saisissez un domaine comme api.acme.com.',
+		'hostname.not_a_name': 'Seulement le domaine : sans https://, port ni chemin.',
+		'hostname.wildcard': 'Les domaines génériques (wildcard) ne sont pas encore pris en charge.',
+		'hostname.ip': 'Une adresse IP n’est pas un domaine.',
+		invalid_hostname: 'Ce n’est pas un nom de domaine valide.',
+		'cloudflare.title': 'Tout configurer avec Cloudflare',
+		'cloudflare.intro': (target: string) =>
+			`Le DNS de ce domaine est chez Cloudflare. Donnez une fois un jeton à checkship : il crée les enregistrements et, si ${target} n’est pas joignable depuis Internet, un tunnel Cloudflare. Plus rien à recopier à la main.`,
+		'cloudflare.step1': 'Créer un jeton sur Cloudflare',
+		'cloudflare.step1.help':
+			'Ouvrez Cloudflare : la page est déjà remplie avec ces autorisations. Cliquez sur Continue to summary, puis Create Token, et copiez-le.',
+		'cloudflare.permissions': 'Autorisations',
+		'cloudflare.token_name': (target: string) => `checkship · ${target}`,
+		'cloudflare.open': 'Ouvrir Cloudflare',
+		'cloudflare.step2': 'Coller le jeton',
+		'cloudflare.token': 'Jeton d’API Cloudflare',
+		'cloudflare.token.placeholder': 'Collez le jeton ici',
+		'cloudflare.token.help':
+			'Conservé sur ce serveur checkship et envoyé uniquement à Cloudflare ; il n’est plus jamais affiché. Révoquez-le quand vous voulez depuis votre profil Cloudflare, sous API Tokens.',
+		'cloudflare.connect': 'Connecter',
+		'cloudflare.connected': (account: string) =>
+			account ? `Connecté à ${account}` : 'Connecté à Cloudflare',
+		'cloudflare.zones': (zones: string) => `Domaines qu’il peut gérer : ${zones}`,
+		'cloudflare.replace_token': 'Utiliser un autre jeton',
+		'cloudflare.step3': 'Comment les visiteurs arrivent-ils sur cette cible ?',
+		'cloudflare.step3.help':
+			'Puis appuyez sur Configurer et redéployer : les domaines sont enregistrés et checkship fait le reste sur Cloudflare.',
+		'cloudflare.way': 'Les visiteurs arrivent',
+		'cloudflare.way.tunnel': 'Par un tunnel Cloudflare',
+		'cloudflare.way.dns': 'Par un enregistrement DNS',
+		'cloudflare.way.recommended': 'conseillé ici',
+		'cloudflare.way.tunnel.help':
+			'Pour une machine qu’Internet ne peut pas joindre, comme un ordinateur ou un serveur à la maison : aucun port à ouvrir. checkship lance le connecteur à côté de son proxy.',
+		'cloudflare.way.tunnel.not_allowed':
+			'Ce jeton n’a pas pu créer de tunnel. Ajoutez-lui Cloudflare Tunnel · Edit sur Cloudflare, puis choisissez ceci et relancez la configuration.',
+		'cloudflare.way.dns.help':
+			'Pour un serveur avec une adresse publique et les ports 80 et 443 ouverts : un enregistrement proxifié pointe vers lui, et le HTTPS vient de Let’s Encrypt.',
+		'cloudflare.setup': 'Configurer et redéployer',
+		'cloudflare.running':
+			'Configuration sur Cloudflare… La première fois, télécharger le connecteur du tunnel peut prendre une à deux minutes.',
+		'cloudflare.tasks': 'Fait sur Cloudflare',
+		'cloudflare.task.tunnel': 'Tunnel prêt',
+		'cloudflare.task.routes': 'Routes ajoutées',
+		'cloudflare.task.records': 'Enregistrements DNS en place',
+		'cloudflare.task.connector': 'Connecteur lancé',
+		'cloudflare.task.cleanup': 'Anciens enregistrements supprimés',
+		'cloudflare.live': (url: string) => `${url} est en ligne`,
+		'cloudflare.live.help':
+			'Cloudflare peut mettre une minute à répondre partout. Le domaine indique ensuite Derrière Cloudflare : la vérification ne voit pas au-delà du proxy de Cloudflare, c’est normal.',
+		'cloudflare.what':
+			'checkship ne touche qu’aux enregistrements qu’il crée, marqués « managed by checkship » dans Cloudflare. Un enregistrement à vous pour le même nom n’est jamais remplacé sans vous demander.',
+		'cloudflare.problem.permission': (permission: string) =>
+			`Il manque l’autorisation ${permission} au jeton.`,
+		'cloudflare.problem.said': (message: string) => `Réponse de Cloudflare : « ${message} ».`,
+		'cloudflare.problem.fix.tunnel':
+			'Sur Cloudflare, ouvrez My Profile › API Tokens (ou Manage Account › Account API Tokens pour un jeton cfat_), modifiez ce jeton et ajoutez Account › Cloudflare Tunnel › Edit (parfois nommé Cloudflare One Connector: cloudflared › Write). Le jeton reste le même : choisissez le tunnel et relancez Configurer et redéployer.',
+		'cloudflare.problem.fix':
+			'Rouvrez Cloudflare pour créer un jeton avec les trois autorisations, puis collez le nouveau.',
+		'cloudflare.outside': (domains: string) => `Absents de ce compte Cloudflare : ${domains}`,
+		'cloudflare.outside.help':
+			'Le compte du jeton ne contient pas ces domaines, checkship n’y a donc pas touché. Configurez-les à la main, ou connectez un jeton du compte qui les contient.',
+		'cloudflare.conflict': (hostname: string) =>
+			`${hostname} a déjà un enregistrement que checkship n’a pas créé`,
+		'cloudflare.conflict.help': (type: string, content: string) =>
+			`${type} → ${content}. Gardez-le s’il sert à autre chose ; remplacez-le pour envoyer ce domaine ici.`,
+		'cloudflare.fix.title': (hostname: string) => `Diriger ${hostname} vers le tunnel`,
+		'cloudflare.fix.why': (type: string, content: string) =>
+			`Il a déjà un enregistrement que checkship n’a pas créé (${type} → ${content}), checkship n’y a donc pas touché. Remplacez-le dans Cloudflare en quatre étapes, ou laissez checkship le faire plus bas.`,
+		'cloudflare.fix.why.dns_edit':
+			'Ce jeton peut seulement lire les enregistrements DNS : ajoutez celui-ci vous-même sur Cloudflare, comme ci-dessous. Ou ajoutez DNS · Edit au jeton et relancez Configurer et redéployer.',
+		'cloudflare.fix.open': 'Ouvrir les enregistrements DNS du domaine sur Cloudflare',
+		'cloudflare.fix.open.button': (zone: string) => `Ouvrir les enregistrements DNS de ${zone}`,
+		'cloudflare.fix.delete': 'Supprimer l’enregistrement qui gêne',
+		'cloudflare.fix.delete.help':
+			'Cliquez sur Edit sur cette ligne, puis Delete. 100:: est l’adresse factice de Cloudflare pour « aucun serveur » : s’il sert à une règle de redirection ou à un Worker, gardez-le et utilisez un autre domaine.',
+		'cloudflare.fix.add':
+			'Ajouter cet enregistrement : cliquez sur Add record, remplissez-le ainsi, puis Save',
+		'cloudflare.fix.type': 'Type',
+		'cloudflare.fix.name': 'Name',
+		'cloudflare.fix.name.root': (zone: string) => `le domaine lui-même, ${zone}`,
+		'cloudflare.fix.target': 'Target',
+		'cloudflare.fix.copy': 'Copier la cible',
+		'cloudflare.fix.proxy': 'Proxy status',
+		'cloudflare.fix.proxied': 'Proxied (nuage orange activé)',
+		'cloudflare.fix.add.help':
+			'La cible est l’adresse propre de votre tunnel. Proxied doit rester activé : un tunnel ne répond qu’à travers le proxy de Cloudflare.',
+		'cloudflare.fix.check': 'Vérifier',
+		'cloudflare.fix.check.help':
+			'checkship cherche l’enregistrement sur Cloudflare et le prend en charge, pour qu’il suive vos domaines ensuite.',
+		'cloudflare.fix.check.button': 'Vérifier l’enregistrement',
+		'cloudflare.fix.or':
+			'Ou laissez checkship le faire : il supprime l’enregistrement qui gêne et ajoute celui ci-dessus.',
+		'cloudflare.fix.done': (hostname: string) => `${hostname} pointe vers le tunnel`,
+		'cloudflare.fix.done.help':
+			'L’enregistrement est en place et géré par checkship. Les visiteurs arrivent sur cette cible par Cloudflare.',
+		'cloudflare.conflict.keep': 'Le garder',
+		'cloudflare.conflict.replace': 'Remplacer l’enregistrement',
+		'cloudflare.account': 'Compte',
+		'cloudflare.tunnel': 'Tunnel',
+		'cloudflare.tunnel.state': (status: string, connections: number) =>
+			`${status} · ${connections === 1 ? '1 connexion' : `${connections} connexions`}`,
+		'cloudflare.zones.label': 'Domaines',
+		'cloudflare.records': 'Enregistrements gérés par checkship',
+		'cloudflare.records.none':
+			'Aucun pour l’instant : configurez un domaine depuis le panneau Domaines d’une application.',
+		'cloudflare.target.help':
+			'Ils suivent les domaines des applications : ajouter ou retirer un domaine met Cloudflare à jour tout seul. Pour changer de jeton, ouvrez le panneau Domaines d’une application.',
+		'cloudflare.disconnect': 'Déconnecter',
+		'cloudflare.disconnect.title': (target: string) => `Déconnecter ${target} de Cloudflare ?`,
+		'cloudflare.disconnect.description':
+			'checkship supprime le tunnel et son connecteur, efface les enregistrements DNS qu’il a créés, puis oublie le jeton. Les domaines configurés ainsi ne répondent plus jusqu’à une nouvelle configuration. Vos autres enregistrements ne sont pas touchés. Révoquez aussi le jeton sur Cloudflare.',
+		cloudflare_token_invalid:
+			'Ceci ne ressemble pas à un jeton d’API Cloudflare. Copiez tout le jeton affiché par Cloudflare après sa création.',
+		cloudflare_token_refused:
+			'Cloudflare refuse ce jeton : il a peut-être expiré, été révoqué ou est limité à d’autres adresses IP.',
+		cloudflare_permission_missing: 'Il manque une autorisation au jeton.',
+		cloudflare_unavailable: 'Cloudflare est injoignable. Réessayez dans un instant.',
+		cloudflare_not_connected: 'Cette cible n’est pas encore connectée à Cloudflare.',
+		cloudflare_invalid_mode: 'Choisissez un tunnel ou un enregistrement DNS.',
+		cloudflare_tunnel_not_allowed: 'Le jeton ne peut pas modifier les tunnels.',
+		cloudflare_automatic_proxy_only:
+			'Seule une cible dont checkship gère le proxy peut être configurée avec Cloudflare.',
+		domain_already_used: 'Déjà utilisé par une autre application.',
+		domain_reserved_by_target:
+			'Dans le domaine de la cible : checkship sert déjà ces noms. Utilisez un domaine en dehors.',
+		domain_reserved:
+			'C’est l’adresse de checkship lui-même. Elle ne peut pas être donnée à une application.',
+		domain_duplicated: 'Ce domaine est déjà sur cette application.',
+		too_many_domains: 'Trop de domaines : 20 par service, 50 par environnement.',
+		custom_domains_need_automatic_proxy:
+			'Cette cible utilise un proxy manuel, elle ne peut donc pas servir de domaines personnalisés.',
 		'settings.target_changed.title': (env: string, from: string, to: string) =>
 			`${env} passe de ${from} à ${to}`,
 		'settings.target_changed.description':
@@ -770,6 +1013,7 @@ Vous devriez probablement essayer de rendre la cible accessible avant de la supp
 			"Choisissez l'environnement et la source. Il s'exécute après les tâches déjà en file pour cet environnement.",
 		// Détails de l'application v3 (DESIGN.md §11.7)
 		'detail.visit': 'Ouvrir',
+		'detail.visit.domain': (domain: string) => `Visiter ${domain}`,
 		'detail.visit.none': "Pas d'URL tant qu'un déploiement n'expose pas de service",
 		'detail.deploy': 'Déployer',
 		'detail.deploy.hint': (branch: string) =>

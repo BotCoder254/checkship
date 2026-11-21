@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -170,6 +171,7 @@ func (b *deploymentProjectBuilder) transform() {
 	}
 
 	builder := b.config.ServicesBuilder()
+	servedDomains := make(map[string]bool) // Services whose custom domains got a router
 
 	// Let's transform the project to expose needed services
 	// Here ServiceNames sort the services by alphabetical order so we don't have to
@@ -263,6 +265,12 @@ func (b *deploymentProjectBuilder) transform() {
 
 			serviceDefinition.Labels["traefik."+routerName+".routers."+entrypointName+".service"] = entrypointName
 			serviceDefinition.Labels["traefik."+routerName+".services."+entrypointName+".loadbalancer.server.port"] = entrypoint.Port().String()
+
+			if hostnames := b.config.DomainsFor(serviceName); router == domain.RouterHttp && len(hostnames) > 0 && !entrypoint.IsCustom() {
+				addDomainRouters(serviceDefinition.Labels, entrypointName, hostnames)
+				servedDomains[serviceName] = true
+				b.logger.Infof("serving %s on %s", serviceName, joinHostnames(hostnames))
+			}
 		}
 
 		serviceDefinition.Ports = []types.ServicePortConfig{} // Remove them since traefik will expose this service
@@ -278,6 +286,24 @@ func (b *deploymentProjectBuilder) transform() {
 	}
 
 	b.services = builder.Services()
+
+	// Domains which could not be applied: say why in the deployment log
+	if domains, hasDomains := b.config.Domains().TryGet(); hasDomains {
+		for _, service := range sortedKeys(domains) {
+			if servedDomains[service] {
+				continue
+			}
+
+			switch {
+			case b.exposedManually:
+				b.logger.Warnf("custom domains of service %s ignored: the target uses a manual proxy", service)
+			case !slices.Contains(b.project.ServiceNames(), service):
+				b.logger.Warnf("custom domains of service %s ignored: there is no such service in the compose file", service)
+			default:
+				b.logger.Warnf("custom domains of service %s ignored: it exposes no http port", service)
+			}
+		}
+	}
 
 	// Add labels to network and volumes to make it easy to find them
 	for name, network := range b.project.Networks {

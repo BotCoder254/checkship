@@ -353,8 +353,11 @@ URL and provider changes trigger `reconfigure()`, i.e. a new version and a new c
    - flags: `--providers.docker`, `--providers.docker.network=<gateway>`,
      constraints `(Label(app.checkship.target, <id>) && (Label(app.checkship.custom_entrypoints,true) || LabelRegex(app.checkship.subdomain,.+))) || Label(app.checkship.exposed,true)`,
      default rule `Host({{ subdomain label }}.<target host>)`, entrypoint `http` on `:80`.
-   - **https url:** entrypoint `insecure :80` redirects to `http`, which now listens on `:443` with ACME TLS-challenge resolver
-     `checkship-resolver-<id>`, storing to the `letsencrypt` volume (`<project>_letsencrypt`).
+   - **https url:** entrypoint `insecure :80` redirects to `http`, which now listens on `:443` with the ACME resolver
+     `checkship-resolver-<id>` using the **HTTP-01** challenge on `insecure` (not TLS-ALPN-01, which can't pass Cloudflare's proxy),
+     storing to the `letsencrypt` volume (`<project>_letsencrypt`). `targets.proxy_revision` + `sqlite.ProxyRevision` (now 1):
+     at startup `infra.ReconfigureOutdatedProxies` reconfigures once every automatic target below it. Bump it when a proxy change must
+     reach existing targets; new targets are created at the current revision.
    - **Custom entrypoints:** known ports are added as `--entrypoints.<name>.address=:<port>/<proto>` + port mappings.
      Unknown ports start a throwaway `<project>-ports-finder` project (`traefik/whoami`) that publishes container ports
      8080+n with **random host ports**, reads the assigned host ports via `ContainerInspect`, then brings it down. These become the
@@ -490,6 +493,37 @@ only if it changed. All registries are injected as docker auth for every deploym
 5. Streams end with the request or on shutdown: `server.shutdown` is cancelled from `srv.RegisterOnShutdown`, because `Shutdown` waits for
    open requests. `GET /apps/:id/services` (`get_app_services`) returns the container states for the Logs tab's strip.
 
+### 6.14 Custom domains (seelf#5)
+- Model: `domain.Hostname` (`hostname.go`: lowercase, punycode via `x/net/idna`, RFC 1123 labels, ≥2 labels, no scheme, port, path,
+  wildcard or IP; only `[a-z0-9.-]`, so it is safe inside Traefik's backtick rules). `ServicesDomains map[service][]Hostname` lives in
+  `EnvironmentConfig.domains` (compared by `Equals`, so a change raises `AppEnvChanged` and the usual redeploy) and is frozen in
+  `ConfigSnapshot.domains` (`deployments.config_domains`).
+- Rules (`create_app.BuildDomains`, used by create and update): valid, ≤20/service, ≤50/environment, unique in the app, not under the
+  target's host (`domain_reserved_by_target`), not `EXPOSED_ON`'s host (`domain_reserved`), automatic proxy only
+  (`custom_domains_need_automatic_proxy`), not used by another app (`domain_already_used` + `DomainOwner{app}` detail, via
+  `AppsReader.GetDomainsOwners`). `app_domains(hostname PK, app_id CASCADE, environment, service)` is kept in sync by the apps store
+  and backs uniqueness. Update keeps an environment's domains when `domains` is omitted and re-checks both environments.
+- Deploy (`docker/domains.go`): one router per domain on the service's main http entrypoint
+  (`<entrypoint>-d<sha1[:4] hex>`, rule `Host(...)`, entrypoint `http`, service = the entrypoint's), so each domain gets its own
+  certificate. Ignored domains (manual proxy, unknown service, no http port) are `[WARN]`ed in the deployment log. `Service.domains`
+  is stored in `state_services`; `get_deployment` returns `domains` and `urls` (custom first, then default).
+- Check: `GET /apps/:id/domains/check` → `check_app_domains` → `infra/domaincheck`: A/AAAA/CNAME (system resolver, 3s), CAA via
+  `x/net/dns/dnsmessage` to `/etc/resolv.conf` nameservers (closest set up the tree), Cloudflare ranges (`cloudflare.go`, dated), and a
+  TLS handshake **only to an address the target's default host resolves to** (pinned IP, SNI = domain, no HTTP). Cached 30s; its own
+  limiter (2 per user). Front: `#lib/hostname.ts` (validation mirror, chips, DNS records), `routes/(main)/apps/domains-drawer.svelte`.
+- Connect Cloudflare (`domain/cloudflare.go`, `app/cloudflare_setup`, `infra/cloudflare` API v4 client, `cloudflare_connections` table):
+  token from a pre-filled link (`#lib/cloudflare.ts`: zone read, dns edit, argotunnel edit), `PUT/GET/DELETE /targets/:id/cloudflare`,
+  `POST …/setup` (session only). Sync: tunnel `checkship-<target>` + ingress (final `http_status:404`), proxied CNAMEs with comment
+  `managed by checkship (target <id>)` (the only records it touches; others are `conflicts` unless in `replace`), connector container
+  `checkship-tunnel-<target>` (`docker/tunnel.go`, pinned `cloudflare/cloudflared` image) on the gateway network. App created/env
+  changed/cleanup queue `SyncJob` (group `deployment.cloudflare.<target>`, Merge); target cleanup queues `DisconnectCommand`.
+  `domaincheck` sets `cloudflare_dns` from the closest NS set (`*.ns.cloudflare.com`), which shows the drawer section.
+  Tokens: `cfat_` (account) verified on `/accounts/{id}/tokens/verify` (account from `/accounts`, else zones), others on
+  `/user/tokens/verify` first. Connect can only probe tunnel Read; a refused create sets `tunnel_allowed=false`, mode dns, and a
+  later successful sync sets it back. Conflicts carry `want` (type/name `@`/content/proxied) and `reason` (`record`, `dns_edit` when
+  the token can't write DNS: the record is added by hand). A matching hand-made CNAME is taken over (comment added), or accepted
+  as is when proxied and DNS is read-only. Permission errors keep Cloudflare's message (`detail.cloudflare`).
+
 ### 6.12 Jobs page
 `GET /api/v1/jobs?page=n` (10 per page). Shows status (retrieved = running, errcode = failed, otherwise pending), payload, policy and
 error. A cancel button appears only for `Cancellable` jobs (`DELETE /jobs/:id`; the store refuses non-cancellable ones with a 404).
@@ -509,7 +543,8 @@ error. A cancel button appears only for `Cancellable` jobs (`DELETE /jobs/:id`; 
 | POST /targets, GET /targets ?active_only, GET/PATCH/DELETE /targets/:id, POST /targets/:id/reconfigure | cookie | create/get/update/request_target_cleanup/reconfigure |
 | POST/GET /registries, GET/PATCH/DELETE /registries/:id | cookie | registry CRUD |
 | GET /apps, POST /apps, PATCH /apps/:id, DELETE /apps/:id | cookie | get_apps/create/update/request_app_cleanup |
-| GET /apps/:id | cookie **or API key** | get_app_detail |
+| GET /apps/:id | cookie **or API key** | get_app_detail (env `domains` included) |
+| GET /apps/:id/domains/check ?environment | cookie or API key | check_app_domains (DNS, CAA, certificate; 429 when busy) |
 | POST /apps/:id/deployments | cookie or API key | queue_deployment (json or multipart) |
 | GET /apps/:id/deployments ?page&environment | cookie or API key | get_app_deployments (5/page) |
 | GET /apps/:id/deployments/:n | cookie or API key | get_deployment |
@@ -535,15 +570,16 @@ targets(id PK, name, url NULL UQ, provider_kind, provider_fingerprint UQ, provid
         state_status, state_version, state_errcode, state_last_ready_version, entrypoints JSON default '{}',
         cleanup_requested_at/by, created_at/by→users)
 apps(id PK, name, version_control_url, version_control_token,
-     production_target→targets RESTRICT, production_version, production_vars JSON,
-     staging_target→targets RESTRICT, staging_version, staging_vars JSON,
+     production_target→targets RESTRICT, production_version, production_vars JSON, production_domains JSON,
+     staging_target→targets RESTRICT, staging_version, staging_vars JSON, staging_domains JSON,
      created_at/by, cleanup_requested_at/by,
      UQ(name, production_target), UQ(name, staging_target))
 deployments(PK(app_id→apps CASCADE, deployment_number), config_appid, config_appname, config_environment,
-            config_target (no FK on purpose), config_vars JSON, state_status, state_errcode, state_services JSON,
+            config_target (no FK on purpose), config_vars JSON, config_domains JSON, state_status, state_errcode, state_services JSON,
             state_started_at, state_finished_at, source_discriminator, source, requested_at, requested_by→users)
             idx(config_target), idx(state_status); TRIGGER on_deployment_failed_cleanup_jobs
 registries(id PK, name, url UQ, credentials_username, credentials_password, created_at/by)
+app_domains(hostname PK, app_id→apps CASCADE, environment, service)  idx(app_id)   -- targets also have proxy_revision
 scheduled_jobs(see §5.5)  idx(resource_id), idx([group])
 auth_schema_migrations, deployment_schema_migrations, scheduler_schema_migrations
 ```

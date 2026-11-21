@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	authfixture "github.com/checkship-deploy/checkship/internal/auth/fixture"
+	"github.com/checkship-deploy/checkship/internal/deployment/app/create_app"
 	"github.com/checkship-deploy/checkship/internal/deployment/app/update_app"
 	"github.com/checkship-deploy/checkship/internal/deployment/domain"
 	"github.com/checkship-deploy/checkship/internal/deployment/fixture"
@@ -25,7 +26,7 @@ func Test_UpdateApp(t *testing.T) {
 		spy.Dispatcher,
 	) {
 		context := fixture.PrepareDatabase(tb, seed...)
-		return update_app.Handler(context.AppsStore, context.AppsStore), context.Context, context.Dispatcher
+		return update_app.Handler(context.AppsStore, context.AppsStore, create_app.DomainsRules{Targets: context.TargetsStore, Apps: context.AppsStore}), context.Context, context.Dispatcher
 	}
 
 	t.Run("should require a valid application id", func(t *testing.T) {

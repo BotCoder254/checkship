@@ -256,6 +256,7 @@ func Test_Deployment(t *testing.T) {
 						PublishedPort: monad.Value[uint](80810),
 					},
 				},
+				Urls: []string{"https://app.docker.localhost"},
 			},
 			{
 				Name:  "db",
@@ -278,5 +279,75 @@ func Test_Deployment(t *testing.T) {
 				},
 			},
 		}, d.State.Services.Get(get_deployment.Services{}))
+	})
+
+	t.Run("should list custom domains first in the service urls", func(t *testing.T) {
+		d := get_deployment.Deployment{
+			AppID:       "app-id",
+			Environment: "production",
+			Target: get_deployment.TargetSummary{
+				ID:          "target-id",
+				Url:         monad.Value("https://apps.example.com"),
+				Entrypoints: monad.Value(get_deployment.Entrypoints{}),
+			},
+			State: get_deployment.State{
+				Services: monad.Value(get_deployment.Services{
+					{
+						Name:    "web",
+						Image:   "web-image",
+						Domains: []string{"shop.example.com", "www.shop.example.com"},
+						Entrypoints: []get_deployment.Entrypoint{
+							{Name: "http1", Router: "http", Subdomain: monad.Value("shop"), Port: 80},
+						},
+					},
+					{
+						Name:        "db",
+						Image:       "db-image",
+						Entrypoints: []get_deployment.Entrypoint{},
+					},
+				}),
+			},
+		}
+
+		d.ResolveServicesUrls()
+
+		services := d.State.Services.MustGet()
+		assert.DeepEqual(t, []string{
+			"https://shop.example.com",
+			"https://www.shop.example.com",
+			"https://shop.apps.example.com",
+		}, services[0].Urls)
+		assert.HasLength(t, 0, services[1].Urls)
+	})
+
+	t.Run("should link custom domains served through a Cloudflare Tunnel in https", func(t *testing.T) {
+		d := get_deployment.Deployment{
+			AppID:       "app-id",
+			Environment: "production",
+			Target: get_deployment.TargetSummary{
+				ID:            "target-id",
+				Url:           monad.Value("http://docker.localhost"),
+				Entrypoints:   monad.Value(get_deployment.Entrypoints{}),
+				TunnelDomains: true,
+			},
+			State: get_deployment.State{
+				Services: monad.Value(get_deployment.Services{
+					{
+						Name:    "web",
+						Image:   "web-image",
+						Domains: []string{"app.gitdesk.app"},
+						Entrypoints: []get_deployment.Entrypoint{
+							{Name: "http1", Router: "http", Subdomain: monad.Value("notes-web"), Port: 80},
+						},
+					},
+				}),
+			},
+		}
+
+		d.ResolveServicesUrls()
+
+		services := d.State.Services.MustGet()
+		// The default address keeps the target's own scheme: it isn't behind the tunnel
+		assert.DeepEqual(t, []string{"https://app.gitdesk.app", "http://notes-web.docker.localhost"}, services[0].Urls)
 	})
 }

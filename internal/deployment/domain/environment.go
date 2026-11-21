@@ -33,6 +33,7 @@ type (
 		target  TargetID
 		version time.Time
 		vars    monad.Maybe[ServicesEnv]
+		domains monad.Maybe[ServicesDomains] // Custom domains per service (seelf#5)
 	}
 )
 
@@ -64,14 +65,37 @@ func (e *EnvironmentConfig) HasEnvironmentVariables(vars ServicesEnv) {
 	e.vars.Set(vars)
 }
 
+// Serve the given services at these custom domains. An empty map removes them.
+func (e *EnvironmentConfig) HasDomains(domains ServicesDomains) {
+	cleaned := make(ServicesDomains, len(domains))
+
+	for service, hostnames := range domains {
+		if len(hostnames) > 0 {
+			cleaned[service] = hostnames
+		}
+	}
+
+	if len(cleaned) == 0 {
+		e.domains = monad.None[ServicesDomains]()
+		return
+	}
+
+	e.domains.Set(cleaned)
+}
+
 // Check if two environment config are equals, does not compare version.
 func (e EnvironmentConfig) Equals(other EnvironmentConfig) bool {
-	return e.target == other.target && reflect.DeepEqual(e.vars, other.vars)
+	return e.target == other.target &&
+		reflect.DeepEqual(e.vars, other.vars) &&
+		reflect.DeepEqual(e.domains, other.domains)
 }
 
 func (e EnvironmentConfig) Target() TargetID               { return e.target }
 func (e EnvironmentConfig) Version() time.Time             { return e.version }
 func (e EnvironmentConfig) Vars() monad.Maybe[ServicesEnv] { return e.vars }
+func (e EnvironmentConfig) Domains() monad.Maybe[ServicesDomains] {
+	return e.domains
+}
 
 func (e *EnvironmentConfig) consolidate(other EnvironmentConfig) {
 	if e.target != other.target {
