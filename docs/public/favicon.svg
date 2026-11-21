@@ -4,9 +4,8 @@
     @media (prefers-color-scheme: dark) { .mark { stroke: #7f95ff; } }
   </style>
   <g class="mark">
-    <!-- Ring: r=9 around (12,12), open between 18° and 68° so the check can leave it -->
-    <path d="M15.37 3.66A9 9 0 1 0 20.56 9.22" />
-    <!-- Check: short arm, then the long arm launching out through the gap -->
-    <path d="M7.25 11.75 10.75 15.25 20 4" />
+    <path d="M2.5 7.5h4.5v4.5h-4.5z" />
+    <path d="M9 15.5h4.5v4.5H9z" />
+    <path d="M15 4.5h6v6h-6z" />
   </g>
 </svg>

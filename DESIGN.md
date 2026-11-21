@@ -254,7 +254,7 @@ Hierarchy is **Page → Section → Component**. A page has one title (its bread
 
 `src/routes/(auth)/+layout.svelte`. Two full-height columns from 1024px (`lg:grid-cols-2`, `min-h-svh`):
 
-- **Left: the art panel** on `canvas`. A dithered illustration (`DitherImage`, source `static/auth/art.svg`: the ring-and-check mark with orbit rings) and the tagline, Heading 3 in `ink`, 48px from the left and bottom edges.
+- **Left: the art panel** on `canvas`. A dithered illustration (`DitherImage`, source `static/auth/art.svg`: the check-of-containers mark with orbit rings) and the tagline, Heading 3 in `ink`, 48px from the left and bottom edges.
 - **Right: the content** on `surface`, centred both ways. The sign-in form is one 360px column: logo 56px, title and description, fields, one full-width primary button.
 - **No line between the columns.** The change from `canvas` to `surface` is the only boundary.
 - **Below 1024px** the panel is hidden and the form is centred alone with 24px gutters. **Below 768px** inputs and the button are 44px tall with 16px text (touch targets; iOS does not zoom a 16px field).
@@ -347,7 +347,9 @@ _Why: motion should confirm that something happened. Looping motion competes wit
 
 ## 10. Logo
 
-- **The mark is a ring-and-check, stroke only.** There is no tile, fill, gradient or shadow. It is drawn at stroke 2 in a 24 × 24 viewBox with round caps and joins.
+- **The mark is the check of containers, stroke only** (owner's choice, 2026-11-21; canvas "checkship logo redesign", round 6). Three containers sit on the three points of a check, so they draw it together: Docker's idea (containers) and Podman's (a pod of three working as one), with checkship's check, and no whale or seals (Docker's trademark guidelines forbid imitating the whale). The last container is larger: the deploy going out. There is no tile, fill, gradient or shadow. It is drawn at stroke 2 in a 24 × 24 viewBox with round caps and joins.
+- **Construction.** Squares `M2.5 7.5h4.5v4.5h-4.5z`, `M9 15.5h4.5v4.5H9z` and `M15 4.5h6v6h-6z` (centres 4.75,9.75 · 11.25,17.75 · 18,7.5). The closest gap is 3.5 units, 1.5 open with the stroke, so the three stay apart at 16px.
+- **Why not a ship.** The container world is crowded with sea marks (Docker's whale, Kubernetes' wheel, Helm, Harbor); research on distinctive brand assets says a mark has to be unique in its category, so the logo leaves the sea theme. Docker's 2026 blue (`#6172FF`) is close to our dark-mode blue; worth watching.
 - **Stroke colour** is the brand colour: `#2f5bea` in light and `#7f95ff` in dark. It never follows the accent tone.
 - **Wordmark.** "checkship" in Inter 600, lower case, in `ink`, with -0.02em tracking.
 - **Spacing.** The mark sits left of the wordmark with a gap of 0.4× the mark size.

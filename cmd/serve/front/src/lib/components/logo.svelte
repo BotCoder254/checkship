@@ -1,5 +1,5 @@
 <!--
-	checkship lockup (DESIGN.md §10): the ring-and-check mark followed by the wordmark.
+	checkship lockup (DESIGN.md §10): the check-of-containers mark followed by the wordmark.
 	Source of truth: assets/brand/logo-mark.svg and assets/brand/logo.svg at the repository root.
 
 	Rules: stroke only, brand blue (--brand, light and dark), wordmark in ink, Inter 600, -0.02em
@@ -36,8 +36,10 @@
 		stroke-linejoin="round"
 		aria-hidden="true"
 	>
-		<path d="M15.37 3.66A9 9 0 1 0 20.56 9.22" />
-		<path d="M7.25 11.75 10.75 15.25 20 4" />
+		<!-- Three containers (a pod) on the three points of a check -->
+		<path d="M2.5 7.5h4.5v4.5h-4.5z" />
+		<path d="M9 15.5h4.5v4.5H9z" />
+		<path d="M15 4.5h6v6h-6z" />
 	</svg>
 	{#if !markOnly}
 		<span
