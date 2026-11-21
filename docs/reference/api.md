@@ -11,6 +11,8 @@ The following routes are allowed with an header `Authorization: Bearer <user API
 ```http
 # Retrieve an app details
 GET /apps/:id
+# DNS, CAA and certificate status of an environment's custom domains
+GET /apps/:id/domains/check?environment=production
 # Creates a new deployment
 POST /apps/:id/deployments
 # Get all deployments of an app
@@ -47,6 +49,63 @@ DELETE /backups/:id
 ```
 
 The [Backups](/reference/backups#api) page describes their bodies.
+
+## Custom domains {#custom-domains}
+
+`POST /apps` and `PATCH /apps/:id` accept each environment's [custom domains](/reference/applications#custom-domains) next to its target and variables, per service:
+
+```json
+{
+  "production": {
+    "target": "<target id>",
+    "domains": { "web": ["shop.acme.com", "www.shop.acme.com"], "api": ["api.acme.com"] }
+  }
+}
+```
+
+On `PATCH`, an environment sent without `domains` keeps its domains, and `{}` removes them. Errors are `validation_failed` with a field per domain (`production.domains.web.0`): `invalid_hostname`, `domain_duplicated`, `domain_reserved_by_target`, `domain_reserved`, `domain_already_used` (its detail names the application, `{"app": "blog"}`), `too_many_domains` and `custom_domains_need_automatic_proxy`. `GET /apps/:id` returns them under `production.domains` and `staging.domains`.
+
+`GET /apps/:id/domains/check?environment=production` checks the saved domains (cookie or API key; a few checks at a time per user, `429` otherwise):
+
+```json
+{
+  "environment": "production",
+  "https": true,
+  "expected": { "host": "shop.apps.acme.com", "addresses": ["203.0.113.10"] },
+  "domains": [
+    {
+      "service": "web",
+      "hostname": "shop.acme.com",
+      "unicode": "shop.acme.com",
+      "dns": "points_here",
+      "addresses": ["203.0.113.10"],
+      "caa": "caa_ok",
+      "certificate": "certificate_ok",
+      "issuer": "Let's Encrypt",
+      "expires_at": "2027-02-18T10:00:00Z"
+    }
+  ]
+}
+```
+
+`dns` is `points_here`, `behind_cloudflare`, `points_elsewhere`, `no_record` or `unknown`; `cloudflare_dns` is `true` when the domain's nameservers are Cloudflare's; `caa` is `caa_ok`, `caa_blocks` (with `caa_issuers`) or `caa_unknown`; `certificate` (https targets, domains pointing here) is `certificate_ok`, `default_certificate` or `unreachable`. Deployment services list their `domains` and their `urls`, custom domains first.
+
+## Connect Cloudflare {#cloudflare}
+
+Per target, with a session cookie only (the token gives access to a Cloudflare account, so an API key can't set it). See [Guide › Cloudflare](/guide/cloudflare#connect).
+
+```sh
+# Status: account, mode, tunnel and the records checkship manages ({"connected": false} when not connected)
+GET /targets/:id/cloudflare
+# Connect with an API token (Zone Read, DNS Edit, optionally Cloudflare Tunnel Edit)
+PUT /targets/:id/cloudflare          {"token": "…"}
+# Set everything up for the target's domains; mode "tunnel" or "dns", replace: hostnames whose own record may be replaced
+POST /targets/:id/cloudflare/setup   {"mode": "tunnel", "replace": []}
+# Remove the tunnel, its connector and checkship's records, then forget the token
+DELETE /targets/:id/cloudflare
+```
+
+The token is never returned. `setup` answers `{"tasks": [{"key": "tunnel", "detail": "…"}], "conflicts": [{"hostname", "type", "content", "zone", "want": {"type", "name", "content", "proxied"}}], "outside": ["…"], "status": {…}}`: `conflicts` are records checkship didn't create (left alone unless listed in `replace`; `want` is the record to put instead, and one made by hand that matches it is taken over), `outside` domains in no zone of the token's account. Errors: `cloudflare_token_invalid`, `cloudflare_token_refused`, `cloudflare_permission_missing` (detail `{"permission": "DNS · Edit"}`), `cloudflare_unavailable`, `cloudflare_not_connected`, `cloudflare_tunnel_not_allowed`, `cloudflare_invalid_mode`, `cloudflare_automatic_proxy_only`; on `PUT`, token errors come as `validation_failed` on the `token` field. Afterwards, adding or removing a domain on the target updates Cloudflare by itself (a `deployment.command.sync_cloudflare` job).
 
 ## Cancel a deployment {#cancel-a-deployment}
 
