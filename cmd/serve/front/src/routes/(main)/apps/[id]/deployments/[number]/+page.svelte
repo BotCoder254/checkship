@@ -236,7 +236,7 @@
 			<h2 class="text-xs font-semibold tracking-wide text-muted-foreground">
 				{l.translate('deployment.source')}
 			</h2>
-			<dl class="grid grid-cols-[120px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
+			<dl class="grid grid-cols-[120px_minmax(0,1fr)] gap-x-3 gap-y-2 track p-4 text-sm sm:p-5">
 				<dt class="text-muted-foreground">{l.translate('deployment.source.kind')}</dt>
 				<dd>{l.translate(`deployment.source.${deployment.source.discriminator}`)}</dd>
 				{#if deployment.source.discriminator === 'git'}
@@ -254,40 +254,45 @@
 			<h2 class="text-xs font-semibold tracking-wide text-muted-foreground">
 				{l.translate('deployment.services.title')}
 			</h2>
-			{#if services.length > 0}
-				<ul class="flex flex-col gap-1.5">
-					{#each services as service (service.name)}
-						{@const entrypointUrls = service.entrypoints.filter((e) => e.url).map((e) => e.url!)}
-						<!-- Custom domains first (seelf#5), then the default address and other ports -->
-						{@const urls = [...new Set([...(service.urls ?? []), ...entrypointUrls])]}
-						{@const defaultUrl = service.domains?.length ? service.urls?.at(-1) : undefined}
-						<li class="flex flex-col gap-1 py-1.5 text-sm">
-							<span class="flex items-center justify-between gap-3">
-								<span class="font-semibold">{service.name}</span>
-								{#if urls.length === 0}
-									<span class="text-muted-foreground">{l.translate('deployment.not_exposed')}</span>
-								{/if}
-							</span>
-							{#each urls as url (url)}
-								<a
-									href={url}
-									target="_blank"
-									rel="noopener noreferrer"
-									class="truncate font-mono text-label text-primary hover:underline"
+			<div class="min-w-0 track p-4 sm:p-5">
+				{#if services.length > 0}
+					<ul class="flex flex-col gap-1.5">
+						{#each services as service (service.name)}
+							{@const entrypointUrls = service.entrypoints.filter((e) => e.url).map((e) => e.url!)}
+							<!-- Custom domains first (seelf#5), then the default address and other ports -->
+							{@const urls = [...new Set([...(service.urls ?? []), ...entrypointUrls])]}
+							{@const defaultUrl = service.domains?.length ? service.urls?.at(-1) : undefined}
+							<li class="flex flex-col gap-1 py-1.5 text-sm">
+								<span class="flex items-center justify-between gap-3">
+									<span class="font-semibold">{service.name}</span>
+									{#if urls.length === 0}
+										<span class="text-muted-foreground"
+											>{l.translate('deployment.not_exposed')}</span
+										>
+									{/if}
+								</span>
+								{#each urls as url (url)}
+									<a
+										href={url}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="truncate font-mono text-label text-primary hover:underline"
+									>
+										{url}{#if url === defaultUrl}<span
+												class="ml-1.5 font-sans text-xs font-semibold text-muted-foreground"
+												>{l.translate('domains.url.default')}</span
+											>{/if}
+									</a>
+								{/each}
+								<span class="truncate font-mono text-xs text-muted-foreground">{service.image}</span
 								>
-									{url}{#if url === defaultUrl}<span
-											class="ml-1.5 font-sans text-xs font-semibold text-muted-foreground"
-											>{l.translate('domains.url.default')}</span
-										>{/if}
-								</a>
-							{/each}
-							<span class="truncate font-mono text-xs text-muted-foreground">{service.image}</span>
-						</li>
-					{/each}
-				</ul>
-			{:else}
-				<p class="text-sm text-muted-foreground">{l.translate('deployment.waiting_for_logs')}</p>
-			{/if}
+							</li>
+						{/each}
+					</ul>
+				{:else}
+					<p class="text-sm text-muted-foreground">{l.translate('deployment.waiting_for_logs')}</p>
+				{/if}
+			</div>
 		</section>
 	</div>
 

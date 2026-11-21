@@ -143,7 +143,7 @@
 	{#if !deleting}
 		<section
 			aria-label={l.translate('targets.overview.figures', [target.name])}
-			class="grid grid-cols-2 gap-6 sm:gap-x-10 xl:grid-cols-4"
+			class="grid grid-cols-2 gap-6 track p-4 sm:gap-x-10 sm:p-5 xl:grid-cols-4"
 		>
 			{#if current}
 				<Metric
@@ -201,7 +201,9 @@
 				<Icon icon={Key01Icon} class="size-4" />
 				{l.translate('targets.connection')}
 			</SectionHeading>
-			<dl class="grid grid-cols-[120px_minmax(0,1fr)] gap-x-3 gap-y-2 text-label/5">
+			<dl
+				class="grid grid-cols-[120px_minmax(0,1fr)] gap-x-3 gap-y-2 track p-4 text-label/5 sm:p-5"
+			>
 				<dt class="text-muted-foreground">{l.translate('targets.provider')}</dt>
 				<dd>
 					{local ? l.translate('targets.provider.local') : l.translate('targets.provider.ssh')}
@@ -231,7 +233,9 @@
 				<Icon icon={Globe02Icon} class="size-4" />
 				{l.translate('targets.exposure')}
 			</SectionHeading>
-			<dl class="grid grid-cols-[120px_minmax(0,1fr)] gap-x-3 gap-y-2 text-label/5">
+			<dl
+				class="grid grid-cols-[120px_minmax(0,1fr)] gap-x-3 gap-y-2 track p-4 text-label/5 sm:p-5"
+			>
 				<dt class="text-muted-foreground">{l.translate('targets.proxy')}</dt>
 				<dd>
 					{target.url
@@ -278,84 +282,86 @@
 				{/if}
 			{/snippet}
 		</SectionHeading>
-		{#if usedApps && usedApps.length > 0}
-			<TimelineList labelledby="apps-title">
-				{#each usedApps as app (app.id)}
-					{@const environments = (['production', 'staging'] as const).filter(
-						(e) => app[`${e}_target`]?.id === target.id
-					)}
-					{@const latest = environments
-						.map((e) => app.latest_deployments[e])
-						.filter((d) => !!d)
-						.sort((a, b) => b.requested_at.localeCompare(a.requested_at))[0]}
-					{@const tile = latest
-						? deploymentTile(latest.state)
-						: { icon: DashboardSquare01Icon, tone: 'muted' as const, spin: false }}
-					{@const status = latest ? deploymentBadge(latest.state) : undefined}
-					{@const latestText = latest
-						? `${status!.label} · #${latest.deployment_number}`
-						: l.translate('apps.no_deployment')}
-					<TimelineRow
-						icon={tile.icon}
-						tone={tile.tone}
-						spin={tile.spin}
-						label={[
-							app.name,
-							...environments.map((e) => l.translate(`deploy.environment.${e}`)),
-							latestText,
-							latest ? l.relative(deploymentMoment(latest)) : undefined
-						]
-							.filter(Boolean)
-							.join(', ')}
-						href={routes.app(app.id)}
-					>
-						{#snippet title()}{app.name}{/snippet}
-						{#snippet badge()}
-							{#each environments as e (e)}
-								<EnvironmentChip environment={e} />
-							{/each}
-						{/snippet}
-						{#snippet details()}
-							{[latestText, latest ? l.relative(deploymentMoment(latest)) : undefined]
+		<div class="min-w-0 track p-2 sm:p-3">
+			{#if usedApps && usedApps.length > 0}
+				<TimelineList labelledby="apps-title">
+					{#each usedApps as app (app.id)}
+						{@const environments = (['production', 'staging'] as const).filter(
+							(e) => app[`${e}_target`]?.id === target.id
+						)}
+						{@const latest = environments
+							.map((e) => app.latest_deployments[e])
+							.filter((d) => !!d)
+							.sort((a, b) => b.requested_at.localeCompare(a.requested_at))[0]}
+						{@const tile = latest
+							? deploymentTile(latest.state)
+							: { icon: DashboardSquare01Icon, tone: 'muted' as const, spin: false }}
+						{@const status = latest ? deploymentBadge(latest.state) : undefined}
+						{@const latestText = latest
+							? `${status!.label} · #${latest.deployment_number}`
+							: l.translate('apps.no_deployment')}
+						<TimelineRow
+							icon={tile.icon}
+							tone={tile.tone}
+							spin={tile.spin}
+							label={[
+								app.name,
+								...environments.map((e) => l.translate(`deploy.environment.${e}`)),
+								latestText,
+								latest ? l.relative(deploymentMoment(latest)) : undefined
+							]
 								.filter(Boolean)
-								.join(' · ')}
-						{/snippet}
-						{#snippet extra()}
-							<DeployStrip
-								appId={app.id}
-								name={app.name}
-								environment={environments.length === 1 ? environments[0] : undefined}
-								onopen={(n) => goto(routes.deployment(app.id, n))}
-							/>
-						{/snippet}
-						{#snippet actions()}
-							<RowMenu label={l.translate('table.menu', [app.name])}>
-								<RowMenuGroup>
-									<RowMenuItem icon={ViewIcon} href={routes.app(app.id)}>
-										{l.translate('menu.open')}
-									</RowMenuItem>
-									<RowMenuItem icon={CommandLineIcon} href={routes.appLogs(app.id)}>
-										{l.translate('menu.logs')}
-									</RowMenuItem>
-									<RowMenuItem icon={Settings02Icon} href={routes.editApp(app.id)}>
-										{l.translate('menu.settings')}
-									</RowMenuItem>
-								</RowMenuGroup>
-							</RowMenu>
-						{/snippet}
-					</TimelineRow>
-				{/each}
-			</TimelineList>
-		{:else if usedApps}
-			<EmptyState
-				illustration="apps"
-				size="compact"
-				level={3}
-				title={l.translate('targets.apps.none.title')}
-				description={target.state.last_ready_version || targetStatus !== TargetStatus.Failed
-					? l.translate('targets.apps.none', [target.name])
-					: l.translate('targets.apps.none_never_ready', [target.name])}
-			/>
-		{/if}
+								.join(', ')}
+							href={routes.app(app.id)}
+						>
+							{#snippet title()}{app.name}{/snippet}
+							{#snippet badge()}
+								{#each environments as e (e)}
+									<EnvironmentChip environment={e} />
+								{/each}
+							{/snippet}
+							{#snippet details()}
+								{[latestText, latest ? l.relative(deploymentMoment(latest)) : undefined]
+									.filter(Boolean)
+									.join(' · ')}
+							{/snippet}
+							{#snippet extra()}
+								<DeployStrip
+									appId={app.id}
+									name={app.name}
+									environment={environments.length === 1 ? environments[0] : undefined}
+									onopen={(n) => goto(routes.deployment(app.id, n))}
+								/>
+							{/snippet}
+							{#snippet actions()}
+								<RowMenu label={l.translate('table.menu', [app.name])}>
+									<RowMenuGroup>
+										<RowMenuItem icon={ViewIcon} href={routes.app(app.id)}>
+											{l.translate('menu.open')}
+										</RowMenuItem>
+										<RowMenuItem icon={CommandLineIcon} href={routes.appLogs(app.id)}>
+											{l.translate('menu.logs')}
+										</RowMenuItem>
+										<RowMenuItem icon={Settings02Icon} href={routes.editApp(app.id)}>
+											{l.translate('menu.settings')}
+										</RowMenuItem>
+									</RowMenuGroup>
+								</RowMenu>
+							{/snippet}
+						</TimelineRow>
+					{/each}
+				</TimelineList>
+			{:else if usedApps}
+				<EmptyState
+					illustration="apps"
+					size="compact"
+					level={3}
+					title={l.translate('targets.apps.none.title')}
+					description={target.state.last_ready_version || targetStatus !== TargetStatus.Failed
+						? l.translate('targets.apps.none', [target.name])
+						: l.translate('targets.apps.none_never_ready', [target.name])}
+				/>
+			{/if}
+		</div>
 	</section>
 </div>

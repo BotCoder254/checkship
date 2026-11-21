@@ -59,96 +59,97 @@
 				</Button>
 			{/snippet}
 		</SectionHeading>
-
-		<dl class="grid grid-cols-[120px_minmax(0,1fr)] gap-x-3 gap-y-2 text-label/5">
-			<dt class="text-muted-foreground">{l.translate('cloudflare.account')}</dt>
-			<dd class="flex flex-wrap items-center gap-2">
-				<span
-					class="inline-flex min-h-6 items-center gap-1.5 rounded-sm bg-success-soft px-2 py-0.5 text-xs font-semibold break-all"
-				>
-					<span aria-hidden="true" class="size-2 rounded-full bg-success"></span>
-					{l.translate('cloudflare.connected', [status.account_name ?? ''])}
-				</span>
-			</dd>
-			<dt class="text-muted-foreground">{l.translate('cloudflare.permissions')}</dt>
-			<dd class="flex flex-wrap gap-1.5">
-				{#each CLOUDFLARE_PERMISSIONS as permission (permission.key)}
-					{#if permission.key !== 'argotunnel' || status.tunnel_allowed}
-						<span
-							class="inline-flex h-6 items-center rounded-sm bg-raised px-2 text-xs font-semibold"
-							>{permission.label}</span
-						>
-					{/if}
-				{/each}
-			</dd>
-			<dt class="text-muted-foreground">{l.translate('cloudflare.way')}</dt>
-			<dd>{l.translate(`cloudflare.way.${status.mode ?? 'dns'}`)}</dd>
-			{#if status.tunnel}
-				<dt class="text-muted-foreground">{l.translate('cloudflare.tunnel')}</dt>
+		<div class="flex min-w-0 flex-col gap-3 track p-4 sm:p-5">
+			<dl class="grid grid-cols-[120px_minmax(0,1fr)] gap-x-3 gap-y-2 text-label/5">
+				<dt class="text-muted-foreground">{l.translate('cloudflare.account')}</dt>
 				<dd class="flex flex-wrap items-center gap-2">
-					<span class="font-mono">{status.tunnel.name}</span>
 					<span
-						class={cn(
-							'inline-flex h-6 items-center gap-1.5 rounded-sm px-2 text-xs font-semibold',
-							tunnelTone === 'success' && 'bg-success-soft',
-							tunnelTone === 'warning' && 'bg-warning-soft',
-							tunnelTone === 'danger' && 'bg-danger-soft'
-						)}
+						class="inline-flex min-h-6 items-center gap-1.5 rounded-sm bg-success-soft px-2 py-0.5 text-xs font-semibold break-all"
 					>
-						<span
-							aria-hidden="true"
-							class={cn(
-								'size-2 rounded-full',
-								tunnelTone === 'success' && 'bg-success',
-								tunnelTone === 'warning' && 'bg-warning',
-								tunnelTone === 'danger' && 'bg-danger'
-							)}
-						></span>
-						{l.translate('cloudflare.tunnel.state', [
-							status.tunnel.status,
-							status.tunnel.connections
-						])}
+						<span aria-hidden="true" class="size-2 rounded-full bg-success"></span>
+						{l.translate('cloudflare.connected', [status.account_name ?? ''])}
 					</span>
 				</dd>
-			{/if}
-			<dt class="text-muted-foreground">{l.translate('cloudflare.zones.label')}</dt>
-			<dd class="font-mono">{status.zones.join(', ') || '—'}</dd>
-		</dl>
+				<dt class="text-muted-foreground">{l.translate('cloudflare.permissions')}</dt>
+				<dd class="flex flex-wrap gap-1.5">
+					{#each CLOUDFLARE_PERMISSIONS as permission (permission.key)}
+						{#if permission.key !== 'argotunnel' || status.tunnel_allowed}
+							<span
+								class="inline-flex h-6 items-center rounded-sm bg-raised px-2 text-xs font-semibold"
+								>{permission.label}</span
+							>
+						{/if}
+					{/each}
+				</dd>
+				<dt class="text-muted-foreground">{l.translate('cloudflare.way')}</dt>
+				<dd>{l.translate(`cloudflare.way.${status.mode ?? 'dns'}`)}</dd>
+				{#if status.tunnel}
+					<dt class="text-muted-foreground">{l.translate('cloudflare.tunnel')}</dt>
+					<dd class="flex flex-wrap items-center gap-2">
+						<span class="font-mono">{status.tunnel.name}</span>
+						<span
+							class={cn(
+								'inline-flex h-6 items-center gap-1.5 rounded-sm px-2 text-xs font-semibold',
+								tunnelTone === 'success' && 'bg-success-soft',
+								tunnelTone === 'warning' && 'bg-warning-soft',
+								tunnelTone === 'danger' && 'bg-danger-soft'
+							)}
+						>
+							<span
+								aria-hidden="true"
+								class={cn(
+									'size-2 rounded-full',
+									tunnelTone === 'success' && 'bg-success',
+									tunnelTone === 'warning' && 'bg-warning',
+									tunnelTone === 'danger' && 'bg-danger'
+								)}
+							></span>
+							{l.translate('cloudflare.tunnel.state', [
+								status.tunnel.status,
+								status.tunnel.connections
+							])}
+						</span>
+					</dd>
+				{/if}
+				<dt class="text-muted-foreground">{l.translate('cloudflare.zones.label')}</dt>
+				<dd class="font-mono">{status.zones.join(', ') || '—'}</dd>
+			</dl>
 
-		<h3 class="mt-2 text-xs font-semibold text-muted-foreground">
-			{l.translate('cloudflare.records')}
-		</h3>
-		{#if status.records.length}
-			<div class="overflow-x-auto">
-				<table class="w-full text-left text-xs">
-					<thead class="text-muted-foreground">
-						<tr>
-							<th scope="col" class="py-1.5 pr-3 font-semibold"
-								>{l.translate('domains.records.domain')}</th
-							>
-							<th scope="col" class="py-1.5 pr-3 font-semibold"
-								>{l.translate('domains.records.type')}</th
-							>
-							<th scope="col" class="py-1.5 font-semibold"
-								>{l.translate('domains.records.value')}</th
-							>
-						</tr>
-					</thead>
-					<tbody class="font-mono">
-						{#each status.records as record (record.hostname + record.type)}
-							<tr class="align-top">
-								<td class="py-1.5 pr-3 break-all">{record.hostname}</td>
-								<td class="py-1.5 pr-3">{record.type}</td>
-								<td class="py-1.5 break-all">{record.content}</td>
+			<h3 class="mt-2 text-xs font-semibold text-muted-foreground">
+				{l.translate('cloudflare.records')}
+			</h3>
+			{#if status.records.length}
+				<div class="overflow-x-auto">
+					<table class="w-full text-left text-xs">
+						<thead class="text-muted-foreground">
+							<tr>
+								<th scope="col" class="py-1.5 pr-3 font-semibold"
+									>{l.translate('domains.records.domain')}</th
+								>
+								<th scope="col" class="py-1.5 pr-3 font-semibold"
+									>{l.translate('domains.records.type')}</th
+								>
+								<th scope="col" class="py-1.5 font-semibold"
+									>{l.translate('domains.records.value')}</th
+								>
 							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
-		{:else}
-			<p class="text-xs text-muted-foreground">{l.translate('cloudflare.records.none')}</p>
-		{/if}
-		<p class="text-xs text-muted-foreground">{l.translate('cloudflare.target.help')}</p>
+						</thead>
+						<tbody class="font-mono">
+							{#each status.records as record (record.hostname + record.type)}
+								<tr class="align-top">
+									<td class="py-1.5 pr-3 break-all">{record.hostname}</td>
+									<td class="py-1.5 pr-3">{record.type}</td>
+									<td class="py-1.5 break-all">{record.content}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{:else}
+				<p class="text-xs text-muted-foreground">{l.translate('cloudflare.records.none')}</p>
+			{/if}
+			<p class="text-xs text-muted-foreground">{l.translate('cloudflare.target.help')}</p>
+		</div>
 	</section>
 
 	<ConfirmDialog
