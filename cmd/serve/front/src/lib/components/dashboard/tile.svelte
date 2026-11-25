@@ -51,27 +51,30 @@
 		{/snippet}
 	</SectionHeading>
 
-	{#if error}
-		<div class="flex flex-1 flex-col items-start justify-center gap-2.5 py-4">
-			<p class="flex items-center gap-2 text-sm text-danger">
-				<Icon icon={Alert02Icon} class="size-4" />
-				{l.translate('dashboard.tile.error')}
-			</p>
-			<p class="text-label text-muted-foreground">{l.translate('dashboard.tile.error.help')}</p>
-			{#if onretry}
-				<Button variant="outline" size="sm" onclick={onretry}>
-					<Icon icon={RefreshIcon} />
-					{l.translate('dashboard.retry')}
-				</Button>
-			{/if}
-		</div>
-	{:else if loading}
-		<div class="flex flex-1 flex-col gap-3" aria-busy="true">
-			<Skeleton class="h-3 w-2/5 bg-raised" />
-			<Skeleton class="h-8 w-3/5 bg-raised" />
-			<Skeleton class="min-h-10 w-full flex-1 bg-raised" />
-		</div>
-	{:else}
-		{@render children()}
-	{/if}
+	<!-- The content in a track (DESIGN.md §1); the heading stays above it. -->
+	<div class="flex min-w-0 flex-1 flex-col track p-4 sm:p-5">
+		{#if error}
+			<div class="flex flex-1 flex-col items-start justify-center gap-2.5 py-4">
+				<p class="flex items-center gap-2 text-sm text-danger">
+					<Icon icon={Alert02Icon} class="size-4" />
+					{l.translate('dashboard.tile.error')}
+				</p>
+				<p class="text-label text-muted-foreground">{l.translate('dashboard.tile.error.help')}</p>
+				{#if onretry}
+					<Button variant="outline" size="sm" onclick={onretry}>
+						<Icon icon={RefreshIcon} />
+						{l.translate('dashboard.retry')}
+					</Button>
+				{/if}
+			</div>
+		{:else if loading}
+			<div class="flex flex-1 flex-col gap-3" aria-busy="true">
+				<Skeleton class="h-3 w-2/5 bg-raised" />
+				<Skeleton class="h-8 w-3/5 bg-raised" />
+				<Skeleton class="min-h-10 w-full flex-1 bg-raised" />
+			</div>
+		{:else}
+			{@render children()}
+		{/if}
+	</div>
 </section>

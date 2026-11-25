@@ -429,9 +429,11 @@
 			</Notice>
 		{/if}
 
-		<Steps label={l.translate('jobs.lifecycle')} steps={lifecycle(job, current.state)} />
+		<div class="track p-4">
+			<Steps label={l.translate('jobs.lifecycle')} steps={lifecycle(job, current.state)} />
+		</div>
 
-		<dl class="grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-label/5">
+		<dl class="grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-2.5 track p-4 text-label/5">
 			<dt class="text-muted-foreground">{l.translate('jobs.for')}</dt>
 			<dd class="min-w-0">
 				{#if subject.href}
@@ -460,17 +462,19 @@
 			<h3 class="text-xs font-semibold tracking-wide text-muted-foreground">
 				{l.translate('jobs.policy.title')}
 			</h3>
-			{#each rules as rule (rule.flag)}
-				<p class="grid grid-cols-[16px_minmax(0,1fr)] gap-2 text-label/[19px]">
-					<Icon icon={CheckmarkCircle02Icon} class="mt-0.5 size-4 text-success" />
-					<span>
-						<strong class="font-semibold">{l.translate(rule.name)}</strong>
-						<span class="text-muted-foreground"> · {l.translate(rule.help)}</span>
-					</span>
-				</p>
-			{:else}
-				<p class="text-label text-muted-foreground">{l.translate('jobs.policy.none')}</p>
-			{/each}
+			<div class="flex flex-col gap-2 track p-4">
+				{#each rules as rule (rule.flag)}
+					<p class="grid grid-cols-[16px_minmax(0,1fr)] gap-2 text-label/[19px]">
+						<Icon icon={CheckmarkCircle02Icon} class="mt-0.5 size-4 text-success" />
+						<span>
+							<strong class="font-semibold">{l.translate(rule.name)}</strong>
+							<span class="text-muted-foreground"> · {l.translate(rule.help)}</span>
+						</span>
+					</p>
+				{:else}
+					<p class="text-label text-muted-foreground">{l.translate('jobs.policy.none')}</p>
+				{/each}
+			</div>
 		</section>
 
 		<section class="flex flex-col gap-2">

@@ -138,61 +138,69 @@
 				</div>
 			</div>
 
-			{#if volumesError}
-				<Notice tone="danger" role="alert">
-					<p>{l.translate('backups.volumes.unreachable')} {volumesError}</p>
-				</Notice>
-			{:else if !volumes}
-				<Skeleton class="h-24 w-full" />
-			{:else if volumes.volumes.length === 0}
-				<EmptyState
-					illustration="volumes"
-					size="compact"
-					level={3}
-					title={l.translate('backups.volumes.empty.title')}
-					description={l.translate('backups.volumes.empty', [
-						l.translate(`deploy.environment.${environment}`)
-					])}
-				/>
-			{:else}
-				{@const where = volumes.target}
-				<TimelineList label={l.translate('backups.volumes.title')}>
-					{#each volumes.volumes as volume (volume.key)}
-						{@const last = volumeLine(backups ?? [], app.id, environment, volume.key, lastBackedUp)}
-						{@const parts = [
-							last.text,
-							volume.services.length
-								? l.translate('backups.volume.used_by', [volume.services.join(', ')])
-								: undefined,
-							targetName(where),
-							volume.docker_name
-						].filter((part): part is string => !!part)}
-						<TimelineRow
-							icon={DatabaseIcon}
-							tone={volumeTone[last.freshness]}
-							label={[volume.key, ...parts].join(', ')}
-						>
-							{#snippet title()}<span class="font-mono">{volume.key}</span>{/snippet}
-							{#snippet details()}<span
-									class={last.freshness === 'stale'
-										? 'text-warning'
-										: last.freshness === 'never'
-											? 'text-danger'
-											: undefined}>{parts.join(' · ')}</span
-								>{/snippet}
-						</TimelineRow>
-					{/each}
-				</TimelineList>
-			{/if}
+			<div class="flex min-w-0 flex-col gap-3 track p-2 sm:p-3">
+				{#if volumesError}
+					<Notice tone="danger" role="alert">
+						<p>{l.translate('backups.volumes.unreachable')} {volumesError}</p>
+					</Notice>
+				{:else if !volumes}
+					<Skeleton class="h-24 w-full" />
+				{:else if volumes.volumes.length === 0}
+					<EmptyState
+						illustration="volumes"
+						size="compact"
+						level={3}
+						title={l.translate('backups.volumes.empty.title')}
+						description={l.translate('backups.volumes.empty', [
+							l.translate(`deploy.environment.${environment}`)
+						])}
+					/>
+				{:else}
+					{@const where = volumes.target}
+					<TimelineList label={l.translate('backups.volumes.title')}>
+						{#each volumes.volumes as volume (volume.key)}
+							{@const last = volumeLine(
+								backups ?? [],
+								app.id,
+								environment,
+								volume.key,
+								lastBackedUp
+							)}
+							{@const parts = [
+								last.text,
+								volume.services.length
+									? l.translate('backups.volume.used_by', [volume.services.join(', ')])
+									: undefined,
+								targetName(where),
+								volume.docker_name
+							].filter((part): part is string => !!part)}
+							<TimelineRow
+								icon={DatabaseIcon}
+								tone={volumeTone[last.freshness]}
+								label={[volume.key, ...parts].join(', ')}
+							>
+								{#snippet title()}<span class="font-mono">{volume.key}</span>{/snippet}
+								{#snippet details()}<span
+										class={last.freshness === 'stale'
+											? 'text-warning'
+											: last.freshness === 'never'
+												? 'text-danger'
+												: undefined}>{parts.join(' · ')}</span
+									>{/snippet}
+							</TimelineRow>
+						{/each}
+					</TimelineList>
+				{/if}
 
-			{#each volumes?.skipped ?? [] as mount (mount.service + mount.target)}
-				<Notice tone="warning">
-					<strong class="font-semibold">
-						{l.translate('backups.skipped.title', [mount.service, mount.source || mount.target])}
-					</strong>
-					<p class="text-muted-foreground">{l.translate(`backups.skipped.${mount.kind}`)}</p>
-				</Notice>
-			{/each}
+				{#each volumes?.skipped ?? [] as mount (mount.service + mount.target)}
+					<Notice tone="warning">
+						<strong class="font-semibold">
+							{l.translate('backups.skipped.title', [mount.service, mount.source || mount.target])}
+						</strong>
+						<p class="text-muted-foreground">{l.translate(`backups.skipped.${mount.kind}`)}</p>
+					</Notice>
+				{/each}
+			</div>
 		</section>
 
 		<section class="flex flex-col gap-3" aria-labelledby="backups-title">
@@ -206,32 +214,34 @@
 						: l.translate('backups.list.description')}
 				</p>
 			</div>
-			{#if backups && backups.length > 0}
-				<BackupsList
-					{backups}
-					label={l.translate('backups.list.title')}
-					onrestore={openRestore}
-					ondetails={openDetails}
-					selected={detailsOpen ? detailsId : undefined}
-				/>
-			{:else if backups}
-				<EmptyState
-					illustration="backups"
-					size="section"
-					link={{ href: docs.backups, label: l.translate('empty.docs.backups') }}
-					title={l.translate('backups.empty.title')}
-					description={l.translate('backups.empty.description')}
-				>
-					{#snippet action()}
-						<Button onclick={() => (backupOpen = true)} disabled={!!app.cleanup_requested_at}>
-							<Icon icon={Archive02Icon} />
-							{l.translate('backups.back_up')}
-						</Button>
-					{/snippet}
-				</EmptyState>
-			{:else}
-				<Skeleton class="h-40 w-full" />
-			{/if}
+			<div class="min-w-0 track p-2 sm:p-3">
+				{#if backups && backups.length > 0}
+					<BackupsList
+						{backups}
+						label={l.translate('backups.list.title')}
+						onrestore={openRestore}
+						ondetails={openDetails}
+						selected={detailsOpen ? detailsId : undefined}
+					/>
+				{:else if backups}
+					<EmptyState
+						illustration="backups"
+						size="section"
+						link={{ href: docs.backups, label: l.translate('empty.docs.backups') }}
+						title={l.translate('backups.empty.title')}
+						description={l.translate('backups.empty.description')}
+					>
+						{#snippet action()}
+							<Button onclick={() => (backupOpen = true)} disabled={!!app.cleanup_requested_at}>
+								<Icon icon={Archive02Icon} />
+								{l.translate('backups.back_up')}
+							</Button>
+						{/snippet}
+					</EmptyState>
+				{:else}
+					<Skeleton class="h-40 w-full" />
+				{/if}
+			</div>
 		</section>
 	</div>
 </AppWorkspace>

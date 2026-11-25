@@ -20,7 +20,8 @@
   <circle cx="612" cy="476" r="6" fill="#fff" fill-opacity="0.85"/>
   <circle cx="300" cy="684" r="5" fill="#fff" fill-opacity="0.7"/>
   <g transform="translate(204 244) scale(13)" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M15.37 3.66A9 9 0 1 0 20.56 9.22"/>
-    <path d="M7.25 11.75 10.75 15.25 20 4"/>
+    <path d="M2.5 7.5h4.5v4.5h-4.5z"/>
+    <path d="M9 15.5h4.5v4.5H9z"/>
+    <path d="M15 4.5h6v6h-6z"/>
   </g>
 </svg>

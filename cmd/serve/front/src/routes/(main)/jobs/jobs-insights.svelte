@@ -79,7 +79,7 @@
 <div class="flex flex-col gap-12">
 	<section
 		aria-label={l.translate('jobs.figures.label')}
-		class="grid grid-cols-2 gap-6 sm:gap-x-10 xl:grid-cols-4"
+		class="grid grid-cols-2 gap-6 track p-4 sm:gap-x-10 sm:p-5 xl:grid-cols-4"
 	>
 		<Metric
 			label={l.translate('status.running')}
@@ -121,16 +121,18 @@
 				{l.translate('jobs.share.title')}
 				{#snippet aside()}{l.translate('jobs.share.note', [total])}{/snippet}
 			</SectionHeading>
-			<ShareBar
-				items={share}
-				headers={[
-					l.translate('jobs.share.state'),
-					l.translate('jobs.share.jobs'),
-					l.translate('charts.share'),
-					l.translate('jobs.kpi.oldest')
-				]}
-				label={share.map((i) => `${i.label} ${i.value}`).join(', ')}
-			/>
+			<div class="track p-4 sm:p-5">
+				<ShareBar
+					items={share}
+					headers={[
+						l.translate('jobs.share.state'),
+						l.translate('jobs.share.jobs'),
+						l.translate('charts.share'),
+						l.translate('jobs.kpi.oldest')
+					]}
+					label={share.map((i) => `${i.label} ${i.value}`).join(', ')}
+				/>
+			</div>
 		</section>
 	{/if}
 </div>

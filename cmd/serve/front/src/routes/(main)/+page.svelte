@@ -239,7 +239,7 @@
 		<Illustration name="rocket" class="mb-2 w-[200px] max-w-full" />
 		<SectionHeading id="first-run">{l.translate('dashboard.first.title')}</SectionHeading>
 		<p class="text-sm text-muted-foreground">{l.translate('dashboard.first.description')}</p>
-		<ol class="-mx-2 flex flex-col gap-0.5">
+		<ol class="flex flex-col gap-0.5 track p-2 sm:p-3">
 			{#each [{ done: activeTargets > 0, label: l.translate('dashboard.first.target'), href: routes.createTarget }, { done: false, label: l.translate('dashboard.first.app'), href: routes.createApp }, { done: false, label: l.translate('dashboard.first.deploy') }] as step, i (i)}
 				<li
 					class="grid min-h-[54px] grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3 px-2 py-2"

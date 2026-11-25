@@ -261,7 +261,7 @@
 	{#if $storage}
 		<section
 			aria-label={l.translate('storage.figures.label')}
-			class="mb-12 grid grid-cols-2 gap-6 sm:gap-x-10 xl:grid-cols-4"
+			class="mb-12 grid grid-cols-2 gap-6 track p-4 sm:gap-x-10 sm:p-5 xl:grid-cols-4"
 		>
 			<Metric
 				label={l.translate('storage.kpi.where')}

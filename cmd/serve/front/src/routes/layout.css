@@ -227,3 +227,12 @@
 		display: none;
 	}
 }
+
+/* The track (DESIGN.md §1, owner 2026-11-21, canvas "checkship environments pipeline", option C):
+   a section's content in one rounded outline on the page's own background, never a fill. A 1px
+   ring drawn inside, so it takes no space. Padding is set where it is used. List rows inside a
+   track never get one of their own. */
+@utility track {
+	border-radius: 14px;
+	box-shadow: inset 0 0 0 1px var(--line-strong);
+}
